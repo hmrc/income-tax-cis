@@ -14,10 +14,27 @@
  * limitations under the License.
  */
 
-package services
+package utils
 
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import javax.inject.{Inject, Singleton}
+import helpers.{WireMockHelper, WiremockStubHelpers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import uk.gov.hmrc.http.test.HttpClientSupport
 
-@Singleton
-class AuthService @Inject()(val authConnector: AuthConnector) extends AuthorisedFunctions
+trait ConnectorIntegrationTest extends AnyWordSpec with Matchers
+  with HttpClientSupport
+  with WireMockHelper
+  with WiremockStubHelpers
+  with BeforeAndAfterAll {
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    startWiremock()
+  }
+
+  override def afterAll(): Unit = {
+    stopWiremock()
+    super.afterAll()
+  }
+}

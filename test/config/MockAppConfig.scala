@@ -16,20 +16,16 @@
 
 package config
 
+import org.scalamock.scalatest.MockFactory
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import javax.inject.{Inject, Singleton}
+class MockAppConfig extends MockFactory {
 
-@Singleton
-class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
-
-  lazy val authBaseUrl: String = servicesConfig.baseUrl("auth")
-  lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
-  lazy val graphiteHost: String = config.get[String]("microservice.metrics.graphite.host")
-
-  lazy val desBaseUrl: String = servicesConfig.baseUrl("des")
-
-  lazy val environment: String = config.get[String]("microservice.services.des.environment")
-  lazy val authorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
+  def config(desHost: String): AppConfig = new AppConfig(mock[Configuration], mock[ServicesConfig]) {
+    val wireMockPort = 11111
+    override lazy val desBaseUrl: String = s"http://$desHost:$wireMockPort"
+    override lazy val authorisationToken: String = "authorisation-token"
+    override lazy val environment: String = "environment"
+  }
 }

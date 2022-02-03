@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-package services
+package utils
 
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import javax.inject.{Inject, Singleton}
+import models.CisDates
 
-@Singleton
-class AuthService @Inject()(val authConnector: AuthConnector) extends AuthorisedFunctions
+/**
+ * Represents a tax year for CIS
+ *
+ * Calculating the model values from a tax year
+ */
+
+object CISTaxYearHelper {
+  def cisTaxYearConverter(taxYear:Int): CisDates = {
+    CisDates(
+      fromDate = s"${taxYear-1}-04-06",
+      toDate = s"$taxYear-04-05"
+    )
+  }
+}
