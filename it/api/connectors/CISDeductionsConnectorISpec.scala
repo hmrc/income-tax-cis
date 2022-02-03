@@ -38,6 +38,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
 
   implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
   val updateCISDeductionsUrl: String = s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
+  val deleteCISDeductionsUrl: String = s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
 
   val connectorWithInternalHost: CISDeductionsConnector = connector()
   val connectorWithExternalHost:  CISDeductionsConnector = connector("127.0.0.1")
@@ -58,7 +59,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
     new HttpHeader(HeaderNames.xSessionId, "sessionIdValue")
   )
 
-  "UpdateCISDeductions" should {
+  ".update" should {
 
     "include internal headers" when {
 
@@ -68,14 +69,14 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
           updateCISDeductionsUrl, Json.toJson(updateCISDeductionsModel).toString(), NO_CONTENT, headersSentToDes
         )
 
-        Await.result(connectorWithInternalHost.updateCISDeductions(nino, submissionId, updateCISDeductionsModel), Duration.Inf) shouldBe Right(())
+        Await.result(connectorWithInternalHost.update(nino, submissionId, updateCISDeductionsModel), Duration.Inf) shouldBe Right(())
       }
 
       "the host for DES is 'External'" in {
         stubPutWithoutResponseBody(
           updateCISDeductionsUrl, Json.toJson(updateCISDeductionsModel).toString(), NO_CONTENT)
 
-        Await.result(connectorWithExternalHost.updateCISDeductions(nino, submissionId, updateCISDeductionsModel), Duration.Inf) shouldBe Right(())
+        Await.result(connectorWithExternalHost.update(nino, submissionId, updateCISDeductionsModel), Duration.Inf) shouldBe Right(())
       }
     }
 
@@ -87,7 +88,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
           val desError = DesErrorModel(status, desErrorBodyModel)
 
           stubPutWithResponseBody(updateCISDeductionsUrl, Json.toJson(updateCISDeductionsModel).toString(), desError.toJson.toString(), status)
-          Await.result(connectorWithInternalHost.updateCISDeductions(nino, submissionId, updateCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
+          Await.result(connectorWithInternalHost.update(nino, submissionId, updateCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
         }
       }
       s"DES returns unexpected error code - BAD_GATEWAY (502)" in {
@@ -95,7 +96,46 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
 
         stubPutWithResponseBody(updateCISDeductionsUrl, Json.toJson(updateCISDeductionsModel).toString(), desError.toJson.toString(), BAD_GATEWAY)
 
-        Await.result(connectorWithInternalHost.updateCISDeductions(nino, submissionId, updateCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
+        Await.result(connectorWithInternalHost.update(nino, submissionId, updateCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
+      }
+    }
+  }
+
+  ".delete" should {
+
+    "include internal headers" when {
+
+      "the host for DES is 'Internal'" in {
+
+        stubDeleteWithoutResponseBody(deleteCISDeductionsUrl, NO_CONTENT, headersSentToDes)
+
+        Await.result(connectorWithInternalHost.delete(nino, submissionId), Duration.Inf) shouldBe Right(())
+      }
+
+      "the host for DES is 'External'" in {
+        stubDeleteWithoutResponseBody(deleteCISDeductionsUrl, NO_CONTENT)
+
+        Await.result(connectorWithExternalHost.delete(nino, submissionId), Duration.Inf) shouldBe Right(())
+      }
+    }
+
+    "handle error" when {
+      val desErrorBodyModel = DesErrorBodyModel("DES_CODE", "DES_REASON")
+
+      Seq(BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).foreach { status =>
+        s"DES returns $status" in {
+          val desError = DesErrorModel(status, desErrorBodyModel)
+
+          stubDeleteWithResponseBody(deleteCISDeductionsUrl, status, desError.toJson.toString())
+          Await.result(connectorWithInternalHost.delete(nino, submissionId), Duration.Inf) shouldBe Left(desError)
+        }
+      }
+      s"DES returns unexpected error code - FORBIDDEN (403)" in {
+        val desError = DesErrorModel(INTERNAL_SERVER_ERROR, desErrorBodyModel)
+
+        stubDeleteWithResponseBody(deleteCISDeductionsUrl, FORBIDDEN, desError.toJson.toString())
+
+        Await.result(connectorWithInternalHost.delete(nino, submissionId), Duration.Inf) shouldBe Left(desError)
       }
     }
   }
