@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-package services
+package utils
 
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import javax.inject.{Inject, Singleton}
+import models.CisDates
 
-@Singleton
-class AuthService @Inject()(val authConnector: AuthConnector) extends AuthorisedFunctions
+class CISTaxYearHelperSpec extends TestUtils {
+
+  "CISTaxYearHelper" should {
+
+    "return a cis dates model containing the correct dates when a tax year is passed" in {
+      val taxYear = 2020
+      val result = CISTaxYearHelper.cisTaxYearConverter(taxYear)
+      result mustBe CisDates(fromDate = "2019-04-06", toDate = "2020-04-05")
+    }
+  }
+}
