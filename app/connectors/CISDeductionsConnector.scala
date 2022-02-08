@@ -19,6 +19,7 @@ package connectors
 import config.AppConfig
 import connectors.httpParsers.UpdateCISDeductionsHttpParser.{UpdateCISDeductionsResponse, UpdateCISDeductionsResponseHttpReads}
 import models.UpdateCISDeductions
+import connectors.httpParsers.DeleteCISDeductionsHttpParser.{DeleteCISDeductionsHttpReads, DeleteCISDeductionsResponse}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
 import javax.inject.Inject
@@ -27,8 +28,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class CISDeductionsConnector @Inject()(val http: HttpClient,
                                        val appConfig: AppConfig)(implicit ec: ExecutionContext) extends DesConnector {
 
-  def updateCISDeductions(nino: String, submissionId: String, model: UpdateCISDeductions)
-                                      (implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] = {
+  def update(nino: String, submissionId: String, model: UpdateCISDeductions)
+            (implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] = {
 
     val updateCISDeductionsUri: String = appConfig.desBaseUrl + s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
 
@@ -38,6 +39,17 @@ class CISDeductionsConnector @Inject()(val http: HttpClient,
     }
 
     desCall(desHeaderCarrier(updateCISDeductionsUri))
+  }
+
+  def delete(nino: String, submissionId: String)(implicit hc: HeaderCarrier): Future[DeleteCISDeductionsResponse] = {
+
+    val deleteCISDeductionsUri: String = appConfig.desBaseUrl + s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
+
+    def desCall(implicit hc: HeaderCarrier): Future[DeleteCISDeductionsResponse] = {
+      http.DELETE[DeleteCISDeductionsResponse](deleteCISDeductionsUri)(DeleteCISDeductionsHttpReads, hc, ec)
+    }
+
+    desCall(desHeaderCarrier(deleteCISDeductionsUri))
   }
 
 }
