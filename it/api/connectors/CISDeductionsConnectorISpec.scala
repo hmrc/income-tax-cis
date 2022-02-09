@@ -33,26 +33,46 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
 
   def connector(desHost: String = "localhost"): CISDeductionsConnector = new CISDeductionsConnector(httpClient, new MockAppConfig().config(desHost))
 
+  val taxYear = 2022
   val nino: String = "AA123123A"
   val submissionId: String = "a111111a-abcd-111a-123a-11a1a111a1"
 
   implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
   val updateCISDeductionsUrl: String = s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
   val deleteCISDeductionsUrl: String = s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
+  val createCISDeductionsUrl: String = s"/income-tax/cis/deductions/$nino"
 
   val connectorWithInternalHost: CISDeductionsConnector = connector()
   val connectorWithExternalHost:  CISDeductionsConnector = connector("127.0.0.1")
 
   val updateCISDeductionsModel: UpdateCISDeductions =
     UpdateCISDeductions(
-      PeriodData(
+      Seq(PeriodData(
         deductionFromDate = "2019-04-06",
         deductionToDate = "2019-05-05",
         grossAmountPaid = Some(129.99),
         deductionAmount = 251.11,
         costOfMaterials = Some(30.00)
-      )
+      ))
     )
+
+  val createCISDeductionsModel: CreateCISDeductionsModel = {
+    CreateCISDeductionsModel(
+      "employerRef",
+      "contractorName",
+      Seq(PeriodData(
+        deductionFromDate = "2019-04-06",
+        deductionToDate = "2019-05-05",
+        grossAmountPaid = Some(129.99),
+        deductionAmount = 251.11,
+        costOfMaterials = Some(30.00)
+      ))
+    )
+  }
+
+  val createCISDeductionsApiModel: CreateCISDeductionsApiModel = createCISDeductionsModel.toApiModel(taxYear)
+
+  val createResponse: CreateCISDeductionsSuccessModel = CreateCISDeductionsSuccessModel("12345678")
 
   val headersSentToDes = Seq(
     new HttpHeader(HeaderNames.authorisation, "Bearer authorisation-token"),
@@ -136,6 +156,57 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
         stubDeleteWithResponseBody(deleteCISDeductionsUrl, FORBIDDEN, desError.toJson.toString())
 
         Await.result(connectorWithInternalHost.delete(nino, submissionId), Duration.Inf) shouldBe Left(desError)
+      }
+    }
+  }
+
+  ".create" should {
+
+    "include internal headers" when {
+
+      "the host for DES is 'Internal'" in {
+
+        stubPostWithResponseBody(
+          createCISDeductionsUrl, OK, Json.toJson(createCISDeductionsApiModel).toString(), Json.toJson(createResponse).toString, headersSentToDes
+        )
+
+        Await.result(connectorWithInternalHost.create(nino, taxYear,createCISDeductionsModel), Duration.Inf) shouldBe Right(createResponse)
+      }
+
+      "the host for DES is 'External'" in {
+        stubPostWithResponseBody(
+          createCISDeductionsUrl, OK, Json.toJson(createCISDeductionsApiModel).toString(), Json.toJson(createResponse).toString, headersSentToDes
+        )
+
+        Await.result(connectorWithExternalHost.create(nino, taxYear, createCISDeductionsModel), Duration.Inf) shouldBe Right(createResponse)
+      }
+    }
+
+    "handle error" when {
+      val desErrorBodyModel = DesErrorBodyModel("DES_CODE", "DES_REASON")
+
+      Seq(CONFLICT, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).foreach { status =>
+        s"DES returns $status" in {
+          val desError = DesErrorModel(status, desErrorBodyModel)
+
+          stubPostWithResponseBody(createCISDeductionsUrl, status, Json.toJson(createCISDeductionsApiModel).toString(), desError.toJson.toString())
+          Await.result(connectorWithInternalHost.create(nino, taxYear, createCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
+        }
+      }
+      s"DES returns unexpected error code - BAD_GATEWAY (502)" in {
+        val desError = DesErrorModel(INTERNAL_SERVER_ERROR, desErrorBodyModel)
+
+        stubPostWithResponseBody(createCISDeductionsUrl, BAD_GATEWAY, Json.toJson(createCISDeductionsApiModel).toString(), desError.toJson.toString())
+
+        Await.result(connectorWithInternalHost.create(nino, taxYear, createCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
+      }
+      s"DES returns OK with bad Json" in {
+        val desError = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)
+
+        stubPostWithResponseBody(createCISDeductionsUrl, OK, Json.toJson(createCISDeductionsApiModel).toString(),
+          Json.toJson(createCISDeductionsApiModel).toString(), headersSentToDes)
+
+        Await.result(connectorWithInternalHost.create(nino, taxYear,createCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
       }
     }
   }

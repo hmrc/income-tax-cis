@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package controllers.predicates
+package actions
 
 import common.{EnrolmentIdentifiers, EnrolmentKeys}
+import models.User
 import play.api.Logger
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc._
@@ -25,7 +26,6 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolment
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import models.User
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -64,7 +64,7 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
 
   val minimumConfidenceLevel: Int = ConfidenceLevel.L200.level
 
-  private[predicates] def individualAuthentication[A](block: User[A] => Future[Result], requestMtdItId: String)
+  private[actions] def individualAuthentication[A](block: User[A] => Future[Result], requestMtdItId: String)
                                                      (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
     authorised.retrieve(allEnrolments and confidenceLevel) {
       case enrolments ~ userConfidence if userConfidence.level >= minimumConfidenceLevel =>
@@ -95,7 +95,7 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
     }
   }
 
-  private[predicates] def agentAuthentication[A](block: User[A] => Future[Result], mtdItId: String)
+  private[actions] def agentAuthentication[A](block: User[A] => Future[Result], mtdItId: String)
                                                 (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
 
     lazy val agentDelegatedAuthRuleKey = "mtd-it-auth"
@@ -125,7 +125,7 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
     }
   }
 
-  private[predicates] def enrolmentGetIdentifierValue(checkedKey: String,
+  private[actions] def enrolmentGetIdentifierValue(checkedKey: String,
                                                       checkedIdentifier: String,
                                                       enrolments: Enrolments): Option[String] = enrolments.enrolments.collectFirst {
     case Enrolment(`checkedKey`, enrolmentIdentifiers, _, _) => enrolmentIdentifiers.collectFirst {

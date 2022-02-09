@@ -17,9 +17,10 @@
 package connectors
 
 import config.AppConfig
+import connectors.httpParsers.CreateCISDeductionsParser.{CreateCISDeductionsResponseHttpReads, CreateCISDeductionsResponse}
 import connectors.httpParsers.UpdateCISDeductionsHttpParser.{UpdateCISDeductionsResponse, UpdateCISDeductionsResponseHttpReads}
-import models.UpdateCISDeductions
 import connectors.httpParsers.DeleteCISDeductionsHttpParser.{DeleteCISDeductionsHttpReads, DeleteCISDeductionsResponse}
+import models.{CreateCISDeductionsApiModel, CreateCISDeductionsModel, UpdateCISDeductions}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
 import javax.inject.Inject
@@ -50,6 +51,18 @@ class CISDeductionsConnector @Inject()(val http: HttpClient,
     }
 
     desCall(desHeaderCarrier(deleteCISDeductionsUri))
+  }
+
+  def create(nino: String, taxYear: Int, model: CreateCISDeductionsModel)
+            (implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
+    val createCISDeductionsUri = appConfig.desBaseUrl + s"/income-tax/cis/deductions/$nino"
+
+    def desCall(implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
+      http.POST[CreateCISDeductionsApiModel, CreateCISDeductionsResponse](
+        createCISDeductionsUri, model.toApiModel(taxYear))(CreateCISDeductionsApiModel.format.writes, CreateCISDeductionsResponseHttpReads, hc,ec)
+    }
+
+    desCall(desHeaderCarrier(createCISDeductionsUri))
   }
 
 }
