@@ -30,6 +30,12 @@ class DesConnectorSpec extends TestUtils{
 
   "FakeConnector" when {
 
+    "base url is requested" should {
+      "return the app config value" in {
+        connector.baseUrl mustBe mockAppConfig.desBaseUrl
+      }
+    }
+
     "host is Internal" should {
       val internalHost = "http://localhost"
 

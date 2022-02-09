@@ -121,6 +121,395 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
     }
   }
 
+  //scalastyle:off
+  def getUrl(taxYear: Int, source: String): String = s"/income-tax/cis/deductions/$nino\\?periodStart=${taxYear-1}-04-06&periodEnd=$taxYear-04-05&source=$source"
+
+  def customerResult(taxYear: Int): CISSource = CISSource(
+    Some(400),Some(400),Some(400),Seq(
+      CisDeductions(
+        s"${taxYear-1}-04-06",
+        s"$taxYear-04-05",
+        Some("Contractor 1"),
+        "111/11111",
+        Some(200.00),
+        Some(200.00),
+        Some(200.00),
+        Seq(
+          GetPeriodData(
+            s"${taxYear-1}-04-06",
+            s"${taxYear-1}-05-05",
+            Some(100.00),
+            Some(100.00),
+            Some(100.00),
+            "2022-05-11T16:38:57.489Z",
+            Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
+            "customer"
+          ),GetPeriodData(
+            s"${taxYear-1}-05-06",
+            s"${taxYear-1}-06-05",
+            Some(100.00),
+            Some(100.00),
+            Some(100.00),
+            "2022-05-11T16:38:57.489Z",
+            Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
+            "customer"
+          )
+        )
+      ),CisDeductions(
+        s"${taxYear-1}-04-06",
+        s"$taxYear-04-05",
+        Some("Contractor 2"),
+        "222/11111",
+        Some(200.00),
+        Some(200.00),
+        Some(200.00),
+        Seq(
+          GetPeriodData(
+            s"${taxYear-1}-04-06",
+            s"${taxYear-1}-05-05",
+            Some(100.00),
+            Some(100.00),
+            Some(100.00),
+            "2022-05-11T16:38:57.489Z",
+            Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
+            "customer"
+          ),GetPeriodData(
+            s"${taxYear-1}-05-06",
+            s"${taxYear-1}-06-05",
+            Some(100.00),
+            Some(100.00),
+            Some(100.00),
+            "2022-05-11T16:38:57.489Z",
+            Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
+            "customer"
+          )
+        )
+      )
+    )
+  )
+
+  def contractorResult(taxYear: Int): CISSource = CISSource(
+    Some(400),Some(400),Some(400),Seq(
+      CisDeductions(
+        s"${taxYear-1}-04-06",
+        s"$taxYear-04-05",
+        Some("Contractor 1"),
+        "111/11111",
+        Some(200.00),
+        Some(200.00),
+        Some(200.00),
+        Seq(
+          GetPeriodData(
+            s"${taxYear-1}-04-06",
+            s"${taxYear-1}-05-05",
+            Some(100.00),
+            Some(100.00),
+            Some(100.00),
+            "2022-05-11T16:38:57.489Z",
+            None,
+            "contractor"
+          ),GetPeriodData(
+            s"${taxYear-1}-05-06",
+            s"${taxYear-1}-06-05",
+            Some(100.00),
+            Some(100.00),
+            Some(100.00),
+            "2022-05-11T16:38:57.489Z",
+            None,
+            "contractor"
+          )
+        )
+      ),CisDeductions(
+        s"${taxYear-1}-04-06",
+        s"$taxYear-04-05",
+        Some("Contractor 2"),
+        "222/11111",
+        Some(200.00),
+        Some(200.00),
+        Some(200.00),
+        Seq(
+          GetPeriodData(
+            s"${taxYear-1}-04-06",
+            s"${taxYear-1}-05-05",
+            Some(100.00),
+            Some(100.00),
+            Some(100.00),
+            "2022-05-11T16:38:57.489Z",
+            None,
+            "contractor"
+          ),GetPeriodData(
+            s"${taxYear-1}-05-06",
+            s"${taxYear-1}-06-05",
+            Some(100.00),
+            Some(100.00),
+            Some(100.00),
+            "2022-05-11T16:38:57.489Z",
+            None,
+            "contractor"
+          )
+        )
+      )
+    )
+  )
+  def smallContractorResult(taxYear: Int): CISSource = CISSource(
+    Some(100),None,None,Seq(
+      CisDeductions(
+        s"${taxYear-1}-04-06",
+        s"$taxYear-04-05",
+        None,
+        "111/11111",
+        Some(100.00),
+        None,
+        None,
+        Seq(
+          GetPeriodData(
+            s"${taxYear-1}-04-06",
+            s"${taxYear-1}-05-05",
+            Some(100.00),
+            None,
+            None,
+            "2022-05-11T16:38:57.489Z",
+            None,
+            "contractor"
+          )
+        )
+      )
+    )
+  )
+
+  def customerResponse(taxYear:Int): String =
+    s"""{
+       |	"totalDeductionAmount": 400.00,
+       |	"totalCostOfMaterials": 400.00,
+       |	"totalGrossAmountPaid": 400.00,
+       |	"cisDeductions": [{
+       |		"fromDate": "${taxYear-1}-04-06",
+       |		"toDate": "$taxYear-04-05",
+       |		"contractorName": "Contractor 1",
+       |		"employerRef": "111/11111",
+       |		"totalDeductionAmount": 200.00,
+       |		"totalCostOfMaterials": 200.00,
+       |		"totalGrossAmountPaid": 200.00,
+       |		"periodData": [{
+       |			"deductionFromDate": "${taxYear-1}-04-06",
+       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionAmount": 100.00,
+       |			"costOfMaterials": 100.00,
+       |			"grossAmountPaid": 100.00,
+       |			"submissionDate": "2022-05-11T16:38:57.489Z",
+       |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
+       |			"source": "customer"
+       |		},{
+       |			"deductionFromDate": "${taxYear-1}-05-06",
+       |			"deductionToDate": "${taxYear-1}-06-05",
+       |			"deductionAmount": 100.00,
+       |			"costOfMaterials": 100.00,
+       |			"grossAmountPaid": 100.00,
+       |			"submissionDate": "2022-05-11T16:38:57.489Z",
+       |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
+       |			"source": "customer"
+       |		}]
+       |	},{
+       |		"fromDate": "${taxYear - 1}-04-06",
+       |		"toDate": "$taxYear-04-05",
+       |		"contractorName": "Contractor 2",
+       |		"employerRef": "222/11111",
+       |		"totalDeductionAmount": 200.00,
+       |		"totalCostOfMaterials": 200.00,
+       |		"totalGrossAmountPaid": 200.00,
+       |		"periodData": [{
+       |			"deductionFromDate": "${taxYear-1}-04-06",
+       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionAmount": 100.00,
+       |			"costOfMaterials": 100.00,
+       |			"grossAmountPaid": 100.00,
+       |			"submissionDate": "2022-05-11T16:38:57.489Z",
+       |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
+       |			"source": "customer"
+       |		},{
+       |			"deductionFromDate": "${taxYear-1}-05-06",
+       |			"deductionToDate": "${taxYear-1}-06-05",
+       |			"deductionAmount": 100.00,
+       |			"costOfMaterials": 100.00,
+       |			"grossAmountPaid": 100.00,
+       |			"submissionDate": "2022-05-11T16:38:57.489Z",
+       |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
+       |			"source": "customer"
+       |		}]
+       |	}]
+       |}""".stripMargin
+
+  def contractorResponse(taxYear:Int): String =
+    s"""{
+       |	"totalDeductionAmount": 400.00,
+       |	"totalCostOfMaterials": 400.00,
+       |	"totalGrossAmountPaid": 400.00,
+       |	"cisDeductions": [{
+       |		"fromDate": "${taxYear-1}-04-06",
+       |		"toDate": "$taxYear-04-05",
+       |		"contractorName": "Contractor 1",
+       |		"employerRef": "111/11111",
+       |		"totalDeductionAmount": 200.00,
+       |		"totalCostOfMaterials": 200.00,
+       |		"totalGrossAmountPaid": 200.00,
+       |		"periodData": [{
+       |			"deductionFromDate": "${taxYear-1}-04-06",
+       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionAmount": 100.00,
+       |			"costOfMaterials": 100.00,
+       |			"grossAmountPaid": 100.00,
+       |			"submissionDate": "2022-05-11T16:38:57.489Z",
+       |			"source": "contractor"
+       |		},{
+       |			"deductionFromDate": "${taxYear-1}-05-06",
+       |			"deductionToDate": "${taxYear-1}-06-05",
+       |			"deductionAmount": 100.00,
+       |			"costOfMaterials": 100.00,
+       |			"grossAmountPaid": 100.00,
+       |			"submissionDate": "2022-05-11T16:38:57.489Z",
+       |			"source": "contractor"
+       |		}]
+       |	},{
+       |		"fromDate": "${taxYear - 1}-04-06",
+       |		"toDate": "$taxYear-04-05",
+       |		"contractorName": "Contractor 2",
+       |		"employerRef": "222/11111",
+       |		"totalDeductionAmount": 200.00,
+       |		"totalCostOfMaterials": 200.00,
+       |		"totalGrossAmountPaid": 200.00,
+       |		"periodData": [{
+       |			"deductionFromDate": "${taxYear-1}-04-06",
+       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionAmount": 100.00,
+       |			"costOfMaterials": 100.00,
+       |			"grossAmountPaid": 100.00,
+       |			"submissionDate": "2022-05-11T16:38:57.489Z",
+       |			"source": "contractor"
+       |		},{
+       |			"deductionFromDate": "${taxYear-1}-05-06",
+       |			"deductionToDate": "${taxYear-1}-06-05",
+       |			"deductionAmount": 100.00,
+       |			"costOfMaterials": 100.00,
+       |			"grossAmountPaid": 100.00,
+       |			"submissionDate": "2022-05-11T16:38:57.489Z",
+       |			"source": "contractor"
+       |		}]
+       |	}]
+       |}""".stripMargin
+
+  def smallContractorResponse(taxYear:Int): String =
+    s"""{
+       |	"totalDeductionAmount": 100.00,
+       |	"cisDeductions": [{
+       |		"fromDate": "${taxYear-1}-04-06",
+       |		"toDate": "$taxYear-04-05",
+       |		"employerRef": "111/11111",
+       |		"totalDeductionAmount": 100.00,
+       |		"periodData": [{
+       |			"deductionFromDate": "${taxYear-1}-04-06",
+       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionAmount": 100.00,
+       |			"submissionDate": "2022-05-11T16:38:57.489Z",
+       |			"source": "contractor"
+       |		}]
+       |	}]
+       |}""".stripMargin
+
+  def emptySeqResponse: String =
+    s"""{
+       |	"cisDeductions": []
+       |}""".stripMargin
+
+  "get" should {
+    "include internal headers" when {
+      "the host for DES is 'Internal' and is retrieving customer data" in {
+
+        stubGetWithResponseBody(getUrl(taxYear, "customer"), OK, customerResponse(taxYear), headersSentToDes)
+
+        Await.result(connectorWithInternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Right(
+          Some(
+            customerResult(taxYear)
+          )
+        )
+      }
+
+      "the host for DES is 'External' and is retrieving customer data" in {
+
+        stubGetWithResponseBody(getUrl(taxYear, "customer"), OK, customerResponse(taxYear))
+
+        Await.result(connectorWithExternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Right(
+          Some(
+            customerResult(taxYear)
+          )
+        )
+      }
+    }
+
+    "return contractor data without submission ids" in {
+      stubGetWithResponseBody(getUrl(taxYear - 1, "contractor"), OK, contractorResponse(taxYear - 1))
+
+      Await.result(connectorWithExternalHost.get(nino, taxYear - 1, "contractor"), Duration.Inf) shouldBe Right(
+        Some(
+          contractorResult(taxYear - 1)
+        )
+      )
+    }
+
+    "return smallest model" in {
+      stubGetWithResponseBody(getUrl(taxYear - 1, "contractor"), OK, smallContractorResponse(taxYear - 1))
+
+      Await.result(connectorWithExternalHost.get(nino, taxYear - 1, "contractor"), Duration.Inf) shouldBe Right(
+        Some(
+          smallContractorResult(taxYear - 1)
+        )
+      )
+    }
+
+    "return a right none if empty seq of cis deductions" in {
+      stubGetWithResponseBody(getUrl(taxYear, "customer"), OK, emptySeqResponse)
+
+      Await.result(connectorWithExternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Right(
+        None
+      )
+    }
+
+    "return a right none if not found" in {
+      stubGetWithResponseBody(getUrl(taxYear, "customer"), NOT_FOUND, "{}")
+
+      Await.result(connectorWithExternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Right(
+        None
+      )
+    }
+
+    "handle malformed json" in {
+      stubGetWithResponseBody(getUrl(taxYear, "customer"), OK, s"""{"cisDeductions": {}}""".stripMargin)
+
+      val desError = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)
+      Await.result(connectorWithExternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Left(
+        desError
+      )
+    }
+
+    "handle error" when {
+      val desErrorBodyModel = DesErrorBodyModel("DES_CODE", "DES_REASON")
+
+      Seq(BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).foreach { status =>
+        s"DES returns $status" in {
+          val desError = DesErrorModel(status, desErrorBodyModel)
+
+          stubGetWithResponseBody(getUrl(taxYear, "customer"), status, desError.toJson.toString())
+          Await.result(connectorWithInternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Left(desError)
+        }
+      }
+      s"DES returns unexpected error code - BAD_GATEWAY (502)" in {
+        val desError = DesErrorModel(INTERNAL_SERVER_ERROR, desErrorBodyModel)
+
+        stubGetWithResponseBody(getUrl(taxYear, "customer"), BAD_GATEWAY, desError.toJson.toString())
+        Await.result(connectorWithInternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Left(desError)
+      }
+    }
+  }
+
   ".delete" should {
 
     "include internal headers" when {
