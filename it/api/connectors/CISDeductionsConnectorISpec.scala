@@ -16,10 +16,12 @@
 
 package api.connectors
 
+import builders.CISSourceBuilder.{contractorCISSource, customerCISSource}
 import com.github.tomakehurst.wiremock.http.HttpHeader
 import config.MockAppConfig
 import connectors.CISDeductionsConnector
 import models._
+import models.get.{CISDeductions, CISSource, GetPeriodData}
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, SessionId}
@@ -56,8 +58,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
       ))
     )
 
-  val createCISDeductionsModel: CreateCISDeductionsModel = {
-    CreateCISDeductionsModel(
+  val createCISDeductionsModel: CreateCISDeductions = {
+    CreateCISDeductions(
       "employerRef",
       "contractorName",
       Seq(PeriodData(
@@ -70,9 +72,9 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
     )
   }
 
-  val createCISDeductionsApiModel: CreateCISDeductionsApiModel = createCISDeductionsModel.toApiModel(taxYear)
+  val createCISDeductionsApiModel: CreateCISDeductionsApi = createCISDeductionsModel.toApiModel(taxYear)
 
-  val createResponse: CreateCISDeductionsSuccessModel = CreateCISDeductionsSuccessModel("12345678")
+  val createResponse: CreateCISDeductionsSuccess = CreateCISDeductionsSuccess("12345678")
 
   val headersSentToDes = Seq(
     new HttpHeader(HeaderNames.authorisation, "Bearer authorisation-token"),
@@ -124,136 +126,9 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
   //scalastyle:off
   def getUrl(taxYear: Int, source: String): String = s"/income-tax/cis/deductions/$nino\\?periodStart=${taxYear-1}-04-06&periodEnd=$taxYear-04-05&source=$source"
 
-  def customerResult(taxYear: Int): CISSource = CISSource(
-    Some(400),Some(400),Some(400),Seq(
-      CisDeductions(
-        s"${taxYear-1}-04-06",
-        s"$taxYear-04-05",
-        Some("Contractor 1"),
-        "111/11111",
-        Some(200.00),
-        Some(200.00),
-        Some(200.00),
-        Seq(
-          GetPeriodData(
-            s"${taxYear-1}-04-06",
-            s"${taxYear-1}-05-05",
-            Some(100.00),
-            Some(100.00),
-            Some(100.00),
-            "2022-05-11T16:38:57.489Z",
-            Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
-            "customer"
-          ),GetPeriodData(
-            s"${taxYear-1}-05-06",
-            s"${taxYear-1}-06-05",
-            Some(100.00),
-            Some(100.00),
-            Some(100.00),
-            "2022-05-11T16:38:57.489Z",
-            Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
-            "customer"
-          )
-        )
-      ),CisDeductions(
-        s"${taxYear-1}-04-06",
-        s"$taxYear-04-05",
-        Some("Contractor 2"),
-        "222/11111",
-        Some(200.00),
-        Some(200.00),
-        Some(200.00),
-        Seq(
-          GetPeriodData(
-            s"${taxYear-1}-04-06",
-            s"${taxYear-1}-05-05",
-            Some(100.00),
-            Some(100.00),
-            Some(100.00),
-            "2022-05-11T16:38:57.489Z",
-            Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
-            "customer"
-          ),GetPeriodData(
-            s"${taxYear-1}-05-06",
-            s"${taxYear-1}-06-05",
-            Some(100.00),
-            Some(100.00),
-            Some(100.00),
-            "2022-05-11T16:38:57.489Z",
-            Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
-            "customer"
-          )
-        )
-      )
-    )
-  )
-
-  def contractorResult(taxYear: Int): CISSource = CISSource(
-    Some(400),Some(400),Some(400),Seq(
-      CisDeductions(
-        s"${taxYear-1}-04-06",
-        s"$taxYear-04-05",
-        Some("Contractor 1"),
-        "111/11111",
-        Some(200.00),
-        Some(200.00),
-        Some(200.00),
-        Seq(
-          GetPeriodData(
-            s"${taxYear-1}-04-06",
-            s"${taxYear-1}-05-05",
-            Some(100.00),
-            Some(100.00),
-            Some(100.00),
-            "2022-05-11T16:38:57.489Z",
-            None,
-            "contractor"
-          ),GetPeriodData(
-            s"${taxYear-1}-05-06",
-            s"${taxYear-1}-06-05",
-            Some(100.00),
-            Some(100.00),
-            Some(100.00),
-            "2022-05-11T16:38:57.489Z",
-            None,
-            "contractor"
-          )
-        )
-      ),CisDeductions(
-        s"${taxYear-1}-04-06",
-        s"$taxYear-04-05",
-        Some("Contractor 2"),
-        "222/11111",
-        Some(200.00),
-        Some(200.00),
-        Some(200.00),
-        Seq(
-          GetPeriodData(
-            s"${taxYear-1}-04-06",
-            s"${taxYear-1}-05-05",
-            Some(100.00),
-            Some(100.00),
-            Some(100.00),
-            "2022-05-11T16:38:57.489Z",
-            None,
-            "contractor"
-          ),GetPeriodData(
-            s"${taxYear-1}-05-06",
-            s"${taxYear-1}-06-05",
-            Some(100.00),
-            Some(100.00),
-            Some(100.00),
-            "2022-05-11T16:38:57.489Z",
-            None,
-            "contractor"
-          )
-        )
-      )
-    )
-  )
   def smallContractorResult(taxYear: Int): CISSource = CISSource(
     Some(100),None,None,Seq(
-      CisDeductions(
+      CISDeductions(
         s"${taxYear-1}-04-06",
         s"$taxYear-04-05",
         None,
@@ -428,7 +303,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
 
         Await.result(connectorWithInternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Right(
           Some(
-            customerResult(taxYear)
+            customerCISSource(taxYear)
           )
         )
       }
@@ -439,7 +314,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
 
         Await.result(connectorWithExternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Right(
           Some(
-            customerResult(taxYear)
+            customerCISSource(taxYear)
           )
         )
       }
@@ -450,7 +325,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
 
       Await.result(connectorWithExternalHost.get(nino, taxYear - 1, "contractor"), Duration.Inf) shouldBe Right(
         Some(
-          contractorResult(taxYear - 1)
+          contractorCISSource(taxYear - 1)
         )
       )
     }

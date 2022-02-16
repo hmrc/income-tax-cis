@@ -28,7 +28,7 @@ trait DesConnector {
 
   val appConfig: AppConfig
 
-  val baseUrl: String = appConfig.desBaseUrl
+  lazy val baseUrl: String = appConfig.desBaseUrl
 
   val headerCarrierConfig: Config = HeaderCarrier.Config.fromConfig(ConfigFactory.load())
 

@@ -16,7 +16,8 @@
 
 package connectors.httpParsers
 
-import models.{CISSource, DesErrorModel}
+import models.DesErrorModel
+import models.get.CISSource
 import play.api.Logging
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}

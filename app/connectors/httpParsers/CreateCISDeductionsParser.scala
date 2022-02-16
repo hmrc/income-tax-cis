@@ -16,7 +16,7 @@
 
 package connectors.httpParsers
 
-import models.{CreateCISDeductionsSuccessModel, DesErrorModel}
+import models.{CreateCISDeductionsSuccess, DesErrorModel}
 import play.api.Logging
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
@@ -24,14 +24,14 @@ import utils.PagerDutyHelper.PagerDutyKeys._
 import utils.PagerDutyHelper.pagerDutyLog
 
 object CreateCISDeductionsParser extends DESParser with Logging{
-  type CreateCISDeductionsResponse = Either[DesErrorModel, CreateCISDeductionsSuccessModel]
+  type CreateCISDeductionsResponse = Either[DesErrorModel, CreateCISDeductionsSuccess]
 
   override val parserName = "createCISDeductionsParser"
 
   implicit object CreateCISDeductionsResponseHttpReads extends HttpReads[CreateCISDeductionsResponse] {
     override def read(method:String, url: String, response:  HttpResponse): CreateCISDeductionsResponse = {
       response.status match {
-        case OK => response.json.validate[CreateCISDeductionsSuccessModel].fold[CreateCISDeductionsResponse](
+        case OK => response.json.validate[CreateCISDeductionsSuccess].fold[CreateCISDeductionsResponse](
           _ => badSuccessJsonFromDES,
           responseModel => Right(responseModel)
         )

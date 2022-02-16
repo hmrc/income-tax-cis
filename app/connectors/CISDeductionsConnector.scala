@@ -22,7 +22,7 @@ import connectors.httpParsers.DeleteCISDeductionsHttpParser.{DeleteCISDeductions
 import connectors.httpParsers.GetCISDeductionsHttpParser.{GetCISDeductionsResponse, GetCISDeductionsResponseHttpReads}
 import connectors.httpParsers.UpdateCISDeductionsHttpParser.{UpdateCISDeductionsResponse, UpdateCISDeductionsResponseHttpReads}
 import javax.inject.Inject
-import models.{CreateCISDeductionsApiModel, CreateCISDeductionsModel, UpdateCISDeductions}
+import models.{CreateCISDeductionsApi, CreateCISDeductions, UpdateCISDeductions}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import utils.CISTaxYearHelper
 
@@ -68,13 +68,13 @@ class CISDeductionsConnector @Inject()(val http: HttpClient,
     desCall(desHeaderCarrier(deleteCISDeductionsUri))
   }
 
-  def create(nino: String, taxYear: Int, model: CreateCISDeductionsModel)
+  def create(nino: String, taxYear: Int, model: CreateCISDeductions)
             (implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
     val createCISDeductionsUri = baseUrl + s"/income-tax/cis/deductions/$nino"
 
     def desCall(implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
-      http.POST[CreateCISDeductionsApiModel, CreateCISDeductionsResponse](
-        createCISDeductionsUri, model.toApiModel(taxYear))(CreateCISDeductionsApiModel.format.writes, CreateCISDeductionsResponseHttpReads, hc,ec)
+      http.POST[CreateCISDeductionsApi, CreateCISDeductionsResponse](
+        createCISDeductionsUri, model.toApiModel(taxYear))(CreateCISDeductionsApi.format.writes, CreateCISDeductionsResponseHttpReads, hc,ec)
     }
 
     desCall(desHeaderCarrier(createCISDeductionsUri))

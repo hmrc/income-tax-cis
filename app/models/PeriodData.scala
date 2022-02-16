@@ -18,13 +18,11 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class PeriodData(
-                       deductionFromDate: String,
-                       deductionToDate: String,
-                       grossAmountPaid: Option[BigDecimal],
-                       deductionAmount: BigDecimal,
-                       costOfMaterials: Option[BigDecimal]
-                     )
+case class PeriodData(deductionFromDate: String,
+                      deductionToDate: String,
+                      grossAmountPaid: Option[BigDecimal],
+                      deductionAmount: BigDecimal,
+                      costOfMaterials: Option[BigDecimal])
 
 object PeriodData {
   implicit val format: OFormat[PeriodData] = Json.format[PeriodData]

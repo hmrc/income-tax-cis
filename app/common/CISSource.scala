@@ -14,21 +14,9 @@
  * limitations under the License.
  */
 
-package utils
+package common
 
-import models.CISDates
-
-/**
- * Represents a tax year for CIS
- *
- * Calculating the model values from a tax year
- */
-
-object CISTaxYearHelper {
-  def cisTaxYearConverter(taxYear:Int): CISDates = {
-    CISDates(
-      fromDate = s"${taxYear-1}-04-06",
-      toDate = s"$taxYear-04-05"
-    )
-  }
+object CISSource {
+  val CUSTOMER = "customer"
+  val CONTRACTOR = "contractor"
 }

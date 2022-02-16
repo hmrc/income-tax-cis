@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-package utils
+package models
 
-import models.CISDates
+import play.api.libs.json.{Json, OFormat}
 
-/**
- * Represents a tax year for CIS
- *
- * Calculating the model values from a tax year
- */
+case class CISDates(fromDate: String,
+                    toDate: String)
 
-object CISTaxYearHelper {
-  def cisTaxYearConverter(taxYear:Int): CISDates = {
-    CISDates(
-      fromDate = s"${taxYear-1}-04-06",
-      toDate = s"$taxYear-04-05"
-    )
-  }
+object CISDates {
+  implicit val format: OFormat[CISDates] = Json.format[CISDates]
 }
