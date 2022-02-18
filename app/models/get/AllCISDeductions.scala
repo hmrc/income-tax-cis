@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package models
+package models.get
 
 import play.api.libs.json.{Json, OFormat}
 
-case class CisDates(
-                     fromDate: String,
-                     toDate: String
-                   )
+case class AllCISDeductions(customerCISDeductions: Option[CISSource],
+                            contractorCISDeductions: Option[CISSource])
 
-object CisDates {
-  implicit val format: OFormat[CisDates] = Json.format[CisDates]
+object AllCISDeductions {
+  implicit val format: OFormat[AllCISDeductions] = Json.format[AllCISDeductions]
 }
+
+
+
+
+

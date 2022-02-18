@@ -16,7 +16,7 @@
 
 package utils
 
-import models.CisDates
+import models.CISDates
 
 class CISTaxYearHelperSpec extends TestUtils {
 
@@ -25,7 +25,7 @@ class CISTaxYearHelperSpec extends TestUtils {
     "return a cis dates model containing the correct dates when a tax year is passed" in {
       val taxYear = 2020
       val result = CISTaxYearHelper.cisTaxYearConverter(taxYear)
-      result mustBe CisDates(fromDate = "2019-04-06", toDate = "2020-04-05")
+      result mustBe CISDates(fromDate = "2019-04-06", toDate = "2020-04-05")
     }
   }
 }

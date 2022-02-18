@@ -14,38 +14,9 @@
  * limitations under the License.
  */
 
-package models
+package models.get
 
 import play.api.libs.json.{Json, OFormat}
-
-case class AllCISDeductions(customerCISDeductions: Option[CISSource],
-                            contractorCISDeductions: Option[CISSource])
-
-object AllCISDeductions {
-  implicit val format: OFormat[AllCISDeductions] = Json.format[AllCISDeductions]
-}
-
-case class CISSource(totalDeductionAmount: Option[BigDecimal],
-                     totalCostOfMaterials: Option[BigDecimal],
-                     totalGrossAmountPaid: Option[BigDecimal],
-                     cisDeductions: Seq[CisDeductions])
-
-object CISSource {
-  implicit val format: OFormat[CISSource] = Json.format[CISSource]
-}
-
-case class CisDeductions(fromDate: String,
-                         toDate: String,
-                         contractorName: Option[String],
-                         employerRef: String,
-                         totalDeductionAmount: Option[BigDecimal],
-                         totalCostOfMaterials: Option[BigDecimal],
-                         totalGrossAmountPaid: Option[BigDecimal],
-                         periodData: Seq[GetPeriodData])
-
-object CisDeductions {
-  implicit val format: OFormat[CisDeductions] = Json.format[CisDeductions]
-}
 
 case class GetPeriodData(deductionFromDate: String,
                          deductionToDate: String,
