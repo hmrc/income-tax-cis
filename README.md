@@ -22,11 +22,11 @@ This service runs on port: `localhost:9328`
 **GET     /income-tax/nino/:nino/sources**                (Gets the CIS deductions for this user)
 
 ### Downstream services
-All expenses data is retrieved / updated via the downstream system.
+All CIS data is retrieved / updated via the downstream system.
 - DES (Data Exchange Service)
 
 ### CIS Sources (Contractor and Customer Data)
-CIS data can come from different sources: Contractor and Customer. Contractor data is CIS data that HMRC have for the user within the tax year, prior to any updates made by the user. The CIS data displayed in-year is HMRC-Held.
+CIS data can come from different sources: Contractor and Customer. Contractor data is CIS data that HMRC have for the user within the tax year, prior to any updates made by the user. The CIS data displayed in-year is Contractor data.
 
 Customer data is provided by the user. At the end of the tax year, users can view any existing CIS data and make changes (create, update and delete).
 
@@ -451,17 +451,18 @@ Customer data is provided by the user. At the end of the tax year, users can vie
 
 </details>
 
-## Ninos with stub data for employment
+## Ninos with stub data for CIS
 
 ### In-Year
-| Nino | Employment data | Source |
+| Nino | CIS data | Source |
 | --- | --- | --- |
-| AC150000B | CIS User with multiple CIS sources | Contractor, Customer |
+| AC150000B | CIS User with multiple CIS deductions | Contractor |
+| AA123459A | CIS User with multiple CIS deductions | Contractor |
 
 ### End of Year
-| Nino | Employment data | Source
+| Nino | CIS data | Source
 | --- | --- | --- |
-| AC150000B | Employment details and expenses | Contractor, Customer |
+| AC150000B | CIS User with multiple CIS deductions | Contractor, Customer |
 
 
 ### License
