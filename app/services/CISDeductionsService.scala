@@ -30,7 +30,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
 
   def submitCISDeductions(nino: String, taxYear: Int, cisSubmission: CISSubmission)
                          (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[DesErrorModel, Option[String]]] = {
-    cisSubmission match {
+    (cisSubmission: @unchecked) match {
       case CISSubmission(Some(employerRef), Some(contractorName), periodData, None) =>
         cisDeductionsConnector.create(nino, taxYear, CreateCISDeductions(employerRef, contractorName, periodData)).map(response =>
           response.right.map(success => Some(success.submissionId)))
@@ -42,7 +42,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
   def getCISDeductions(nino: String, taxYear: Int)
                       (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[DesErrorModel, AllCISDeductions]] = {
 
-    getContractorCISDeductions(nino,taxYear).flatMap {
+    getContractorCISDeductions(nino, taxYear).flatMap {
       case Left(error) => Future.successful(Left(error))
       case Right(contractorCISDeductions) => getCustomerCISDeductions(nino, taxYear).map {
         case Left(error) => Left(error)
@@ -57,12 +57,12 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
   }
 
   private def getCustomerCISDeductions(nino: String, taxYear: Int)
-                              (implicit hc: HeaderCarrier): Future[Either[DesErrorModel,Option[CISSource]]] = {
+                                      (implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Option[CISSource]]] = {
     cisDeductionsConnector.get(nino, taxYear, CUSTOMER)
   }
 
   private def getContractorCISDeductions(nino: String, taxYear: Int)
-                                (implicit hc: HeaderCarrier): Future[Either[DesErrorModel,Option[CISSource]]] = {
+                                        (implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Option[CISSource]]] = {
     cisDeductionsConnector.get(nino, taxYear, CONTRACTOR)
   }
 }

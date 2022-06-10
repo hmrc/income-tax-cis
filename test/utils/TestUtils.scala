@@ -40,6 +40,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Awaitable, ExecutionContext, Future}
 
+// TODO: This class should be cleaned up similar to the FE
 trait TestUtils extends AnyWordSpec with Matchers with MockFactory with GuiceOneAppPerSuite with BeforeAndAfterEach {
 
   override def beforeEach(): Unit = {
