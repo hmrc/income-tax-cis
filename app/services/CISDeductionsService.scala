@@ -18,14 +18,26 @@ package services
 
 import common.CISSource.{CONTRACTOR, CUSTOMER}
 import connectors.CISDeductionsConnector
-import javax.inject.Inject
 import models.get.{AllCISDeductions, CISSource}
-import models.DesErrorModel
+import models.submission.CISSubmission
+import models.{CreateCISDeductions, DesErrorModel, UpdateCISDeductions}
 import uk.gov.hmrc.http.HeaderCarrier
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnector) {
+
+  def submitCISDeductions(nino: String, taxYear: Int, cisSubmission: CISSubmission)
+                         (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[DesErrorModel, Option[String]]] = {
+    cisSubmission match {
+      case CISSubmission(Some(employerRef), Some(contractorName), periodData, None) =>
+        cisDeductionsConnector.create(nino, taxYear, CreateCISDeductions(employerRef, contractorName, periodData)).map(response =>
+          response.right.map(success => Some(success.submissionId)))
+      case CISSubmission(None, None, periodData, Some(submissionId)) =>
+        cisDeductionsConnector.update(nino, submissionId, UpdateCISDeductions(periodData = periodData)).map(response => response.right.map(_ => None))
+    }
+  }
 
   def getCISDeductions(nino: String, taxYear: Int)
                       (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[DesErrorModel, AllCISDeductions]] = {
@@ -45,12 +57,12 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
   }
 
   private def getCustomerCISDeductions(nino: String, taxYear: Int)
-                              (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[DesErrorModel,Option[CISSource]]] = {
+                              (implicit hc: HeaderCarrier): Future[Either[DesErrorModel,Option[CISSource]]] = {
     cisDeductionsConnector.get(nino, taxYear, CUSTOMER)
   }
 
   private def getContractorCISDeductions(nino: String, taxYear: Int)
-                                (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[DesErrorModel,Option[CISSource]]] = {
+                                (implicit hc: HeaderCarrier): Future[Either[DesErrorModel,Option[CISSource]]] = {
     cisDeductionsConnector.get(nino, taxYear, CONTRACTOR)
   }
 }
