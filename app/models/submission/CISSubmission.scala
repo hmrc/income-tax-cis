@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package models.get
+package models.submission
 
+import models.PeriodData
 import play.api.libs.json.{Json, OFormat}
 
-case class CISDeductions(fromDate: String,
-                         toDate: String,
+case class CISSubmission(employerRef: Option[String],
                          contractorName: Option[String],
-                         employerRef: String,
-                         totalDeductionAmount: Option[BigDecimal],
-                         totalCostOfMaterials: Option[BigDecimal],
-                         totalGrossAmountPaid: Option[BigDecimal],
-                         periodData: Seq[GetPeriodData])
+                         periodData: Seq[PeriodData],
+                         submissionId: Option[String])
 
-object CISDeductions {
-  implicit val format: OFormat[CISDeductions] = Json.format[CISDeductions]
+object CISSubmission {
+  implicit val format: OFormat[CISSubmission] = Json.format[CISSubmission]
 }
+
