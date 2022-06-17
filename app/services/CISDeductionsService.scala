@@ -56,13 +56,15 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
     }
   }
 
-  private def getCustomerCISDeductions(nino: String, taxYear: Int)
-                                      (implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Option[CISSource]]] = {
+  def deleteCISDeductionsSubmission(nino: String, submissionId: String)(implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Unit]] = {
+    cisDeductionsConnector.delete(nino,submissionId)
+  }
+
+  private def getCustomerCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Option[CISSource]]] = {
     cisDeductionsConnector.get(nino, taxYear, CUSTOMER)
   }
 
-  private def getContractorCISDeductions(nino: String, taxYear: Int)
-                                        (implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Option[CISSource]]] = {
+  private def getContractorCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Option[CISSource]]] = {
     cisDeductionsConnector.get(nino, taxYear, CONTRACTOR)
   }
 }
