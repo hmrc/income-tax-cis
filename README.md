@@ -21,6 +21,10 @@ This service runs on port: `localhost:9328`
 
 **GET     /income-tax/nino/:nino/sources**                (Gets the CIS deductions for this user)
 
+**DELETE  /income-tax/nino/:nino/sources/:submissionId**      (Deletes a users CIS Deduction submission)
+
+**POST    /income-tax/nino/:nino/sources**                  (Creates a new CIS Deduction or updates an existing CIS Deduction - Routes to either based on the json request body)
+
 ### Downstream services
 All CIS data is retrieved / updated via the downstream system.
 - DES (Data Exchange Service)
@@ -460,7 +464,7 @@ Customer data is provided by the user. At the end of the tax year, users can vie
 | AA123459A | CIS User with multiple CIS deductions | Contractor |
 
 ### End of Year
-| Nino | CIS data | Source
+| Nino | CIS data | Source |
 | --- | --- | --- |
 | AC150000B | CIS User with multiple CIS deductions | Contractor, Customer |
 

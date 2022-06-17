@@ -18,7 +18,7 @@ package support.mocks
 
 import models.DesErrorModel
 import models.submission.CISSubmission
-import org.scalamock.handlers.CallHandler5
+import org.scalamock.handlers.{CallHandler3, CallHandler5}
 import org.scalamock.scalatest.MockFactory
 import services.CISDeductionsService
 import uk.gov.hmrc.http.HeaderCarrier
@@ -28,6 +28,15 @@ import scala.concurrent.{ExecutionContext, Future}
 trait MockCISDeductionsService extends MockFactory {
 
   protected val mockCISDeductionsService: CISDeductionsService = mock[CISDeductionsService]
+
+  def mockDeleteCISDeductionsSubmission(nino: String,
+                                        submissionId: String,
+                                        response: Either[DesErrorModel, Unit]): CallHandler3[String,
+    String, HeaderCarrier, Future[Either[DesErrorModel, Unit]]] = {
+    (mockCISDeductionsService.deleteCISDeductionsSubmission(_: String, _: String)(_: HeaderCarrier))
+      .expects(nino, submissionId, *)
+      .returning(Future.successful(response))
+  }
 
   def mockSubmitCISDeductions(nino: String,
                               taxYear: Int,
