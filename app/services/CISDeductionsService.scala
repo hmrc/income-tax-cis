@@ -33,9 +33,9 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
     (cisSubmission: @unchecked) match {
       case CISSubmission(Some(employerRef), Some(contractorName), periodData, None) =>
         cisDeductionsConnector.create(nino, taxYear, CreateCISDeductions(employerRef, contractorName, periodData)).map(response =>
-          response.right.map(success => Some(success.submissionId)))
+          response.map(success => Some(success.submissionId)))
       case CISSubmission(None, None, periodData, Some(submissionId)) =>
-        cisDeductionsConnector.update(nino, submissionId, UpdateCISDeductions(periodData = periodData)).map(response => response.right.map(_ => None))
+        cisDeductionsConnector.update(nino, submissionId, UpdateCISDeductions(periodData = periodData)).map(response => response.map(_ => None))
     }
   }
 
@@ -57,7 +57,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
   }
 
   def deleteCISDeductionsSubmission(nino: String, submissionId: String)(implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Unit]] = {
-    cisDeductionsConnector.delete(nino,submissionId)
+    cisDeductionsConnector.delete(nino, submissionId)
   }
 
   private def getCustomerCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Option[CISSource]]] = {
