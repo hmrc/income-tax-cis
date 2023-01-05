@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import connectors.httpParsers.CreateCISDeductionsParser.{CreateCISDeductionsResp
 import connectors.httpParsers.DeleteCISDeductionsHttpParser.{DeleteCISDeductionsHttpReads, DeleteCISDeductionsResponse}
 import connectors.httpParsers.GetCISDeductionsHttpParser.{GetCISDeductionsResponse, GetCISDeductionsResponseHttpReads}
 import connectors.httpParsers.UpdateCISDeductionsHttpParser.{UpdateCISDeductionsResponse, UpdateCISDeductionsResponseHttpReads}
-import javax.inject.Inject
-import models.{CreateCISDeductionsApi, CreateCISDeductions, UpdateCISDeductions}
+import models.{CreateCISDeductions, CreateCISDeductionsApi, UpdateCISDeductions}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import utils.CISTaxYearHelper
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class CISDeductionsConnector @Inject()(val http: HttpClient,
@@ -38,7 +38,7 @@ class CISDeductionsConnector @Inject()(val http: HttpClient,
 
     def desCall(implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] = {
       http.PUT[UpdateCISDeductions, UpdateCISDeductionsResponse](
-        updateUri, model)(UpdateCISDeductions.format.writes, UpdateCISDeductionsResponseHttpReads, hc, ec)
+        updateUri, model)(UpdateCISDeductions.format, UpdateCISDeductionsResponseHttpReads, hc, ec)
     }
 
     desCall(desHeaderCarrier(updateUri))
@@ -74,7 +74,7 @@ class CISDeductionsConnector @Inject()(val http: HttpClient,
 
     def desCall(implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
       http.POST[CreateCISDeductionsApi, CreateCISDeductionsResponse](
-        createCISDeductionsUri, model.toApiModel(taxYear))(CreateCISDeductionsApi.format.writes, CreateCISDeductionsResponseHttpReads, hc,ec)
+        createCISDeductionsUri, model.toApiModel(taxYear))(CreateCISDeductionsApi.format, CreateCISDeductionsResponseHttpReads, hc, ec)
     }
 
     desCall(desHeaderCarrier(createCISDeductionsUri))

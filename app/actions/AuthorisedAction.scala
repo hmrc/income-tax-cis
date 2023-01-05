@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
+class AuthorisedAction @Inject()()(val authConnector: AuthConnector,
                                    defaultActionBuilder: DefaultActionBuilder,
-                                   val cc: ControllerComponents) extends AuthorisedFunctions {
+                                   cc: ControllerComponents) extends AuthorisedFunctions {
 
   lazy val logger: Logger = Logger.apply(this.getClass)
   implicit val executionContext: ExecutionContext = cc.executionContext
@@ -48,7 +48,7 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
       unauthorized
     }(
       mtdItId =>
-        authorised.retrieve(affinityGroup) {
+        authorised().retrieve(affinityGroup) {
           case Some(AffinityGroup.Agent) => agentAuthentication(block, mtdItId)(request, headerCarrier)
           case _ => individualAuthentication(block, mtdItId)(request, headerCarrier)
         } recover {
@@ -65,8 +65,8 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
   val minimumConfidenceLevel: Int = ConfidenceLevel.L250.level
 
   private[actions] def individualAuthentication[A](block: User[A] => Future[Result], requestMtdItId: String)
-                                                     (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
-    authorised.retrieve(allEnrolments and confidenceLevel) {
+                                                  (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
+    authorised().retrieve(allEnrolments and confidenceLevel) {
       case enrolments ~ userConfidence if userConfidence.level >= minimumConfidenceLevel =>
         val optionalMtdItId: Option[String] = enrolmentGetIdentifierValue(EnrolmentKeys.Individual, EnrolmentIdentifiers.individualId, enrolments)
         val optionalNino: Option[String] = enrolmentGetIdentifierValue(EnrolmentKeys.nino, EnrolmentIdentifiers.nino, enrolments)
@@ -96,7 +96,7 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
   }
 
   private[actions] def agentAuthentication[A](block: User[A] => Future[Result], mtdItId: String)
-                                                (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
+                                             (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
 
     lazy val agentDelegatedAuthRuleKey = "mtd-it-auth"
 
@@ -126,8 +126,8 @@ class AuthorisedAction @Inject()()(implicit val authConnector: AuthConnector,
   }
 
   private[actions] def enrolmentGetIdentifierValue(checkedKey: String,
-                                                      checkedIdentifier: String,
-                                                      enrolments: Enrolments): Option[String] = enrolments.enrolments.collectFirst {
+                                                   checkedIdentifier: String,
+                                                   enrolments: Enrolments): Option[String] = enrolments.enrolments.collectFirst {
     case Enrolment(`checkedKey`, enrolmentIdentifiers, _, _) => enrolmentIdentifiers.collectFirst {
       case EnrolmentIdentifier(`checkedIdentifier`, identifierValue) => identifierValue
     }
