@@ -33,7 +33,7 @@ class DeleteCISDeductionsSubmissionController @Inject()(service: CISDeductionsSe
   def deleteCISDeductionsSubmission(nino: String, taxYear: Int, submissionId: String): Action[AnyContent] = auth.async { implicit user =>
     logger.info(s"[DeleteCISDeductionsSubmissionController][deleteCISDeductionsSubmission]" +
       s" Attempting to delete submission: $submissionId, nino: $nino, tax year: $taxYear")
-    service.deleteCISDeductionsSubmission(nino, submissionId).map {
+    service.deleteCISDeductionsSubmission(taxYear, nino, submissionId).map {
       case Right(_) => NoContent
       case Left(errorModel) => Status(errorModel.status)(errorModel.toJson)
     }

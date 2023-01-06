@@ -17,7 +17,8 @@
 package controllers
 
 import builders.CISSubmissionBuilder.{aCreateCISSubmission, aPeriodData, anUpdateCISSubmission}
-import models.{CreateCISDeductionsSuccess, DesErrorBodyModel, DesErrorModel}
+import connectors.errors.{SingleErrorBody, ApiError}
+import models.CreateCISDeductionsSuccess
 import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, OK}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.AnyContentAsJson
@@ -164,7 +165,7 @@ class CreateUpdateCisDeductionsControllerSpec extends TestUtils with MockCISDedu
       "return the error response when called as an individual" in {
         val result = {
           mockAuth()
-          mockSubmitCISDeductions(nino, taxYear, aCreateCISSubmission, Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)))
+          mockSubmitCISDeductions(nino, taxYear, aCreateCISSubmission, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
           controller.postCISDeductions(nino, taxYear)(fakeRequest(Json.toJson(aCreateCISSubmission)))
         }
         status(result) mustBe INTERNAL_SERVER_ERROR

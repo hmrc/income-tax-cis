@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package connectors.httpParsers
+package connectors.parsers
 
-import models.DesErrorModel
-import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT, SERVICE_UNAVAILABLE}
+import connectors.errors.ApiError
+import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
-import utils.PagerDutyHelper.PagerDutyKeys.{FOURXX_RESPONSE_FROM_DES, INTERNAL_SERVER_ERROR_FROM_DES,
-  SERVICE_UNAVAILABLE_FROM_DES, UNEXPECTED_RESPONSE_FROM_DES}
+import utils.PagerDutyHelper.PagerDutyKeys._
 import utils.PagerDutyHelper.pagerDutyLog
 
-object DeleteCISDeductionsHttpParser extends DESParser {
-  type DeleteCISDeductionsResponse = Either[DesErrorModel, Unit]
+object DeleteCISDeductionsHttpParser extends ResponseParser {
+
+  type DeleteCISDeductionsResponse = Either[ApiError, Unit]
 
   override val parserName: String = "DeleteCISDeductionsHttpParser"
 
@@ -34,16 +34,19 @@ object DeleteCISDeductionsHttpParser extends DESParser {
         case NO_CONTENT => Right(())
         case BAD_REQUEST | NOT_FOUND =>
           pagerDutyLog(FOURXX_RESPONSE_FROM_DES, logMessage(response))
-          handleDESError(response)
+          handleError(response)
+        case UNPROCESSABLE_ENTITY =>
+          pagerDutyLog(UNPROCESSABLE_ENTITY_FROM_DES, logMessage(response))
+          handleError(response)
         case SERVICE_UNAVAILABLE =>
           pagerDutyLog(SERVICE_UNAVAILABLE_FROM_DES, logMessage(response))
-          handleDESError(response)
+          handleError(response)
         case INTERNAL_SERVER_ERROR =>
           pagerDutyLog(INTERNAL_SERVER_ERROR_FROM_DES, logMessage(response))
-          handleDESError(response)
+          handleError(response)
         case _ =>
           pagerDutyLog(UNEXPECTED_RESPONSE_FROM_DES, logMessage(response))
-          handleDESError(response, Some(INTERNAL_SERVER_ERROR))
+          handleError(response, Some(INTERNAL_SERVER_ERROR))
       }
     }
   }

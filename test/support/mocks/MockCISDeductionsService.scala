@@ -16,9 +16,9 @@
 
 package support.mocks
 
-import models.DesErrorModel
+import connectors.errors.ApiError
 import models.submission.CISSubmission
-import org.scalamock.handlers.{CallHandler3, CallHandler5}
+import org.scalamock.handlers.{CallHandler4, CallHandler5}
 import org.scalamock.scalatest.MockFactory
 import services.CISDeductionsService
 import uk.gov.hmrc.http.HeaderCarrier
@@ -29,20 +29,20 @@ trait MockCISDeductionsService extends MockFactory {
 
   protected val mockCISDeductionsService: CISDeductionsService = mock[CISDeductionsService]
 
-  def mockDeleteCISDeductionsSubmission(nino: String,
+  def mockDeleteCISDeductionsSubmission(taxYear: Int,
+                                        nino: String,
                                         submissionId: String,
-                                        response: Either[DesErrorModel, Unit]): CallHandler3[String,
-    String, HeaderCarrier, Future[Either[DesErrorModel, Unit]]] = {
-    (mockCISDeductionsService.deleteCISDeductionsSubmission(_: String, _: String)(_: HeaderCarrier))
-      .expects(nino, submissionId, *)
+                                        response: Either[ApiError, Unit]): CallHandler4[Int, String, String, HeaderCarrier, Future[Either[ApiError, Unit]]] = {
+    (mockCISDeductionsService.deleteCISDeductionsSubmission(_: Int, _: String, _: String)(_: HeaderCarrier))
+      .expects(taxYear, nino, submissionId, *)
       .returning(Future.successful(response))
   }
 
   def mockSubmitCISDeductions(nino: String,
                               taxYear: Int,
                               data: CISSubmission,
-                              response: Either[DesErrorModel, Option[String]]): CallHandler5[String, Int, CISSubmission, HeaderCarrier,
-    ExecutionContext, Future[Either[DesErrorModel, Option[String]]]] = {
+                              response: Either[ApiError, Option[String]]): CallHandler5[String, Int, CISSubmission, HeaderCarrier,
+    ExecutionContext, Future[Either[ApiError, Option[String]]]] = {
     (mockCISDeductionsService.submitCISDeductions(_: String, _: Int, _: CISSubmission)(_: HeaderCarrier, _: ExecutionContext))
       .expects(nino, taxYear, data, *, *)
       .returning(Future.successful(response))

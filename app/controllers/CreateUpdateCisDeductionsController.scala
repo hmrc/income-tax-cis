@@ -17,7 +17,8 @@
 package controllers
 
 import actions.AuthorisedAction
-import models.{CreateCISDeductionsSuccess, DesErrorModel}
+import connectors.errors.ApiError
+import models.CreateCISDeductionsSuccess
 
 import javax.inject.Inject
 import models.submission.CISSubmission
@@ -46,7 +47,7 @@ class CreateUpdateCisDeductionsController @Inject()(service: CISDeductionsServic
     }
   }
 
-  private def responseHandler(serviceResponse: Future[Either[DesErrorModel, Option[String]]]): Future[Result] ={
+  private def responseHandler(serviceResponse: Future[Either[ApiError, Option[String]]]): Future[Result] ={
     serviceResponse.map {
       case Right(Some(submissionId)) => Ok(Json.toJson(CreateCISDeductionsSuccess(submissionId)))
       case Right(_) => Ok

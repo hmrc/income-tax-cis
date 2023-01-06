@@ -16,14 +16,15 @@
 
 package controllers
 
-import models.{DesErrorBodyModel, DesErrorModel}
+import connectors.errors.{ApiError, SingleErrorBody}
 import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import support.mocks.MockCISDeductionsService
 import utils.TestUtils
 
-class DeleteCISDeductionsSubmissionControllerSpec extends TestUtils with MockCISDeductionsService {
+class DeleteCISDeductionsSubmissionControllerSpec extends TestUtils
+  with MockCISDeductionsService {
 
   private val controller = new DeleteCISDeductionsSubmissionController(mockCISDeductionsService, authorisedAction, mockControllerComponents)
 
@@ -37,9 +38,7 @@ class DeleteCISDeductionsSubmissionControllerSpec extends TestUtils with MockCIS
     "return an NO CONTENT response when successfully deletes the data" in {
       val result = {
         mockAuth()
-        mockDeleteCISDeductionsSubmission(
-          nino, "submissionId", Right(())
-        )
+        mockDeleteCISDeductionsSubmission(taxYear, nino, "submissionId", Right(()))
         controller.deleteCISDeductionsSubmission(nino, taxYear, "submissionId")(fakeRequest)
       }
       status(result) mustBe NO_CONTENT
@@ -49,9 +48,7 @@ class DeleteCISDeductionsSubmissionControllerSpec extends TestUtils with MockCIS
       "return the error response" in {
         val result = {
           mockAuth()
-          mockDeleteCISDeductionsSubmission(
-            nino, "submissionId", Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError))
-          )
+          mockDeleteCISDeductionsSubmission(taxYear, nino, "submissionId", Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
           controller.deleteCISDeductionsSubmission(nino, taxYear, "submissionId")(fakeRequest)
         }
         status(result) mustBe INTERNAL_SERVER_ERROR
