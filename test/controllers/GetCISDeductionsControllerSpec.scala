@@ -17,8 +17,8 @@
 package controllers
 
 import builders.CISSourceBuilder.{contractorCISSource, customerCISSource}
+import connectors.errors.{SingleErrorBody, ApiError}
 import models.get.AllCISDeductions
-import models.{DesErrorBodyModel, DesErrorModel}
 import org.scalamock.handlers.CallHandler4
 import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.libs.json.Json
@@ -41,17 +41,17 @@ class GetCISDeductionsControllerSpec extends TestUtils {
   private val fakeGetRequest = FakeRequest("GET", "/").withHeaders("MTDITID" -> mtdItID)
 
   def mockGetCISDeductions(data: AllCISDeductions):
-  CallHandler4[String, Int, HeaderCarrier, ExecutionContext, Future[Either[DesErrorModel, AllCISDeductions]]] = {
+  CallHandler4[String, Int, HeaderCarrier, ExecutionContext, Future[Either[ApiError, AllCISDeductions]]] = {
     (service.getCISDeductions(_: String, _: Int)(_: HeaderCarrier, _: ExecutionContext))
       .expects(*, *, *, *)
       .returning(Future.successful(Right(data)))
   }
 
-  def mockGetCISDeductionsError(): CallHandler4[String, Int, HeaderCarrier, ExecutionContext, Future[Either[DesErrorModel, AllCISDeductions]]] = {
+  def mockGetCISDeductionsError(): CallHandler4[String, Int, HeaderCarrier, ExecutionContext, Future[Either[ApiError, AllCISDeductions]]] = {
     (service.getCISDeductions(_: String, _: Int)(_: HeaderCarrier, _: ExecutionContext))
       .expects(*, *, *, *)
-      .returning(Future.successful(Left(DesErrorModel(
-        INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError
+      .returning(Future.successful(Left(ApiError(
+        INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError
       ))))
   }
 

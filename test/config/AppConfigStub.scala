@@ -20,12 +20,20 @@ import org.scalamock.scalatest.MockFactory
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class MockAppConfig extends MockFactory {
+class AppConfigStub extends MockFactory {
 
-  def config(desHost: String): AppConfig = new AppConfig(mock[Configuration], mock[ServicesConfig]) {
-    val wireMockPort = 11111
+  def config(desHost: String = "localhost", environment: String = "test"): AppConfig = new AppConfig(mock[Configuration], mock[ServicesConfig]) {
+    private val wireMockPort = 11111
+
+    private lazy val authorisationToken: String = "secret"
+
+    override lazy val ifBaseUrl: String = s"http://localhost:$wireMockPort"
+    override lazy val ifEnvironment: String = environment
+
+    override def authorisationTokenFor(apiVersion: String): String = authorisationToken + s".$apiVersion"
+
     override lazy val desBaseUrl: String = s"http://$desHost:$wireMockPort"
-    override lazy val authorisationToken: String = "authorisation-token"
-    override lazy val environment: String = "environment"
+    override lazy val desAuthorisationToken: String = "authorisation-token"
+    override lazy val desEnvironment: String = "environment"
   }
 }

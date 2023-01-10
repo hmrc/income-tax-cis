@@ -26,6 +26,7 @@ object PagerDutyHelper extends Logging {
     val SERVICE_UNAVAILABLE_FROM_DES: PagerDutyKeys.Value = Value
     val INTERNAL_SERVER_ERROR_FROM_DES: PagerDutyKeys.Value = Value
     val UNEXPECTED_RESPONSE_FROM_DES: PagerDutyKeys.Value = Value
+    val UNPROCESSABLE_ENTITY_FROM_DES: PagerDutyKeys.Value = Value
     val FOURXX_RESPONSE_FROM_DES: PagerDutyKeys.Value = Value
   }
 

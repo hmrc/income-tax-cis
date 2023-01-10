@@ -24,12 +24,18 @@ import javax.inject.{Inject, Singleton}
 @Singleton
 class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
 
+  private lazy val ifAuthorisationTokenKey: String = "microservice.services.integration-framework.authorisation-token"
+
+  lazy val ifBaseUrl: String = servicesConfig.baseUrl(serviceName = "integration-framework")
+  lazy val ifEnvironment: String = servicesConfig.getString(key = "microservice.services.integration-framework.environment")
+
+  def authorisationTokenFor(apiVersion: String): String = servicesConfig.getString(ifAuthorisationTokenKey + s".$apiVersion")
+
   lazy val authBaseUrl: String = servicesConfig.baseUrl("auth")
   lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
   lazy val graphiteHost: String = config.get[String]("microservice.metrics.graphite.host")
 
   lazy val desBaseUrl: String = servicesConfig.baseUrl("des")
-
-  lazy val environment: String = config.get[String]("microservice.services.des.environment")
-  lazy val authorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
+  lazy val desEnvironment: String = config.get[String]("microservice.services.des.environment")
+  lazy val desAuthorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
 }

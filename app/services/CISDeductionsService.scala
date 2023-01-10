@@ -18,18 +18,21 @@ package services
 
 import common.CISSource.{CONTRACTOR, CUSTOMER}
 import connectors.CISDeductionsConnector
+import connectors.errors.ApiError
 import models.get.{AllCISDeductions, CISSource}
 import models.submission.CISSubmission
-import models.{CreateCISDeductions, DesErrorModel, UpdateCISDeductions}
+import models.{CreateCISDeductions, UpdateCISDeductions}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnector) {
+// TODO: Refactor to use services instead of connector
+class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnector,
+                                     integrationFrameworkService: IntegrationFrameworkService) {
 
   def submitCISDeductions(nino: String, taxYear: Int, cisSubmission: CISSubmission)
-                         (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[DesErrorModel, Option[String]]] = {
+                         (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[ApiError, Option[String]]] = {
     (cisSubmission: @unchecked) match {
       case CISSubmission(Some(employerRef), Some(contractorName), periodData, None) =>
         cisDeductionsConnector.create(nino, taxYear, CreateCISDeductions(employerRef, contractorName, periodData)).map(response =>
@@ -40,7 +43,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
   }
 
   def getCISDeductions(nino: String, taxYear: Int)
-                      (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[DesErrorModel, AllCISDeductions]] = {
+                      (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[ApiError, AllCISDeductions]] = {
 
     getContractorCISDeductions(nino, taxYear).flatMap {
       case Left(error) => Future.successful(Left(error))
@@ -56,15 +59,26 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
     }
   }
 
-  def deleteCISDeductionsSubmission(nino: String, submissionId: String)(implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Unit]] = {
-    cisDeductionsConnector.delete(nino, submissionId)
+  def deleteCISDeductionsSubmission(taxYear: Int,
+                                    nino: String,
+                                    submissionId: String)
+                                   (implicit hc: HeaderCarrier): Future[Either[ApiError, Unit]] = {
+    if (shouldUseIFApi(taxYear)) {
+      integrationFrameworkService.deleteCisDeductions(taxYear, nino, submissionId)
+    } else {
+      cisDeductionsConnector.delete(nino, submissionId)
+    }
   }
 
-  private def getCustomerCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Option[CISSource]]] = {
+  private def shouldUseIFApi(taxYear: Int): Boolean = {
+    taxYear - 1 == 2023
+  }
+
+  private def getCustomerCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
     cisDeductionsConnector.get(nino, taxYear, CUSTOMER)
   }
 
-  private def getContractorCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[DesErrorModel, Option[CISSource]]] = {
+  private def getContractorCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
     cisDeductionsConnector.get(nino, taxYear, CONTRACTOR)
   }
 }

@@ -14,46 +14,46 @@
  * limitations under the License.
  */
 
-package connectors.httpParsers
+package connectors.parsers
 
-import models.{DesErrorBodyModel, DesErrorModel, DesErrorsBodyModel}
+import connectors.errors.{SingleErrorBody, ApiError, MultiErrorsBody}
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.HttpResponse
 import utils.PagerDutyHelper.PagerDutyKeys.{BAD_SUCCESS_JSON_FROM_DES, UNEXPECTED_RESPONSE_FROM_DES}
 import utils.PagerDutyHelper.{getCorrelationId, pagerDutyLog}
 
-trait DESParser {
+trait ResponseParser {
 
   val parserName : String
 
   def logMessage(response:HttpResponse): String ={
-    s"[$parserName][read] Received ${response.status} from DES. Body:${response.body}" + getCorrelationId(response)
+    s"[$parserName][read] Received ${response.status} from DES/IF. Body:${response.body}" + getCorrelationId(response)
   }
 
-  def badSuccessJsonFromDES[Response]: Either[DesErrorModel, Response] = {
-    pagerDutyLog(BAD_SUCCESS_JSON_FROM_DES, s"[$parserName][read] Invalid Json from DES.")
-    Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError))
+  def badSuccessJsonFromDES[Response]: Either[ApiError, Response] = {
+    pagerDutyLog(BAD_SUCCESS_JSON_FROM_DES, s"[$parserName][read] Invalid Json from DES/IF.")
+    Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
   }
 
-  def handleDESError[Response](response: HttpResponse, statusOverride: Option[Int] = None): Either[DesErrorModel, Response] = {
+  def handleError[Response](response: HttpResponse, statusOverride: Option[Int] = None): Either[ApiError, Response] = {
 
     val status = statusOverride.getOrElse(response.status)
 
     try {
       val json = response.json
 
-      lazy val desError = json.asOpt[DesErrorBodyModel]
-      lazy val desErrors = json.asOpt[DesErrorsBodyModel]
+      lazy val desError = json.asOpt[SingleErrorBody]
+      lazy val desErrors = json.asOpt[MultiErrorsBody]
 
       (desError, desErrors) match {
-        case (Some(desError), _) => Left(DesErrorModel(status, desError))
-        case (_, Some(desErrors)) => Left(DesErrorModel(status, desErrors))
+        case (Some(desError), _) => Left(ApiError(status, desError))
+        case (_, Some(desErrors)) => Left(ApiError(status, desErrors))
         case _ =>
-          pagerDutyLog(UNEXPECTED_RESPONSE_FROM_DES, s"[$parserName][read] Unexpected Json from DES.")
-          Left(DesErrorModel(status, DesErrorBodyModel.parsingError))
+          pagerDutyLog(UNEXPECTED_RESPONSE_FROM_DES, s"[$parserName][read] Unexpected Json from DES/IF.")
+          Left(ApiError(status, SingleErrorBody.parsingError))
       }
     } catch {
-      case _: Exception => Left(DesErrorModel(status, DesErrorBodyModel.parsingError))
+      case _: Exception => Left(ApiError(status, SingleErrorBody.parsingError))
     }
   }
 }

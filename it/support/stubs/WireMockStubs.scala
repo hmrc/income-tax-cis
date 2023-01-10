@@ -14,15 +14,26 @@
  * limitations under the License.
  */
 
-package helpers
+package support.stubs
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.HttpHeader
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import play.api.http.ContentTypes.JSON
 import play.api.libs.json.JsValue
+import play.api.test.Helpers.CONTENT_TYPE
+import uk.gov.hmrc.http.HttpResponse
 
-trait WiremockStubHelpers {
+// TODO: Refactor
+trait WireMockStubs {
+
+  def stubDeleteHttpClientCall(url: String,
+                               httpResponse: HttpResponse,
+                               requestHeaders: Seq[HttpHeader] = Seq.empty): StubMapping = {
+    val mappingBuilder = delete(urlMatching(url))
+    getStubMapping(httpResponse, requestHeaders, mappingBuilder)
+  }
 
   def stubGetWithResponseBody(url: String, status: Int, response: String, requestHeaders: Seq[HttpHeader] = Seq.empty): StubMapping = {
     val mappingWithHeaders: MappingBuilder = requestHeaders.foldLeft(get(urlMatching(url))) { (result, nxt) =>
@@ -136,4 +147,17 @@ trait WiremockStubHelpers {
       ))
   }
 
+  private def getStubMapping(httpResponse: HttpResponse,
+                             requestHeaders: Seq[HttpHeader],
+                             mappingBuilder: MappingBuilder): StubMapping = {
+    val responseBuilder = aResponse()
+      .withStatus(httpResponse.status)
+      .withBody(httpResponse.body)
+      .withHeader(CONTENT_TYPE, JSON)
+
+    val mappingBuilderWithHeaders: MappingBuilder = requestHeaders
+      .foldLeft(mappingBuilder)((result, nxt) => result.withHeader(nxt.key(), equalTo(nxt.firstValue())))
+
+    stubFor(mappingBuilderWithHeaders.willReturn(responseBuilder))
+  }
 }

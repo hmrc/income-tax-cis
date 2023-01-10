@@ -14,46 +14,35 @@
  * limitations under the License.
  */
 
-package connectors.httpParsers
+package connectors.parsers
 
-import models.DesErrorModel
-import models.get.CISSource
-import play.api.Logging
+import connectors.errors.ApiError
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 import utils.PagerDutyHelper.PagerDutyKeys._
 import utils.PagerDutyHelper.pagerDutyLog
 
-object GetCISDeductionsHttpParser extends DESParser with Logging {
-  type GetCISDeductionsResponse = Either[DesErrorModel, Option[CISSource]]
+object UpdateCISDeductionsHttpParser extends ResponseParser {
+  type UpdateCISDeductionsResponse = Either[ApiError, Unit]
 
-  override val parserName: String = "GetCISDeductionsResponse"
+  override val parserName: String = "UpdateCISDeductionsResponse"
 
-  implicit object GetCISDeductionsResponseHttpReads extends HttpReads[GetCISDeductionsResponse] {
-    override def read(method: String, url: String, response: HttpResponse): GetCISDeductionsResponse = {
+  implicit object UpdateCISDeductionsResponseHttpReads extends HttpReads[UpdateCISDeductionsResponse] {
+    override def read(method: String, url: String, response: HttpResponse): UpdateCISDeductionsResponse = {
       response.status match {
-        case OK => response.json.validate[CISSource].fold[GetCISDeductionsResponse](
-          _ => badSuccessJsonFromDES,
-          {
-            case CISSource(_,_,_,cisDeductions) if cisDeductions.isEmpty => Right(None)
-            case parsedModel => Right(Some(parsedModel))
-          }
-        )
-        case NOT_FOUND =>
-          logger.info(logMessage(response))
-          Right(None)
+        case NO_CONTENT => Right(())
         case INTERNAL_SERVER_ERROR =>
           pagerDutyLog(INTERNAL_SERVER_ERROR_FROM_DES, logMessage(response))
-          handleDESError(response)
+          handleError(response)
         case SERVICE_UNAVAILABLE =>
           pagerDutyLog(SERVICE_UNAVAILABLE_FROM_DES, logMessage(response))
-          handleDESError(response)
-        case BAD_REQUEST | UNPROCESSABLE_ENTITY =>
+          handleError(response)
+        case BAD_REQUEST | UNPROCESSABLE_ENTITY | NOT_FOUND =>
           pagerDutyLog(FOURXX_RESPONSE_FROM_DES, logMessage(response))
-          handleDESError(response)
+          handleError(response)
         case _ =>
           pagerDutyLog(UNEXPECTED_RESPONSE_FROM_DES, logMessage(response))
-          handleDESError(response, Some(INTERNAL_SERVER_ERROR))
+          handleError(response, Some(INTERNAL_SERVER_ERROR))
       }
     }
   }

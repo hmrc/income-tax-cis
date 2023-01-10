@@ -19,130 +19,121 @@ package services
 import builders.CISSourceBuilder.{contractorCISSource, customerCISSource}
 import builders.CISSubmissionBuilder.{aCreateCISSubmission, anUpdateCISSubmission}
 import common.CISSource.{CONTRACTOR, CUSTOMER}
+import connectors.errors.{ApiError, SingleErrorBody}
 import models._
 import models.get.AllCISDeductions
 import play.api.http.Status.INTERNAL_SERVER_ERROR
-import support.mocks.MockCISDeductionsConnector
-import utils.TestUtils
+import support.UnitTest
+import support.mocks.{MockCISDeductionsConnector, MockIntegrationFrameworkService}
+import support.providers.TaxYearProvider
+import uk.gov.hmrc.http.HeaderCarrier
 
-class CISDeductionsServiceSpec extends TestUtils with MockCISDeductionsConnector{
+import scala.concurrent.ExecutionContext.Implicits.global
 
-  private val underTest = new CISDeductionsService(
-    mockCISDeductionsConnector
-  )
+class CISDeductionsServiceSpec extends UnitTest
+  with MockCISDeductionsConnector
+  with MockIntegrationFrameworkService
+  with TaxYearProvider {
+
+  private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
   private val nino = "AA66666B"
-  private val taxYear = 2022
+  private val taxYear2023_24 = 2024
+
+  private val underTest = new CISDeductionsService(
+    mockCISDeductionsConnector,
+    mockIntegrationFrameworkService
+  )
 
   "submitCISDeductions" should {
     "return an error from the create contractor call" in {
-
       mockCreate(nino, taxYear, CreateCISDeductions(
-        aCreateCISSubmission.employerRef.get,aCreateCISSubmission.contractorName.get,aCreateCISSubmission.periodData
-      ), Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)))
+        aCreateCISSubmission.employerRef.get, aCreateCISSubmission.contractorName.get, aCreateCISSubmission.periodData
+      ), Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-      val result = underTest.submitCISDeductions(nino, taxYear, aCreateCISSubmission)
-
-      await(result) mustBe Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError))
+      await(underTest.submitCISDeductions(nino, taxYear, aCreateCISSubmission)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
     }
-    "return an id from the create contractor call" in {
 
+    "return an id from the create contractor call" in {
       mockCreate(nino, taxYear, CreateCISDeductions(
-        aCreateCISSubmission.employerRef.get,aCreateCISSubmission.contractorName.get,aCreateCISSubmission.periodData
+        aCreateCISSubmission.employerRef.get, aCreateCISSubmission.contractorName.get, aCreateCISSubmission.periodData
       ), Right(CreateCISDeductionsSuccess("id")))
 
-      val result = underTest.submitCISDeductions(nino, taxYear, aCreateCISSubmission)
-
-      await(result) mustBe Right(Some("id"))
+      await(underTest.submitCISDeductions(nino, taxYear, aCreateCISSubmission)) shouldBe Right(Some("id"))
     }
-    "return None from the update contractor call" in {
 
+    "return None from the update contractor call" in {
       mockUpdate(nino, anUpdateCISSubmission.submissionId.get, UpdateCISDeductions(anUpdateCISSubmission.periodData), Right(()))
 
-      val result = underTest.submitCISDeductions(nino, taxYear, anUpdateCISSubmission)
-
-      await(result) mustBe Right(None)
+      await(underTest.submitCISDeductions(nino, taxYear, anUpdateCISSubmission)) shouldBe Right(None)
     }
+
     "return an error from the update contractor call" in {
-
       mockUpdate(nino, anUpdateCISSubmission.submissionId.get, UpdateCISDeductions(anUpdateCISSubmission.periodData),
-        Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)))
+        Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-      val result = underTest.submitCISDeductions(nino, taxYear, anUpdateCISSubmission)
-
-      await(result) mustBe Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError))
+      await(underTest.submitCISDeductions(nino, taxYear, anUpdateCISSubmission)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
     }
   }
 
   "getCISDeductions" should {
     "return an error from the first contractor call" in {
-
-      mockGet(nino, taxYear, CONTRACTOR, Left(DesErrorModel(
-        INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError
+      mockGet(nino, taxYear, CONTRACTOR, Left(ApiError(
+        INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError
       )))
 
-      await(underTest.getCISDeductions(nino, taxYear)) mustBe Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError))
+      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
     }
 
     "return an error from the second customer call" in {
-
-      mockGet(nino, taxYear, CUSTOMER, Left(DesErrorModel(
-        INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError
+      mockGet(nino, taxYear, CUSTOMER, Left(ApiError(
+        INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError
       )))
       mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
 
-      await(underTest.getCISDeductions(nino, taxYear)) mustBe Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError))
+      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
     }
 
     "return both customer and contractor data" in {
-
       mockGet(nino, taxYear, CUSTOMER, Right(Some(customerCISSource(taxYear))))
       mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
 
-      await(underTest.getCISDeductions(nino, taxYear)) mustBe Right(AllCISDeductions(Some(customerCISSource(taxYear)), Some(contractorCISSource(taxYear))))
+      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(Some(customerCISSource(taxYear)), Some(contractorCISSource(taxYear))))
     }
 
     "return no data for customer and contractor" in {
-
       mockGet(nino, taxYear, CUSTOMER, Right(None))
       mockGet(nino, taxYear, CONTRACTOR, Right(None))
 
-      await(underTest.getCISDeductions(nino, taxYear)) mustBe Right(AllCISDeductions(None, None))
+      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(None, None))
     }
 
     "return customer data" in {
-
       mockGet(nino, taxYear, CUSTOMER, Right(Some(customerCISSource(taxYear))))
       mockGet(nino, taxYear, CONTRACTOR, Right(None))
 
-      await(underTest.getCISDeductions(nino, taxYear)) mustBe Right(AllCISDeductions(Some(customerCISSource(taxYear)), None))
+      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(Some(customerCISSource(taxYear)), None))
     }
 
     "return contractor data" in {
-
       mockGet(nino, taxYear, CUSTOMER, Right(None))
       mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
 
-      await(underTest.getCISDeductions(nino, taxYear)) mustBe Right(AllCISDeductions(None, Some(contractorCISSource(taxYear))))
+      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(None, Some(contractorCISSource(taxYear))))
     }
   }
 
   ".deleteCISDeductionsSubmission" should {
-    "return no content when deleted" in {
+    "delegate to IF Connector when tax year is 2023-24 and return the result" in {
+      mockDeleteCisDeductions(taxYear2023_24, nino, "submissionId", Right(()))
 
+      await(underTest.deleteCISDeductionsSubmission(taxYear2023_24, nino, "submissionId")) shouldBe Right(())
+    }
+
+    "delegate to DES Connector when tax year is different than 2023-24" in {
       mockDelete(nino, "submissionId", Right(()))
 
-      val result = underTest.deleteCISDeductionsSubmission(nino, "submissionId")
-
-      await(result) mustBe Right(())
-    }
-    "return error when failed to delete" in {
-
-      mockDelete(nino, "submissionId",  Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)))
-
-      val result = underTest.deleteCISDeductionsSubmission(nino, "submissionId")
-
-      await(result) mustBe Left(DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError))
+      await(underTest.deleteCISDeductionsSubmission(taxYear, nino, "submissionId")) shouldBe Right(())
     }
   }
 }

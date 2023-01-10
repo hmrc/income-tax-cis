@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package api.connectors
+package connectors
 
 import builders.CISSourceBuilder.{contractorCISSource, customerCISSource}
 import com.github.tomakehurst.wiremock.http.HttpHeader
-import config.MockAppConfig
-import connectors.CISDeductionsConnector
+import config.AppConfigStub
+import connectors.errors.{ApiError, SingleErrorBody}
 import models._
 import models.get.{CISDeductions, CISSource, GetPeriodData}
 import play.api.http.Status._
 import play.api.libs.json.Json
+import support.ConnectorIntegrationTest
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, SessionId}
-import utils.ConnectorIntegrationTest
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,7 +33,7 @@ import scala.concurrent.duration.Duration
 
 class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
 
-  def connector(desHost: String = "localhost"): CISDeductionsConnector = new CISDeductionsConnector(httpClient, new MockAppConfig().config(desHost))
+  def connector(desHost: String = "localhost"): CISDeductionsConnector = new CISDeductionsConnector(httpClient, new AppConfigStub().config(desHost))
 
   val taxYear = 2022
   val nino: String = "AA123123A"
@@ -45,7 +45,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
   val createCISDeductionsUrl: String = s"/income-tax/cis/deductions/$nino"
 
   val connectorWithInternalHost: CISDeductionsConnector = connector()
-  val connectorWithExternalHost:  CISDeductionsConnector = connector("127.0.0.1")
+  val connectorWithExternalHost: CISDeductionsConnector = connector("127.0.0.1")
 
   val updateCISDeductionsModel: UpdateCISDeductions =
     UpdateCISDeductions(
@@ -76,7 +76,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
 
   val createResponse: CreateCISDeductionsSuccess = CreateCISDeductionsSuccess("12345678")
 
-  val headersSentToDes = Seq(
+  val headersSentToDes: Seq[HttpHeader] = Seq(
     new HttpHeader(HeaderNames.authorisation, "Bearer authorisation-token"),
     new HttpHeader(HeaderNames.xSessionId, "sessionIdValue")
   )
@@ -103,18 +103,18 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
     }
 
     "handle error" when {
-      val desErrorBodyModel = DesErrorBodyModel("DES_CODE", "DES_REASON")
+      val desErrorBodyModel = SingleErrorBody("DES_CODE", "DES_REASON")
 
       Seq(BAD_REQUEST, UNPROCESSABLE_ENTITY, NOT_FOUND, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).foreach { status =>
         s"DES returns $status" in {
-          val desError = DesErrorModel(status, desErrorBodyModel)
+          val desError = ApiError(status, desErrorBodyModel)
 
           stubPutWithResponseBody(updateCISDeductionsUrl, Json.toJson(updateCISDeductionsModel).toString(), desError.toJson.toString(), status)
           Await.result(connectorWithInternalHost.update(nino, submissionId, updateCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
         }
       }
       s"DES returns unexpected error code - BAD_GATEWAY (502)" in {
-        val desError = DesErrorModel(INTERNAL_SERVER_ERROR, desErrorBodyModel)
+        val desError = ApiError(INTERNAL_SERVER_ERROR, desErrorBodyModel)
 
         stubPutWithResponseBody(updateCISDeductionsUrl, Json.toJson(updateCISDeductionsModel).toString(), desError.toJson.toString(), BAD_GATEWAY)
 
@@ -124,12 +124,12 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
   }
 
   //scalastyle:off
-  def getUrl(taxYear: Int, source: String): String = s"/income-tax/cis/deductions/$nino\\?periodStart=${taxYear-1}-04-06&periodEnd=$taxYear-04-05&source=$source"
+  def getUrl(taxYear: Int, source: String): String = s"/income-tax/cis/deductions/$nino\\?periodStart=${taxYear - 1}-04-06&periodEnd=$taxYear-04-05&source=$source"
 
   def smallContractorResult(taxYear: Int): CISSource = CISSource(
-    Some(100),None,None,Seq(
+    Some(100), None, None, Seq(
       CISDeductions(
-        s"${taxYear-1}-04-06",
+        s"${taxYear - 1}-04-06",
         s"$taxYear-04-05",
         None,
         "111/11111",
@@ -138,8 +138,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
         None,
         Seq(
           GetPeriodData(
-            s"${taxYear-1}-04-06",
-            s"${taxYear-1}-05-05",
+            s"${taxYear - 1}-04-06",
+            s"${taxYear - 1}-05-05",
             Some(100.00),
             None,
             None,
@@ -152,13 +152,13 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
     )
   )
 
-  def customerResponse(taxYear:Int): String =
+  def customerResponse(taxYear: Int): String =
     s"""{
        |	"totalDeductionAmount": 400.00,
        |	"totalCostOfMaterials": 400.00,
        |	"totalGrossAmountPaid": 400.00,
        |	"cisDeductions": [{
-       |		"fromDate": "${taxYear-1}-04-06",
+       |		"fromDate": "${taxYear - 1}-04-06",
        |		"toDate": "$taxYear-04-05",
        |		"contractorName": "Contractor 1",
        |		"employerRef": "111/11111",
@@ -166,8 +166,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
        |		"totalCostOfMaterials": 200.00,
        |		"totalGrossAmountPaid": 200.00,
        |		"periodData": [{
-       |			"deductionFromDate": "${taxYear-1}-04-06",
-       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionFromDate": "${taxYear - 1}-04-06",
+       |			"deductionToDate": "${taxYear - 1}-05-05",
        |			"deductionAmount": 100.00,
        |			"costOfMaterials": 100.00,
        |			"grossAmountPaid": 100.00,
@@ -175,8 +175,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
        |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
        |			"source": "customer"
        |		},{
-       |			"deductionFromDate": "${taxYear-1}-05-06",
-       |			"deductionToDate": "${taxYear-1}-06-05",
+       |			"deductionFromDate": "${taxYear - 1}-05-06",
+       |			"deductionToDate": "${taxYear - 1}-06-05",
        |			"deductionAmount": 100.00,
        |			"costOfMaterials": 100.00,
        |			"grossAmountPaid": 100.00,
@@ -193,8 +193,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
        |		"totalCostOfMaterials": 200.00,
        |		"totalGrossAmountPaid": 200.00,
        |		"periodData": [{
-       |			"deductionFromDate": "${taxYear-1}-04-06",
-       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionFromDate": "${taxYear - 1}-04-06",
+       |			"deductionToDate": "${taxYear - 1}-05-05",
        |			"deductionAmount": 100.00,
        |			"costOfMaterials": 100.00,
        |			"grossAmountPaid": 100.00,
@@ -202,8 +202,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
        |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
        |			"source": "customer"
        |		},{
-       |			"deductionFromDate": "${taxYear-1}-05-06",
-       |			"deductionToDate": "${taxYear-1}-06-05",
+       |			"deductionFromDate": "${taxYear - 1}-05-06",
+       |			"deductionToDate": "${taxYear - 1}-06-05",
        |			"deductionAmount": 100.00,
        |			"costOfMaterials": 100.00,
        |			"grossAmountPaid": 100.00,
@@ -214,13 +214,13 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
        |	}]
        |}""".stripMargin
 
-  def contractorResponse(taxYear:Int): String =
+  def contractorResponse(taxYear: Int): String =
     s"""{
        |	"totalDeductionAmount": 400.00,
        |	"totalCostOfMaterials": 400.00,
        |	"totalGrossAmountPaid": 400.00,
        |	"cisDeductions": [{
-       |		"fromDate": "${taxYear-1}-04-06",
+       |		"fromDate": "${taxYear - 1}-04-06",
        |		"toDate": "$taxYear-04-05",
        |		"contractorName": "Contractor 1",
        |		"employerRef": "111/11111",
@@ -228,16 +228,16 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
        |		"totalCostOfMaterials": 200.00,
        |		"totalGrossAmountPaid": 200.00,
        |		"periodData": [{
-       |			"deductionFromDate": "${taxYear-1}-04-06",
-       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionFromDate": "${taxYear - 1}-04-06",
+       |			"deductionToDate": "${taxYear - 1}-05-05",
        |			"deductionAmount": 100.00,
        |			"costOfMaterials": 100.00,
        |			"grossAmountPaid": 100.00,
        |			"submissionDate": "2022-05-11T16:38:57.489Z",
        |			"source": "contractor"
        |		},{
-       |			"deductionFromDate": "${taxYear-1}-05-06",
-       |			"deductionToDate": "${taxYear-1}-06-05",
+       |			"deductionFromDate": "${taxYear - 1}-05-06",
+       |			"deductionToDate": "${taxYear - 1}-06-05",
        |			"deductionAmount": 100.00,
        |			"costOfMaterials": 100.00,
        |			"grossAmountPaid": 100.00,
@@ -253,16 +253,16 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
        |		"totalCostOfMaterials": 200.00,
        |		"totalGrossAmountPaid": 200.00,
        |		"periodData": [{
-       |			"deductionFromDate": "${taxYear-1}-04-06",
-       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionFromDate": "${taxYear - 1}-04-06",
+       |			"deductionToDate": "${taxYear - 1}-05-05",
        |			"deductionAmount": 100.00,
        |			"costOfMaterials": 100.00,
        |			"grossAmountPaid": 100.00,
        |			"submissionDate": "2022-05-11T16:38:57.489Z",
        |			"source": "contractor"
        |		},{
-       |			"deductionFromDate": "${taxYear-1}-05-06",
-       |			"deductionToDate": "${taxYear-1}-06-05",
+       |			"deductionFromDate": "${taxYear - 1}-05-06",
+       |			"deductionToDate": "${taxYear - 1}-06-05",
        |			"deductionAmount": 100.00,
        |			"costOfMaterials": 100.00,
        |			"grossAmountPaid": 100.00,
@@ -272,17 +272,17 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
        |	}]
        |}""".stripMargin
 
-  def smallContractorResponse(taxYear:Int): String =
+  def smallContractorResponse(taxYear: Int): String =
     s"""{
        |	"totalDeductionAmount": 100.00,
        |	"cisDeductions": [{
-       |		"fromDate": "${taxYear-1}-04-06",
+       |		"fromDate": "${taxYear - 1}-04-06",
        |		"toDate": "$taxYear-04-05",
        |		"employerRef": "111/11111",
        |		"totalDeductionAmount": 100.00,
        |		"periodData": [{
-       |			"deductionFromDate": "${taxYear-1}-04-06",
-       |			"deductionToDate": "${taxYear-1}-05-05",
+       |			"deductionFromDate": "${taxYear - 1}-04-06",
+       |			"deductionToDate": "${taxYear - 1}-05-05",
        |			"deductionAmount": 100.00,
        |			"submissionDate": "2022-05-11T16:38:57.489Z",
        |			"source": "contractor"
@@ -359,25 +359,25 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
     "handle malformed json" in {
       stubGetWithResponseBody(getUrl(taxYear, "customer"), OK, s"""{"cisDeductions": {}}""".stripMargin)
 
-      val desError = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)
+      val desError = ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)
       Await.result(connectorWithExternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Left(
         desError
       )
     }
 
     "handle error" when {
-      val desErrorBodyModel = DesErrorBodyModel("DES_CODE", "DES_REASON")
+      val desErrorBodyModel = SingleErrorBody("DES_CODE", "DES_REASON")
 
       Seq(BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).foreach { status =>
         s"DES returns $status" in {
-          val desError = DesErrorModel(status, desErrorBodyModel)
+          val desError = ApiError(status, desErrorBodyModel)
 
           stubGetWithResponseBody(getUrl(taxYear, "customer"), status, desError.toJson.toString())
           Await.result(connectorWithInternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Left(desError)
         }
       }
       s"DES returns unexpected error code - BAD_GATEWAY (502)" in {
-        val desError = DesErrorModel(INTERNAL_SERVER_ERROR, desErrorBodyModel)
+        val desError = ApiError(INTERNAL_SERVER_ERROR, desErrorBodyModel)
 
         stubGetWithResponseBody(getUrl(taxYear, "customer"), BAD_GATEWAY, desError.toJson.toString())
         Await.result(connectorWithInternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe Left(desError)
@@ -386,11 +386,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
   }
 
   ".delete" should {
-
     "include internal headers" when {
-
       "the host for DES is 'Internal'" in {
-
         stubDeleteWithoutResponseBody(deleteCISDeductionsUrl, NO_CONTENT, headersSentToDes)
 
         Await.result(connectorWithInternalHost.delete(nino, submissionId), Duration.Inf) shouldBe Right(())
@@ -404,18 +401,19 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
     }
 
     "handle error" when {
-      val desErrorBodyModel = DesErrorBodyModel("DES_CODE", "DES_REASON")
+      val desErrorBodyModel = SingleErrorBody("DES_CODE", "DES_REASON")
 
       Seq(BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).foreach { status =>
         s"DES returns $status" in {
-          val desError = DesErrorModel(status, desErrorBodyModel)
+          val desError = ApiError(status, desErrorBodyModel)
 
           stubDeleteWithResponseBody(deleteCISDeductionsUrl, status, desError.toJson.toString())
           Await.result(connectorWithInternalHost.delete(nino, submissionId), Duration.Inf) shouldBe Left(desError)
         }
       }
+
       s"DES returns unexpected error code - FORBIDDEN (403)" in {
-        val desError = DesErrorModel(INTERNAL_SERVER_ERROR, desErrorBodyModel)
+        val desError = ApiError(INTERNAL_SERVER_ERROR, desErrorBodyModel)
 
         stubDeleteWithResponseBody(deleteCISDeductionsUrl, FORBIDDEN, desError.toJson.toString())
 
@@ -425,16 +423,13 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
   }
 
   ".create" should {
-
     "include internal headers" when {
-
       "the host for DES is 'Internal'" in {
-
         stubPostWithResponseBody(
           createCISDeductionsUrl, OK, Json.toJson(createCISDeductionsApiModel).toString(), Json.toJson(createResponse).toString, headersSentToDes
         )
 
-        Await.result(connectorWithInternalHost.create(nino, taxYear,createCISDeductionsModel), Duration.Inf) shouldBe Right(createResponse)
+        Await.result(connectorWithInternalHost.create(nino, taxYear, createCISDeductionsModel), Duration.Inf) shouldBe Right(createResponse)
       }
 
       "the host for DES is 'External'" in {
@@ -447,30 +442,30 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest {
     }
 
     "handle error" when {
-      val desErrorBodyModel = DesErrorBodyModel("DES_CODE", "DES_REASON")
+      val desErrorBodyModel = SingleErrorBody("DES_CODE", "DES_REASON")
 
       Seq(CONFLICT, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).foreach { status =>
         s"DES returns $status" in {
-          val desError = DesErrorModel(status, desErrorBodyModel)
+          val desError = ApiError(status, desErrorBodyModel)
 
           stubPostWithResponseBody(createCISDeductionsUrl, status, Json.toJson(createCISDeductionsApiModel).toString(), desError.toJson.toString())
           Await.result(connectorWithInternalHost.create(nino, taxYear, createCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
         }
       }
       s"DES returns unexpected error code - BAD_GATEWAY (502)" in {
-        val desError = DesErrorModel(INTERNAL_SERVER_ERROR, desErrorBodyModel)
+        val desError = ApiError(INTERNAL_SERVER_ERROR, desErrorBodyModel)
 
         stubPostWithResponseBody(createCISDeductionsUrl, BAD_GATEWAY, Json.toJson(createCISDeductionsApiModel).toString(), desError.toJson.toString())
 
         Await.result(connectorWithInternalHost.create(nino, taxYear, createCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
       }
       s"DES returns OK with bad Json" in {
-        val desError = DesErrorModel(INTERNAL_SERVER_ERROR, DesErrorBodyModel.parsingError)
+        val desError = ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)
 
         stubPostWithResponseBody(createCISDeductionsUrl, OK, Json.toJson(createCISDeductionsApiModel).toString(),
           Json.toJson(createCISDeductionsApiModel).toString(), headersSentToDes)
 
-        Await.result(connectorWithInternalHost.create(nino, taxYear,createCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
+        Await.result(connectorWithInternalHost.create(nino, taxYear, createCISDeductionsModel), Duration.Inf) shouldBe Left(desError)
       }
     }
   }

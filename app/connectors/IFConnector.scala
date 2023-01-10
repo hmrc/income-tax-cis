@@ -24,23 +24,21 @@ import utils.HeaderCarrierSyntax.HeaderCarrierOps
 
 import java.net.URL
 
-trait DesConnector {
+trait IFConnector {
 
-  val appConfig: AppConfig
+  protected val appConfig: AppConfig
+  protected[connectors] lazy val baseUrl: String = appConfig.ifBaseUrl
 
-  lazy val baseUrl: String = appConfig.desBaseUrl
+  protected val headerCarrierConfig: Config = HeaderCarrier.Config.fromConfig(ConfigFactory.load())
 
-  val headerCarrierConfig: Config = HeaderCarrier.Config.fromConfig(ConfigFactory.load())
-
-  private[connectors] def desHeaderCarrier(url : String)(implicit hc: HeaderCarrier): HeaderCarrier = {
+  protected[connectors] def ifHeaderCarrier(url: String, apiVersion: String)(implicit hc: HeaderCarrier): HeaderCarrier = {
     val isInternalHost = headerCarrierConfig.internalHostPatterns.exists(_.pattern.matcher(new URL(url).getHost).matches())
+    val hcWithAuth = hc.copy(authorization = Some(Authorization(s"Bearer ${appConfig.authorisationTokenFor(apiVersion)}")))
 
-    val hcWithAuth = hc.copy(authorization = Some(Authorization(s"Bearer ${appConfig.desAuthorisationToken}")))
-
-    if(isInternalHost) {
-      hcWithAuth.withExtraHeaders("Environment" -> appConfig.desEnvironment)
+    if (isInternalHost) {
+      hcWithAuth.withExtraHeaders(headers = "Environment" -> appConfig.ifEnvironment)
     } else {
-      hcWithAuth.withExtraHeaders(("Environment" -> appConfig.desEnvironment) +: hcWithAuth.toExplicitHeaders: _*)
+      hcWithAuth.withExtraHeaders(("Environment" -> appConfig.ifEnvironment) +: hcWithAuth.toExplicitHeaders: _*)
     }
   }
 }

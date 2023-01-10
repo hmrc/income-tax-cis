@@ -17,11 +17,12 @@
 package support.mocks
 
 import connectors.CISDeductionsConnector
-import connectors.httpParsers.CreateCISDeductionsParser.CreateCISDeductionsResponse
-import connectors.httpParsers.DeleteCISDeductionsHttpParser.DeleteCISDeductionsResponse
-import connectors.httpParsers.GetCISDeductionsHttpParser.GetCISDeductionsResponse
-import connectors.httpParsers.UpdateCISDeductionsHttpParser.UpdateCISDeductionsResponse
-import models.{CreateCISDeductions, CreateCISDeductionsSuccess, DesErrorModel, UpdateCISDeductions}
+import connectors.errors.ApiError
+import connectors.parsers.CreateCISDeductionsParser.CreateCISDeductionsResponse
+import connectors.parsers.DeleteCISDeductionsHttpParser.DeleteCISDeductionsResponse
+import connectors.parsers.GetCISDeductionsHttpParser.GetCISDeductionsResponse
+import connectors.parsers.UpdateCISDeductionsHttpParser.UpdateCISDeductionsResponse
+import models.{CreateCISDeductions, CreateCISDeductionsSuccess, UpdateCISDeductions}
 import org.scalamock.handlers.{CallHandler3, CallHandler4}
 import org.scalamock.scalatest.MockFactory
 import uk.gov.hmrc.http.HeaderCarrier
@@ -34,7 +35,7 @@ trait MockCISDeductionsConnector extends MockFactory {
 
   def mockDelete(nino: String,
                  submissionId: String,
-                 response: Either[DesErrorModel, Unit]): CallHandler3[String, String, HeaderCarrier, Future[DeleteCISDeductionsResponse]] = {
+                 response: Either[ApiError, Unit]): CallHandler3[String, String, HeaderCarrier, Future[DeleteCISDeductionsResponse]] = {
     (mockCISDeductionsConnector.delete(_: String, _: String)(_: HeaderCarrier))
       .expects(nino, submissionId, *)
       .returning(Future.successful(response))
@@ -53,7 +54,7 @@ trait MockCISDeductionsConnector extends MockFactory {
   def mockUpdate(nino: String,
                  submissionId: String,
                  model: UpdateCISDeductions,
-                 connectorResult: Either[DesErrorModel, Unit]): CallHandler4[String, String,
+                 connectorResult: Either[ApiError, Unit]): CallHandler4[String, String,
     UpdateCISDeductions, HeaderCarrier, Future[UpdateCISDeductionsResponse]] = {
     (mockCISDeductionsConnector.update(_: String, _: String, _: UpdateCISDeductions)(_: HeaderCarrier))
       .expects(nino, submissionId, model, *)
@@ -63,7 +64,7 @@ trait MockCISDeductionsConnector extends MockFactory {
   def mockCreate(nino: String,
                  taxYear: Int,
                  model: CreateCISDeductions,
-                 connectorResult: Either[DesErrorModel, CreateCISDeductionsSuccess]): CallHandler4[String, Int,
+                 connectorResult: Either[ApiError, CreateCISDeductionsSuccess]): CallHandler4[String, Int,
     CreateCISDeductions, HeaderCarrier, Future[CreateCISDeductionsResponse]] = {
     (mockCISDeductionsConnector.create(_: String, _: Int, _: CreateCISDeductions)(_: HeaderCarrier))
       .expects(nino, taxYear, model, *)

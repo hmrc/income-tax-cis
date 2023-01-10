@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package utils
+package support
 
-import helpers.{WireMockHelper, WiremockStubHelpers}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
+import support.helpers.WireMockServer
+import support.providers.AppConfigStubProvider
+import support.stubs.WireMockStubs
 import uk.gov.hmrc.http.test.HttpClientSupport
 
 trait ConnectorIntegrationTest extends AnyWordSpec with Matchers
+  with FutureAwaits with DefaultAwaitTimeout
   with HttpClientSupport
-  with WireMockHelper
-  with WiremockStubHelpers
+  with AppConfigStubProvider
+  with WireMockServer with WireMockStubs
   with BeforeAndAfterAll {
 
   override def beforeAll(): Unit = {
