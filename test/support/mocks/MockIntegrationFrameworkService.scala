@@ -17,6 +17,7 @@
 package support.mocks
 
 import connectors.errors.ApiError
+import models.get.CISSource
 import org.scalamock.handlers.CallHandler4
 import org.scalamock.scalatest.MockFactory
 import services.IntegrationFrameworkService
@@ -27,6 +28,15 @@ import scala.concurrent.Future
 trait MockIntegrationFrameworkService extends MockFactory {
 
   protected val mockIntegrationFrameworkService: IntegrationFrameworkService = mock[IntegrationFrameworkService]
+
+  def mockGetCisDeductions(taxYear: Int,
+                           nino: String,
+                           source: String,
+                           response: Either[ApiError, Option[CISSource]]): CallHandler4[Int, String, String, HeaderCarrier, Future[Either[ApiError, Option[CISSource]]]] = {
+    (mockIntegrationFrameworkService.getCisDeductions(_: Int, _: String, _: String)(_: HeaderCarrier))
+      .expects(taxYear, nino, source, *)
+      .returning(Future.successful(response))
+  }
 
   def mockDeleteCisDeductions(taxYear: Int,
                               nino: String,

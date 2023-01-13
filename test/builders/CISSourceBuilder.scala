@@ -18,13 +18,14 @@ package builders
 
 import models.get.{CISDeductions, CISSource, GetPeriodData}
 
+// TODO: Refactor
 object CISSourceBuilder {
 
   //scalastyle:off
   def customerCISSource(taxYear: Int): CISSource = CISSource(
-    Some(400),Some(400),Some(400),Seq(
+    Some(400), Some(400), Some(400), Seq(
       CISDeductions(
-        s"${taxYear-1}-04-06",
+        s"${taxYear - 1}-04-06",
         s"$taxYear-04-05",
         Some("Contractor 1"),
         "111/11111",
@@ -33,17 +34,17 @@ object CISSourceBuilder {
         Some(200.00),
         Seq(
           GetPeriodData(
-            s"${taxYear-1}-04-06",
-            s"${taxYear-1}-05-05",
+            s"${taxYear - 1}-04-06",
+            s"${taxYear - 1}-05-05",
             Some(100.00),
             Some(100.00),
             Some(100.00),
             "2022-05-11T16:38:57.489Z",
             Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
             "customer"
-          ),GetPeriodData(
-            s"${taxYear-1}-05-06",
-            s"${taxYear-1}-06-05",
+          ), GetPeriodData(
+            s"${taxYear - 1}-05-06",
+            s"${taxYear - 1}-06-05",
             Some(100.00),
             Some(100.00),
             Some(100.00),
@@ -52,8 +53,8 @@ object CISSourceBuilder {
             "customer"
           )
         )
-      ),CISDeductions(
-        s"${taxYear-1}-04-06",
+      ), CISDeductions(
+        s"${taxYear - 1}-04-06",
         s"$taxYear-04-05",
         Some("Contractor 2"),
         "222/11111",
@@ -62,17 +63,17 @@ object CISSourceBuilder {
         Some(200.00),
         Seq(
           GetPeriodData(
-            s"${taxYear-1}-04-06",
-            s"${taxYear-1}-05-05",
+            s"${taxYear - 1}-04-06",
+            s"${taxYear - 1}-05-05",
             Some(100.00),
             Some(100.00),
             Some(100.00),
             "2022-05-11T16:38:57.489Z",
             Some("4557ecb5-fd32-48cc-81f5-e6acd1099f3c"),
             "customer"
-          ),GetPeriodData(
-            s"${taxYear-1}-05-06",
-            s"${taxYear-1}-06-05",
+          ), GetPeriodData(
+            s"${taxYear - 1}-05-06",
+            s"${taxYear - 1}-06-05",
             Some(100.00),
             Some(100.00),
             Some(100.00),
@@ -86,9 +87,9 @@ object CISSourceBuilder {
   )
 
   def contractorCISSource(taxYear: Int): CISSource = CISSource(
-    Some(400),Some(400),Some(400),Seq(
+    Some(400), Some(400), Some(400), Seq(
       CISDeductions(
-        s"${taxYear-1}-04-06",
+        s"${taxYear - 1}-04-06",
         s"$taxYear-04-05",
         Some("Contractor 1"),
         "111/11111",
@@ -97,17 +98,17 @@ object CISSourceBuilder {
         Some(200.00),
         Seq(
           GetPeriodData(
-            s"${taxYear-1}-04-06",
-            s"${taxYear-1}-05-05",
+            s"${taxYear - 1}-04-06",
+            s"${taxYear - 1}-05-05",
             Some(100.00),
             Some(100.00),
             Some(100.00),
             "2022-05-11T16:38:57.489Z",
             None,
             "contractor"
-          ),GetPeriodData(
-            s"${taxYear-1}-05-06",
-            s"${taxYear-1}-06-05",
+          ), GetPeriodData(
+            s"${taxYear - 1}-05-06",
+            s"${taxYear - 1}-06-05",
             Some(100.00),
             Some(100.00),
             Some(100.00),
@@ -116,8 +117,8 @@ object CISSourceBuilder {
             "contractor"
           )
         )
-      ),CISDeductions(
-        s"${taxYear-1}-04-06",
+      ), CISDeductions(
+        s"${taxYear - 1}-04-06",
         s"$taxYear-04-05",
         Some("Contractor 2"),
         "222/11111",
@@ -126,17 +127,17 @@ object CISSourceBuilder {
         Some(200.00),
         Seq(
           GetPeriodData(
-            s"${taxYear-1}-04-06",
-            s"${taxYear-1}-05-05",
+            s"${taxYear - 1}-04-06",
+            s"${taxYear - 1}-05-05",
             Some(100.00),
             Some(100.00),
             Some(100.00),
             "2022-05-11T16:38:57.489Z",
             None,
             "contractor"
-          ),GetPeriodData(
-            s"${taxYear-1}-05-06",
-            s"${taxYear-1}-06-05",
+          ), GetPeriodData(
+            s"${taxYear - 1}-05-06",
+            s"${taxYear - 1}-06-05",
             Some(100.00),
             Some(100.00),
             Some(100.00),

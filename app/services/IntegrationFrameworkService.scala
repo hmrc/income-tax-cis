@@ -18,6 +18,7 @@ package services
 
 import connectors.IntegrationFrameworkConnector
 import connectors.errors.ApiError
+import models.get.CISSource
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
@@ -25,6 +26,13 @@ import scala.concurrent.Future
 
 @Singleton
 class IntegrationFrameworkService @Inject()(integrationFrameworkConnector: IntegrationFrameworkConnector) {
+
+  def getCisDeductions(taxYear: Int,
+                       nino: String,
+                       source: String)
+                      (implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
+    integrationFrameworkConnector.getCisDeductions(taxYear, nino, source)
+  }
 
   def deleteCisDeductions(taxYear: Int,
                           nino: String,

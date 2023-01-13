@@ -44,17 +44,12 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
 
   def getCISDeductions(nino: String, taxYear: Int)
                       (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[ApiError, AllCISDeductions]] = {
-
-    getContractorCISDeductions(nino, taxYear).flatMap {
+    getCISDeductions(nino, taxYear, CONTRACTOR).flatMap {
       case Left(error) => Future.successful(Left(error))
-      case Right(contractorCISDeductions) => getCustomerCISDeductions(nino, taxYear).map {
+      case Right(contractorCISDeductions) => getCISDeductions(nino, taxYear, CUSTOMER).map {
         case Left(error) => Left(error)
-        case Right(customerCISDeductions) => Right(
-          AllCISDeductions(
-            customerCISDeductions = customerCISDeductions,
-            contractorCISDeductions = contractorCISDeductions
-          )
-        )
+        case Right(customerCISDeductions) =>
+          Right(AllCISDeductions(customerCISDeductions = customerCISDeductions, contractorCISDeductions = contractorCISDeductions))
       }
     }
   }
@@ -74,11 +69,11 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
     taxYear - 1 == 2023
   }
 
-  private def getCustomerCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
-    cisDeductionsConnector.get(nino, taxYear, CUSTOMER)
-  }
-
-  private def getContractorCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
-    cisDeductionsConnector.get(nino, taxYear, CONTRACTOR)
+  private def getCISDeductions(nino: String, taxYear: Int, source: String)(implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
+    if (shouldUseIFApi(taxYear)) {
+      integrationFrameworkService.getCisDeductions(taxYear, nino, source)
+    } else {
+      cisDeductionsConnector.get(nino, taxYear, source)
+    }
   }
 }
