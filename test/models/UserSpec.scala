@@ -18,28 +18,21 @@ package models
 
 import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
-import utils.TestUtils
+import support.UnitTest
 
-class UserSpec extends TestUtils {
+class UserSpec extends UnitTest {
 
   ".isAgent" should {
-
     "return true" when {
-
       "user has an arn" in {
-        User[AnyContent]("23456789", Some("123456789"))(FakeRequest()).isAgent mustBe true
+        User[AnyContent]("23456789", Some("123456789"))(FakeRequest()).isAgent shouldBe true
       }
-
     }
 
     "return false" when {
-
       "user does not have an arn" in {
-        User[AnyContent]("23456789", None)(FakeRequest()).isAgent mustBe false
+        User[AnyContent]("23456789", None)(FakeRequest()).isAgent shouldBe false
       }
-
     }
-
   }
-
 }

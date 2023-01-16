@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package utils
+package support.builders
 
-import models.CISDates
-import support.UnitTest
-import utils.CISTaxYearHelper.cisTaxYearConverter
+import models.submission.CISSubmission
+import support.builders.PeriodDataBuilder.aPeriodData
 
-class CISTaxYearHelperSpec extends UnitTest {
+object CISSubmissionBuilder {
 
-  ".cisTaxYearConverter" should {
-    "return a cis dates model containing the correct dates when a tax year is passed" in {
-      cisTaxYearConverter(2020) shouldBe CISDates(fromDate = "2019-04-06", toDate = "2020-04-05")
-    }
-  }
+  val aCISSubmission: CISSubmission = CISSubmission(
+    employerRef = Some("123/AB123456"),
+    contractorName = Some("ABC Steelworks"),
+    periodData = Seq(aPeriodData),
+    submissionId = Some("submissionId")
+  )
 }

@@ -16,11 +16,11 @@
 
 package connectors.parsers
 
-import builders.CISSourceBuilder.customerCISSource
 import connectors.errors.{ApiError, SingleErrorBody}
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import support.UnitTest
+import support.builders.CISSourceBuilder.customerCISSource
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HttpResponse
 

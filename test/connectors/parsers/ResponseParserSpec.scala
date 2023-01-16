@@ -19,20 +19,20 @@ package connectors.parsers
 import connectors.errors.{ApiError, MultiErrorsBody, SingleErrorBody}
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.{JsValue, Json}
+import support.UnitTest
 import uk.gov.hmrc.http.HttpResponse
-import utils.TestUtils
 
-class ResponseParserSpec extends TestUtils {
+class ResponseParserSpec extends UnitTest {
 
   object FakeParser extends ResponseParser {
     override val parserName: String = "TestParser"
   }
 
-  def httpResponse(json: JsValue =
-                   Json.parse(
-                     """{"failures":[
-                       |{"code":"SERVICE_UNAVAILABLE","reason":"The service is currently unavailable"},
-                       |{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}]}""".stripMargin)): HttpResponse = HttpResponse(
+  private def httpResponse(json: JsValue =
+                           Json.parse(
+                             """{"failures":[
+                               |{"code":"SERVICE_UNAVAILABLE","reason":"The service is currently unavailable"},
+                               |{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}]}""".stripMargin)): HttpResponse = HttpResponse(
     INTERNAL_SERVER_ERROR,
     json,
     Map("CorrelationId" -> Seq("1234645654645"))
@@ -40,8 +40,9 @@ class ResponseParserSpec extends TestUtils {
 
   "FakeParser" should {
     "log the correct message" in {
-      val result = FakeParser.logMessage(httpResponse())
-      result mustBe
+      val underTest = FakeParser.logMessage(httpResponse())
+
+      underTest shouldBe
         """[TestParser][read] Received 500 from DES/IF. Body:{
           |  "failures" : [ {
           |    "code" : "SERVICE_UNAVAILABLE",
@@ -52,32 +53,39 @@ class ResponseParserSpec extends TestUtils {
           |  } ]
           |} CorrelationId: 1234645654645""".stripMargin
     }
+
     "return the the correct error" in {
-      val result = FakeParser.badSuccessJsonFromDES
-      result mustBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")))
+      val underTest = FakeParser.badSuccessJsonFromDES
+
+      underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")))
     }
+
     "handle multiple errors" in {
-      val result = FakeParser.handleError(httpResponse())
-      result mustBe Left(ApiError(INTERNAL_SERVER_ERROR, MultiErrorsBody(Seq(
+      val underTest = FakeParser.handleError(httpResponse())
+
+      underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, MultiErrorsBody(Seq(
         SingleErrorBody("SERVICE_UNAVAILABLE", "The service is currently unavailable"),
         SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")
       ))))
     }
+
     "handle single errors" in {
-      val result = FakeParser.handleError(httpResponse(Json.parse(
+      val underTest = FakeParser.handleError(httpResponse(Json.parse(
         """{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}""".stripMargin)))
-      result mustBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")))
+
+      underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")))
     }
 
     "handle response that is neither a single error or multiple errors" in {
-      val result = FakeParser.handleError(httpResponse(Json.obj()))
-      result mustBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")))
+      val underTest = FakeParser.handleError(httpResponse(Json.obj()))
+
+      underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")))
     }
 
     "handle response when the response body is not json" in {
-      val result = FakeParser.handleError(HttpResponse(INTERNAL_SERVER_ERROR, "", Map("CorrelationId" -> Seq("1234645654645"))))
-      result mustBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")))
-    }
+      val underTest = FakeParser.handleError(HttpResponse(INTERNAL_SERVER_ERROR, "", Map("CorrelationId" -> Seq("1234645654645"))))
 
+      underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")))
+    }
   }
 }

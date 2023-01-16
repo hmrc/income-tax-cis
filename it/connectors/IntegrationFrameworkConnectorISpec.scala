@@ -16,11 +16,11 @@
 
 package connectors
 
-import builders.CISSourceBuilder.customerCISSource
 import connectors.errors.{ApiError, SingleErrorBody}
 import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import support.ConnectorIntegrationTest
+import support.builders.CISSourceBuilder.customerCISSource
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, SessionId}
 import utils.CISTaxYearHelper

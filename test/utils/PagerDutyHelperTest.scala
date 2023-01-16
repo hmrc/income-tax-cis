@@ -16,23 +16,24 @@
 
 package utils
 
+import play.api.http.Status.OK
+import support.UnitTest
 import uk.gov.hmrc.http.HttpResponse
+import utils.PagerDutyHelper.getCorrelationId
 
-class PagerDutyHelperTest extends TestUtils {
+class PagerDutyHelperTest extends UnitTest {
 
-  "PagerDutyHelper" should {
-
-    val status = 200
-
+  ".getCorrelationId(...)" should {
     "return string containing correlationId when response contains correlationId" in {
-      val result = PagerDutyHelper.getCorrelationId(HttpResponse(status, "", Map("CorrelationId" -> Seq("some_correlation_id"))))
-      result mustBe " CorrelationId: some_correlation_id"
+      val responseWithCorrelationId = HttpResponse(OK, "", Map("CorrelationId" -> Seq("some_correlation_id")))
+
+      getCorrelationId(responseWithCorrelationId) shouldBe " CorrelationId: some_correlation_id"
     }
 
     "return empty string when response does not contain correlationId" in {
-      val result = PagerDutyHelper.getCorrelationId(HttpResponse(status, ""))
-      result mustBe ""
-    }
+      val responseWithoutCorrelationid = HttpResponse(OK, "")
 
+      getCorrelationId(responseWithoutCorrelationid) shouldBe ""
+    }
   }
 }

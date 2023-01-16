@@ -18,9 +18,7 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class UpdateCISDeductions(
-                                periodData: Seq[PeriodData]
-                              )
+case class UpdateCISDeductions(periodData: Seq[PeriodData])
 
 object UpdateCISDeductions {
   implicit val format: OFormat[UpdateCISDeductions] = Json.format[UpdateCISDeductions]

@@ -16,13 +16,11 @@
 
 package connectors.errors
 
-import com.codahale.metrics.SharedMetricRegistries
 import play.api.http.Status.SERVICE_UNAVAILABLE
 import play.api.libs.json.{JsObject, Json}
-import utils.TestUtils
+import support.UnitTest
 
-class ApiErrorBodySpec extends TestUtils {
-  SharedMetricRegistries.clear()
+class ApiErrorBodySpec extends UnitTest {
 
   private val jsonModel: JsObject = Json.obj(
     "code" -> "SERVER_ERROR",
@@ -31,27 +29,29 @@ class ApiErrorBodySpec extends TestUtils {
 
   private val errorsJsModel: JsObject = Json.obj(
     "failures" -> Json.arr(
-      Json.obj("code" -> "SERVICE_UNAVAILABLE",
-        "reason" -> "The service is currently unavailable"),
-      Json.obj("code" -> "INTERNAL_SERVER_ERROR",
-        "reason" -> "The service is currently facing issues.")
+      Json.obj(
+        "code" -> "SERVICE_UNAVAILABLE",
+        "reason" -> "The service is currently unavailable"
+      ),
+      Json.obj(
+        "code" -> "INTERNAL_SERVER_ERROR",
+        "reason" -> "The service is currently facing issues."
+      )
     )
   )
 
   "The DesErrorModel" should {
-    val model = ApiError(SERVICE_UNAVAILABLE, SingleErrorBody("SERVER_ERROR", "Service is unavailable"))
     val errorsModel = ApiError(SERVICE_UNAVAILABLE, MultiErrorsBody(Seq(
       SingleErrorBody("SERVICE_UNAVAILABLE", "The service is currently unavailable"),
       SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")
     )))
 
     "parse to Json" in {
-      model.toJson mustBe jsonModel
+      ApiError(SERVICE_UNAVAILABLE, SingleErrorBody("SERVER_ERROR", "Service is unavailable")).toJson shouldBe jsonModel
     }
 
     "parse to Json for multiple errors" in {
-      errorsModel.toJson mustBe errorsJsModel
+      errorsModel.toJson shouldBe errorsJsModel
     }
   }
-
 }

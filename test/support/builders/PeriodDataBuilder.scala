@@ -14,36 +14,18 @@
  * limitations under the License.
  */
 
-package builders
+package support.builders
 
 import models.PeriodData
-import models.submission.CISSubmission
+import support.utils.TaxYearUtils.taxYearEOY
 
-object CISSubmissionBuilder {
+object PeriodDataBuilder {
 
   val aPeriodData: PeriodData = PeriodData(
-    deductionFromDate = "2021-04-06",
-    deductionToDate = "2021-05-05",
-    grossAmountPaid = Some(1),
-    deductionAmount = 1,
-    costOfMaterials = Some(1)
-  )
-
-  val anUpdateCISSubmission: CISSubmission = CISSubmission(
-    employerRef = None,
-    submissionId = Some("submissionId"),
-    contractorName = None,
-    periodData = Seq(
-      aPeriodData
-    )
-  )
-
-  val aCreateCISSubmission: CISSubmission = CISSubmission(
-    contractorName = Some("ABC Steelworks"),
-    employerRef = Some("123/AB123456"),
-    submissionId = None,
-    periodData = Seq(
-      aPeriodData
-    )
+    deductionFromDate = s"$taxYearEOY-04-06",
+    deductionToDate = s"$taxYearEOY-05-05",
+    grossAmountPaid = Some(100),
+    deductionAmount = 50,
+    costOfMaterials = Some(30)
   )
 }
