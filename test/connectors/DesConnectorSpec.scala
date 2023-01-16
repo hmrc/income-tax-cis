@@ -17,23 +17,26 @@
 package connectors
 
 import config.AppConfig
+import support.UnitTest
+import support.providers.AppConfigStubProvider
 import uk.gov.hmrc.http.HeaderNames._
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, SessionId}
-import utils.TestUtils
 
-class DesConnectorSpec extends TestUtils {
+class DesConnectorSpec extends UnitTest
+  with AppConfigStubProvider {
 
-  class FakeConnector(override val appConfig: AppConfig) extends DesConnector {
+  private class FakeConnector(override val appConfig: AppConfig) extends DesConnector {
     def headerCarrierTest(url: String)(hc: HeaderCarrier): HeaderCarrier = desHeaderCarrier(url)(hc)
   }
 
-  val connector = new FakeConnector(appConfig = mockAppConfig)
+  private val headerCarrier = HeaderCarrier()
+
+  private val connector = new FakeConnector(appConfig = appConfigStub)
 
   "FakeConnector" when {
-
     "base url is requested" should {
       "return the app config value" in {
-        connector.baseUrl mustBe mockAppConfig.desBaseUrl
+        connector.baseUrl shouldBe appConfigStub.desBaseUrl
       }
     }
 
@@ -41,34 +44,30 @@ class DesConnectorSpec extends TestUtils {
       val internalHost = "http://localhost"
 
       "add the correct authorization" in {
-        val hc = HeaderCarrier()
-        val result = connector.headerCarrierTest(internalHost)(hc)
-        result.authorization mustBe Some(Authorization(s"Bearer ${mockAppConfig.desAuthorisationToken}"))
+        val result = connector.headerCarrierTest(internalHost)(headerCarrier)
+
+        result.authorization shouldBe Some(Authorization(s"Bearer ${appConfigStub.desAuthorisationToken}"))
       }
 
       "add the correct environment" in {
-        val hc = HeaderCarrier()
-        val result = connector.headerCarrierTest(internalHost)(hc)
-        result.extraHeaders mustBe List(
-          "Environment" -> mockAppConfig.desEnvironment
-        )
+        val result = connector.headerCarrierTest(internalHost)(headerCarrier)
+
+        result.extraHeaders shouldBe List("Environment" -> appConfigStub.desEnvironment)
       }
     }
 
     "host is External" should {
       val externalHost = "http://127.0.0.1"
-
       "include all HeaderCarrier headers in the extraHeaders when the host is external" in {
         val hc = HeaderCarrier(sessionId = Some(SessionId("sessionIdHeaderValue")))
         val result = connector.headerCarrierTest(externalHost)(hc)
 
-        result.extraHeaders.size mustBe 4
-        result.extraHeaders.contains(xSessionId -> "sessionIdHeaderValue") mustBe true
-        result.extraHeaders.contains(authorisation -> s"Bearer ${mockAppConfig.desAuthorisationToken}") mustBe true
-        result.extraHeaders.contains("Environment" -> mockAppConfig.desEnvironment) mustBe true
-        result.extraHeaders.exists(x => x._1.equalsIgnoreCase(xRequestChain)) mustBe true
+        result.extraHeaders.size shouldBe 4
+        result.extraHeaders.contains(xSessionId -> "sessionIdHeaderValue") shouldBe true
+        result.extraHeaders.contains(authorisation -> s"Bearer ${appConfigStub.desAuthorisationToken}") shouldBe true
+        result.extraHeaders.contains("Environment" -> appConfigStub.desEnvironment) shouldBe true
+        result.extraHeaders.exists(x => x._1.equalsIgnoreCase(xRequestChain)) shouldBe true
       }
     }
   }
-
 }
