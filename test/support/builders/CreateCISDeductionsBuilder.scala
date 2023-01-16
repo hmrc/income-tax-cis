@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package support.utils
+package support.builders
 
-import java.time.LocalDate
-import java.time.Month.APRIL
+import models.CreateCISDeductions
+import support.builders.CISSubmissionBuilder.aCISSubmission
 
-object TaxYearUtils {
+object CreateCISDeductionsBuilder {
 
-  private val dateNow: LocalDate = LocalDate.now()
-  private val taxYearCutoffDate: LocalDate = LocalDate.of(dateNow.getYear, APRIL, 5)
-
-  val taxYear: Int = if (dateNow.isAfter(taxYearCutoffDate)) dateNow.getYear + 1 else dateNow.getYear
-  val taxYearEOY: Int = taxYear - 1
+  val aCreateCISDeductions: CreateCISDeductions = CreateCISDeductions(
+    employerRef = aCISSubmission.employerRef.get,
+    contractorName = aCISSubmission.contractorName.get,
+    periodData = aCISSubmission.periodData
+  )
 }

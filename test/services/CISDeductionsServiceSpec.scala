@@ -16,14 +16,15 @@
 
 package services
 
-import builders.CISSourceBuilder.{contractorCISSource, customerCISSource}
-import builders.CISSubmissionBuilder.{aCreateCISSubmission, anUpdateCISSubmission}
 import common.CISSource.{CONTRACTOR, CUSTOMER}
 import connectors.errors.{ApiError, SingleErrorBody}
 import models._
 import models.get.AllCISDeductions
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import support.UnitTest
+import support.builders.CISSourceBuilder.{contractorCISSource, customerCISSource}
+import support.builders.CISSubmissionBuilder.aCISSubmission
+import support.builders.CreateCISDeductionsBuilder.aCreateCISDeductions
 import support.mocks.{MockCISDeductionsConnector, MockIntegrationFrameworkService}
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HeaderCarrier
@@ -47,32 +48,29 @@ class CISDeductionsServiceSpec extends UnitTest
 
   "submitCISDeductions" should {
     "return an error from the create contractor call" in {
-      mockCreate(nino, taxYear, CreateCISDeductions(
-        aCreateCISSubmission.employerRef.get, aCreateCISSubmission.contractorName.get, aCreateCISSubmission.periodData
-      ), Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+      mockCreate(nino, taxYear, aCreateCISDeductions, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-      await(underTest.submitCISDeductions(nino, taxYear, aCreateCISSubmission)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None))) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
     }
 
     "return an id from the create contractor call" in {
-      mockCreate(nino, taxYear, CreateCISDeductions(
-        aCreateCISSubmission.employerRef.get, aCreateCISSubmission.contractorName.get, aCreateCISSubmission.periodData
-      ), Right(CreateCISDeductionsSuccess("id")))
+      mockCreate(nino, taxYear, aCreateCISDeductions, Right(CreateCISDeductionsSuccess("id")))
 
-      await(underTest.submitCISDeductions(nino, taxYear, aCreateCISSubmission)) shouldBe Right(Some("id"))
+      await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None))) shouldBe Right(Some("id"))
     }
 
     "return None from the update contractor call" in {
-      mockUpdate(nino, anUpdateCISSubmission.submissionId.get, UpdateCISDeductions(anUpdateCISSubmission.periodData), Right(()))
+      mockUpdate(nino, aCISSubmission.submissionId.get, UpdateCISDeductions(aCISSubmission.periodData), Right(()))
 
-      await(underTest.submitCISDeductions(nino, taxYear, anUpdateCISSubmission)) shouldBe Right(None)
+      await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe Right(None)
     }
 
     "return an error from the update contractor call" in {
-      mockUpdate(nino, anUpdateCISSubmission.submissionId.get, UpdateCISDeductions(anUpdateCISSubmission.periodData),
+      mockUpdate(nino, aCISSubmission.submissionId.get, UpdateCISDeductions(aCISSubmission.periodData),
         Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-      await(underTest.submitCISDeductions(nino, taxYear, anUpdateCISSubmission)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe
+        Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
     }
   }
 

@@ -22,6 +22,8 @@ import utils.CISTaxYearHelper.cisTaxYearConverter
 case class CreateCISDeductions(employerRef: String,
                                contractorName: String,
                                periodData: Seq[PeriodData]) {
+
+  // TODO: This method is not unit tested
   def toApiModel(taxYear: Int): CreateCISDeductionsApi = {
     val cisTaxYear = cisTaxYearConverter(taxYear)
     CreateCISDeductionsApi(
