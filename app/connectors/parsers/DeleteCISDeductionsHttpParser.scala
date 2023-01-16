@@ -32,11 +32,8 @@ object DeleteCISDeductionsHttpParser extends ResponseParser {
     override def read(method: String, url: String, response: HttpResponse): DeleteCISDeductionsResponse = {
       response.status match {
         case NO_CONTENT => Right(())
-        case BAD_REQUEST | NOT_FOUND =>
+        case BAD_REQUEST | NOT_FOUND | UNPROCESSABLE_ENTITY =>
           pagerDutyLog(FOURXX_RESPONSE_FROM_DES, logMessage(response))
-          handleError(response)
-        case UNPROCESSABLE_ENTITY =>
-          pagerDutyLog(UNPROCESSABLE_ENTITY_FROM_DES, logMessage(response))
           handleError(response)
         case SERVICE_UNAVAILABLE =>
           pagerDutyLog(SERVICE_UNAVAILABLE_FROM_DES, logMessage(response))

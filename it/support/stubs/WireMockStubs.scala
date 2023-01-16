@@ -28,6 +28,13 @@ import uk.gov.hmrc.http.HttpResponse
 // TODO: Refactor
 trait WireMockStubs {
 
+  def stubGetHttpClientCall(url: String,
+                            httpResponse: HttpResponse,
+                            requestHeaders: Seq[HttpHeader] = Seq.empty): StubMapping = {
+    val mappingBuilder = get(urlMatching(url))
+    getStubMapping(httpResponse, requestHeaders, mappingBuilder)
+  }
+
   def stubDeleteHttpClientCall(url: String,
                                httpResponse: HttpResponse,
                                requestHeaders: Seq[HttpHeader] = Seq.empty): StubMapping = {

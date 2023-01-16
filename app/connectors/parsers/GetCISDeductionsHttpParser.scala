@@ -35,7 +35,7 @@ object GetCISDeductionsHttpParser extends ResponseParser with Logging {
         case OK => response.json.validate[CISSource].fold[GetCISDeductionsResponse](
           _ => badSuccessJsonFromDES,
           {
-            case CISSource(_,_,_,cisDeductions) if cisDeductions.isEmpty => Right(None)
+            case CISSource(_, _, _, cisDeductions) if cisDeductions.isEmpty => Right(None)
             case parsedModel => Right(Some(parsedModel))
           }
         )

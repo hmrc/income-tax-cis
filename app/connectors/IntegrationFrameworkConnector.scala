@@ -19,7 +19,9 @@ package connectors
 import config.AppConfig
 import connectors.errors.ApiError
 import connectors.parsers.DeleteCISDeductionsHttpParser.{DeleteCISDeductionsHttpReads, DeleteCISDeductionsResponse}
+import connectors.parsers.GetCISDeductionsHttpParser.{GetCISDeductionsResponse, GetCISDeductionsResponseHttpReads}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import utils.CISTaxYearHelper
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,9 +31,24 @@ class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
                                               appConf: AppConfig)
                                              (implicit ec: ExecutionContext) extends IFConnector {
 
+  private val getApiVersion = "1792"
   private val deleteApiVersion = "1790"
 
   override protected[connectors] val appConfig: AppConfig = appConf
+
+  def getCisDeductions(taxYear: Int,
+                       nino: String,
+                       source: String)(implicit hc: HeaderCarrier): Future[GetCISDeductionsResponse] = {
+    val cisTaxYear = CISTaxYearHelper.cisTaxYearConverter(taxYear)
+    val url =
+      baseUrl + s"/income-tax/cis/deductions/${toTaxYearParam(taxYear)}/$nino?startDate=${cisTaxYear.fromDate}&endDate=${cisTaxYear.toDate}&source=$source"
+
+    def ifCall(implicit hc: HeaderCarrier): Future[GetCISDeductionsResponse] = {
+      httpClient.GET[GetCISDeductionsResponse](url)(GetCISDeductionsResponseHttpReads, hc, ec)
+    }
+
+    ifCall(ifHeaderCarrier(url, getApiVersion))
+  }
 
   def deleteCisDeductions(taxYear: Int,
                           nino: String,

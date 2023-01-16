@@ -77,49 +77,49 @@ class CISDeductionsServiceSpec extends UnitTest
   }
 
   "getCISDeductions" should {
-    "return an error from the first contractor call" in {
-      mockGet(nino, taxYear, CONTRACTOR, Left(ApiError(
-        INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError
-      )))
+    "when DES Connector is used" when {
+      "return an error from the first contractor call" in {
+        mockGet(nino, taxYear, CONTRACTOR, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+        await(underTest.getCISDeductions(nino, taxYear)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      }
+
+      "return an error from the second customer call" in {
+        mockGet(nino, taxYear, CUSTOMER, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+        mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
+
+        await(underTest.getCISDeductions(nino, taxYear)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      }
+
+      "return both customer and contractor data" in {
+        mockGet(nino, taxYear, CUSTOMER, Right(Some(customerCISSource(taxYear))))
+        mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
+
+        await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(Some(customerCISSource(taxYear)), Some(contractorCISSource(taxYear))))
+      }
     }
 
-    "return an error from the second customer call" in {
-      mockGet(nino, taxYear, CUSTOMER, Left(ApiError(
-        INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError
-      )))
-      mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
+    "when IF Connector is used" when {
+      val taxYearForIF = 2024
+      "return an error from the first contractor call" in {
+        mockGetCisDeductions(taxYearForIF, nino, CONTRACTOR, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
-    }
+        await(underTest.getCISDeductions(nino, taxYearForIF)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      }
 
-    "return both customer and contractor data" in {
-      mockGet(nino, taxYear, CUSTOMER, Right(Some(customerCISSource(taxYear))))
-      mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
+      "return an error from the second customer call" in {
+        mockGetCisDeductions(taxYearForIF, nino, CUSTOMER, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+        mockGetCisDeductions(taxYearForIF, nino, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
 
-      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(Some(customerCISSource(taxYear)), Some(contractorCISSource(taxYear))))
-    }
+        await(underTest.getCISDeductions(nino, taxYearForIF)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      }
 
-    "return no data for customer and contractor" in {
-      mockGet(nino, taxYear, CUSTOMER, Right(None))
-      mockGet(nino, taxYear, CONTRACTOR, Right(None))
+      "return both customer and contractor data" in {
+        mockGetCisDeductions(taxYearForIF, nino, CUSTOMER, Right(Some(customerCISSource(taxYear))))
+        mockGetCisDeductions(taxYearForIF, nino, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
 
-      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(None, None))
-    }
-
-    "return customer data" in {
-      mockGet(nino, taxYear, CUSTOMER, Right(Some(customerCISSource(taxYear))))
-      mockGet(nino, taxYear, CONTRACTOR, Right(None))
-
-      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(Some(customerCISSource(taxYear)), None))
-    }
-
-    "return contractor data" in {
-      mockGet(nino, taxYear, CUSTOMER, Right(None))
-      mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource(taxYear))))
-
-      await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(None, Some(contractorCISSource(taxYear))))
+        await(underTest.getCISDeductions(nino, taxYearForIF)) shouldBe Right(AllCISDeductions(Some(customerCISSource(taxYear)), Some(contractorCISSource(taxYear))))
+      }
     }
   }
 

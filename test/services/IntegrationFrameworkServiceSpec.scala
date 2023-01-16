@@ -16,6 +16,7 @@
 
 package services
 
+import builders.CISSourceBuilder.customerCISSource
 import support.UnitTest
 import support.mocks.MockIntegrationFrameworkConnector
 import support.providers.TaxYearProvider
@@ -29,10 +30,19 @@ class IntegrationFrameworkServiceSpec extends UnitTest
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
+  private val source = "some-source"
   private val nino = "some-nino"
   private val submissionId = UUID.randomUUID().toString
 
   private val underTest = new IntegrationFrameworkService(mockIntegrationFrameworkConnector)
+
+  ".getCisDeductions" should {
+    "delegate to IFConnector and return the result" in {
+      mockGetCisDeductions(taxYear, nino, source, Right(Some(customerCISSource(taxYear))))
+
+      await(underTest.getCisDeductions(taxYear, nino, source))
+    }
+  }
 
   ".deleteCisDeductions" should {
     "delegate to IFConnector and return the result" in {

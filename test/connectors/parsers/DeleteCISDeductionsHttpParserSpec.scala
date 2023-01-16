@@ -17,7 +17,7 @@
 package connectors.parsers
 
 import connectors.errors.{ApiError, SingleErrorBody}
-import play.api.http.Status.{BAD_REQUEST, HTTP_VERSION_NOT_SUPPORTED, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
+import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import support.UnitTest
 import uk.gov.hmrc.http.HttpResponse
