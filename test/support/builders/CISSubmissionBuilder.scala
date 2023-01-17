@@ -17,6 +17,7 @@
 package support.builders
 
 import models.submission.CISSubmission
+import support.builders.GetPeriodDataBuilder.aGetPeriodData
 import support.builders.PeriodDataBuilder.aPeriodData
 
 object CISSubmissionBuilder {
@@ -25,6 +26,6 @@ object CISSubmissionBuilder {
     employerRef = Some("123/AB123456"),
     contractorName = Some("ABC Steelworks"),
     periodData = Seq(aPeriodData),
-    submissionId = Some("submissionId")
+    submissionId = aGetPeriodData.submissionId
   )
 }

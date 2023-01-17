@@ -16,6 +16,7 @@
 
 package controllers
 
+import common.CISSource.CONTRACTOR
 import connectors.errors.{ApiError, SingleErrorBody}
 import models.get.AllCISDeductions
 import org.scalamock.handlers.CallHandler4
@@ -23,7 +24,9 @@ import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import services.CISDeductionsService
-import support.builders.CISSourceBuilder.{contractorCISSource, customerCISSource}
+import support.builders.CISDeductionsBuilder.aCISDeductions
+import support.builders.CISSourceBuilder.aCISSource
+import support.builders.GetPeriodDataBuilder.aGetPeriodData
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.TestUtils
 
@@ -31,12 +34,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class GetCISDeductionsControllerSpec extends TestUtils {
 
-  val service: CISDeductionsService = mock[CISDeductionsService]
-  val controller = new GetCISDeductionsController(service, authorisedAction, mockControllerComponents)
+  private val service: CISDeductionsService = mock[CISDeductionsService]
+  private val controller = new GetCISDeductionsController(service, authorisedAction, mockControllerComponents)
 
-  val nino: String = "123456789"
-  val mtdItID: String = "1234567890"
-  val taxYear: Int = 2022
+  private val nino: String = "123456789"
+  private val mtdItID: String = "1234567890"
+  private val taxYear: Int = 2022
+  private val contractorCISSource = aCISSource.copy(cisDeductions = Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(submissionId = None, source = CONTRACTOR)))))
 
   private val fakeGetRequest = FakeRequest("GET", "/").withHeaders("MTDITID" -> mtdItID)
 
@@ -61,16 +65,16 @@ class GetCISDeductionsControllerSpec extends TestUtils {
         val result = {
           mockAuth()
           mockGetCISDeductions(AllCISDeductions(
-            customerCISDeductions = Some(customerCISSource(taxYear)),
-            contractorCISDeductions = Some(contractorCISSource(taxYear))
+            customerCISDeductions = Some(aCISSource),
+            contractorCISDeductions = Some(contractorCISSource)
           ))
           controller.getCISDeductions(nino, taxYear)(fakeGetRequest)
         }
         status(result) mustBe OK
         Json.parse(bodyOf(result)) mustBe Json.toJson(
           AllCISDeductions(
-            customerCISDeductions = Some(customerCISSource(taxYear)),
-            contractorCISDeductions = Some(contractorCISSource(taxYear))
+            customerCISDeductions = Some(aCISSource),
+            contractorCISDeductions = Some(contractorCISSource)
           )
         )
       }
