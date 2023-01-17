@@ -16,8 +16,9 @@
 
 package actions
 
-import common.{EnrolmentIdentifiers, EnrolmentKeys}
 import models.User
+import models.authorisation.Enrolment.{Agent, Individual, Nino}
+import models.requests.AuthorisationRequest
 import play.api.Logger
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc._
@@ -30,97 +31,101 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuthorisedAction @Inject()()(val authConnector: AuthConnector,
-                                   defaultActionBuilder: DefaultActionBuilder,
-                                   cc: ControllerComponents) extends AuthorisedFunctions {
+class AuthorisedAction @Inject()(defaultActionBuilder: DefaultActionBuilder,
+                                 val authConnector: AuthConnector,
+                                 cc: ControllerComponents) extends AuthorisedFunctions {
 
-  lazy val logger: Logger = Logger.apply(this.getClass)
-  implicit val executionContext: ExecutionContext = cc.executionContext
+  private lazy val logger: Logger = Logger.apply(this.getClass)
+  private implicit val executionContext: ExecutionContext = cc.executionContext
 
-  val unauthorized: Future[Result] = Future(Unauthorized)
+  private val agentDelegatedAuthRuleKey: String = "mtd-it-auth"
+  private val minimumConfidenceLevel: Int = ConfidenceLevel.L250.level
+  private val unauthorized: Future[Result] = Future.successful(Unauthorized)
 
-  def async(block: User[AnyContent] => Future[Result]): Action[AnyContent] = defaultActionBuilder.async { implicit request =>
-
-    implicit lazy val headerCarrier: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
+  def async(block: AuthorisationRequest[AnyContent] => Future[Result]): Action[AnyContent] = defaultActionBuilder.async { implicit request =>
     request.headers.get("mtditid").fold {
-      logger.warn("[AuthorisedAction][async] - No MTDITID in the header. Returning unauthorised.")
+      val logMessage = "[AuthorisedAction][async] - No MTDITID in the header. Returning unauthorised."
+      logger.warn(logMessage)
       unauthorized
-    }(
+    } {
       mtdItId =>
+        implicit val headerCarrier: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         authorised().retrieve(affinityGroup) {
           case Some(AffinityGroup.Agent) => agentAuthentication(block, mtdItId)(request, headerCarrier)
           case _ => individualAuthentication(block, mtdItId)(request, headerCarrier)
         } recover {
           case _: NoActiveSession =>
-            logger.info(s"[AuthorisedAction][async] - No active session.")
+            val logMessage = s"[AuthorisedAction][async] - No active session."
+            logger.info(logMessage)
             Unauthorized
           case _: AuthorisationException =>
-            logger.info(s"[AuthorisedAction][async] - User failed to authenticate")
+            val logMessage = s"[AuthorisedAction][async] - User failed to authenticate"
+            logger.info(logMessage)
             Unauthorized
         }
-    )
+    }
   }
 
-  val minimumConfidenceLevel: Int = ConfidenceLevel.L250.level
-
-  private[actions] def individualAuthentication[A](block: User[A] => Future[Result], requestMtdItId: String)
+  private[actions] def individualAuthentication[A](block: AuthorisationRequest[A] => Future[Result], requestMtdItId: String)
                                                   (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
     authorised().retrieve(allEnrolments and confidenceLevel) {
       case enrolments ~ userConfidence if userConfidence.level >= minimumConfidenceLevel =>
-        val optionalMtdItId: Option[String] = enrolmentGetIdentifierValue(EnrolmentKeys.Individual, EnrolmentIdentifiers.individualId, enrolments)
-        val optionalNino: Option[String] = enrolmentGetIdentifierValue(EnrolmentKeys.nino, EnrolmentIdentifiers.nino, enrolments)
+        val optionalMtdItId: Option[String] = enrolmentGetIdentifierValue(Individual.key, Individual.value, enrolments)
+        val optionalNino: Option[String] = enrolmentGetIdentifierValue(Nino.key, Nino.value, enrolments)
 
         (optionalMtdItId, optionalNino) match {
           case (Some(authMTDITID), Some(_)) =>
             enrolments.enrolments.collectFirst {
-              case Enrolment(EnrolmentKeys.Individual, enrolmentIdentifiers, _, _)
-                if enrolmentIdentifiers.exists(identifier => identifier.key == EnrolmentIdentifiers.individualId && identifier.value == requestMtdItId) =>
-                block(User(requestMtdItId, None))
+              case Enrolment(Individual.key, enrolmentIdentifiers, _, _)
+                if enrolmentIdentifiers.exists(identifier => identifier.key == Individual.value && identifier.value == requestMtdItId) =>
+                block(AuthorisationRequest(User(requestMtdItId, None), request))
             } getOrElse {
-              logger.info(s"[AuthorisedAction][individualAuthentication] Non-agent with an invalid MTDITID. " +
-                s"MTDITID in auth matches MTDITID in request: ${authMTDITID == requestMtdItId}")
+              val logMessage = s"[AuthorisedAction][individualAuthentication] Non-agent with an invalid MTDITID. " +
+                s"MTDITID in auth matches MTDITID in request: ${authMTDITID == requestMtdItId}"
+              logger.info(logMessage)
               unauthorized
             }
           case (_, None) =>
-            logger.info(s"[AuthorisedAction][individualAuthentication] - User has no nino.")
+            val logMessage = s"[AuthorisedAction][individualAuthentication] - User has no nino."
+            logger.info(logMessage)
             unauthorized
           case (None, _) =>
-            logger.info(s"[AuthorisedAction][individualAuthentication] - User has no MTD IT enrolment.")
+            val logMessage = s"[AuthorisedAction][individualAuthentication] - User has no MTD IT enrolment."
+            logger.info(logMessage)
             unauthorized
         }
       case _ =>
-        logger.info("[AuthorisedAction][individualAuthentication] User has confidence level below 250.")
+        val logMessage = "[AuthorisedAction][individualAuthentication] User has confidence level below 250."
+        logger.info(logMessage)
         unauthorized
     }
   }
 
-  private[actions] def agentAuthentication[A](block: User[A] => Future[Result], mtdItId: String)
+  private[actions] def agentAuthentication[A](block: AuthorisationRequest[A] => Future[Result], mtdItId: String)
                                              (implicit request: Request[A], hc: HeaderCarrier): Future[Result] = {
-
-    lazy val agentDelegatedAuthRuleKey = "mtd-it-auth"
-
     lazy val agentAuthPredicate: String => Enrolment = identifierId =>
-      Enrolment(EnrolmentKeys.Individual)
-        .withIdentifier(EnrolmentIdentifiers.individualId, identifierId)
+      Enrolment(Individual.key)
+        .withIdentifier(Individual.value, identifierId)
         .withDelegatedAuthRule(agentDelegatedAuthRuleKey)
 
     authorised(agentAuthPredicate(mtdItId))
       .retrieve(allEnrolments) { enrolments =>
-
-        enrolmentGetIdentifierValue(EnrolmentKeys.Agent, EnrolmentIdentifiers.agentReference, enrolments) match {
+        enrolmentGetIdentifierValue(Agent.key, Agent.value, enrolments) match {
           case Some(arn) =>
-            block(User(mtdItId, Some(arn)))
+            block(AuthorisationRequest(User(mtdItId, Some(arn)), request))
           case None =>
-            logger.info("[AuthorisedAction][agentAuthentication] Agent with no HMRC-AS-AGENT enrolment.")
+            val logMessage = "[AuthorisedAction][agentAuthentication] Agent with no HMRC-AS-AGENT enrolment."
+            logger.info(logMessage)
             unauthorized
         }
       } recover {
       case _: NoActiveSession =>
-        logger.info(s"[AuthorisedAction][agentAuthentication] - No active session.")
+        val logMessage = s"[AuthorisedAction][agentAuthentication] - No active session."
+        logger.info(logMessage)
         Unauthorized
       case _: AuthorisationException =>
-        logger.info(s"[AuthorisedAction][agentAuthentication] - Agent does not have delegated authority for Client.")
+        val logMessage = s"[AuthorisedAction][agentAuthentication] - Agent does not have delegated authority for Client."
+        logger.info(logMessage)
         Unauthorized
     }
   }

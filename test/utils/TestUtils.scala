@@ -64,7 +64,7 @@ trait TestUtils extends AnyWordSpec with Matchers with MockFactory with GuiceOne
   implicit val mockAuthConnector: AuthConnector = mock[AuthConnector]
   implicit val mockAuthService: AuthService = new AuthService(mockAuthConnector)
   val defaultActionBuilder: DefaultActionBuilder = DefaultActionBuilder(mockControllerComponents.parsers.default)
-  val authorisedAction = new AuthorisedAction()(mockAuthConnector, defaultActionBuilder, mockControllerComponents)
+  val authorisedAction = new AuthorisedAction(defaultActionBuilder, mockAuthConnector, mockControllerComponents)
 
 
   def status(awaitable: Future[Result]): Int = await(awaitable).header.status

@@ -14,18 +14,9 @@
  * limitations under the License.
  */
 
-package common
+package models.requests
 
-// TODO: (Hristo) Delete me
-object EnrolmentKeys {
-  val Individual = "HMRC-MTD-IT"
-  val Agent = "HMRC-AS-AGENT"
-  val nino = "HMRC-NI"
-}
+import models.User
+import play.api.mvc.{Request, WrappedRequest}
 
-// TODO: (Hristo) Delete me
-object EnrolmentIdentifiers {
-  val individualId = "MTDITID"
-  val agentReference = "AgentReferenceNumber"
-  val nino = "NINO"
-}
+case class AuthorisationRequest[T](user: User, request: Request[T]) extends WrappedRequest[T](request)
