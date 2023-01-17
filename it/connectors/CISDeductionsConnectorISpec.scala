@@ -17,6 +17,7 @@
 package connectors
 
 import com.github.tomakehurst.wiremock.http.HttpHeader
+import common.CISSource.CONTRACTOR
 import config.AppConfigStub
 import connectors.errors.{ApiError, SingleErrorBody}
 import models._
@@ -24,8 +25,10 @@ import models.get.{CISDeductions, CISSource, GetPeriodData}
 import play.api.http.Status._
 import play.api.libs.json.Json
 import support.ConnectorIntegrationTest
-import support.builders.CISSourceBuilder.{contractorCISSource, customerCISSource}
+import support.builders.CISDeductionsBuilder.aCISDeductions
+import support.builders.CISSourceBuilder.aCISSource
 import support.builders.CreateCISDeductionsBuilder.aCreateCISDeductions
+import support.builders.GetPeriodDataBuilder.aGetPeriodData
 import support.builders.UpdateCISDeductionsBuilder.anUpdateCISDeductions
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, SessionId}
@@ -42,6 +45,26 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
 
   private val nino: String = "AA123123A"
   private val submissionId: String = "a111111a-abcd-111a-123a-11a1a111a1"
+
+  private val customerPeriodData = aGetPeriodData.copy(costOfMaterials = Some(100.00), grossAmountPaid = Some(100.00))
+  private val contractorPeriodData = customerPeriodData.copy(deductionFromDate = s"${taxYearEOY - 1}-04-06", deductionToDate = s"${taxYearEOY - 1}-05-05", submissionId = None, source = CONTRACTOR)
+  private val customerCisDeductions = aCISDeductions.copy(
+    totalCostOfMaterials = Some(200.00),
+    totalGrossAmountPaid = Some(200.00),
+    periodData = Seq(customerPeriodData, customerPeriodData.copy(deductionFromDate = s"$taxYearEOY-05-06", deductionToDate = s"$taxYearEOY-06-05"))
+  )
+  private val contractorCisDeductions =
+    customerCisDeductions.copy(
+      fromDate = s"${taxYearEOY - 1}-04-06",
+      toDate = s"$taxYearEOY-04-05",
+      periodData = Seq(contractorPeriodData, contractorPeriodData.copy(deductionFromDate = s"${taxYearEOY - 1}-05-06", deductionToDate = s"${taxYearEOY - 1}-06-05")))
+  private val customerCISSource =
+    aCISSource.copy(
+      totalCostOfMaterials = Some(400),
+      totalGrossAmountPaid = Some(400),
+      cisDeductions = Seq(customerCisDeductions, customerCisDeductions.copy(contractorName = Some("Contractor 2"), employerRef = "222/11111"))
+    )
+  private val contractorCISSource = customerCISSource.copy(cisDeductions = Seq(contractorCisDeductions, contractorCisDeductions.copy(contractorName = Some("Contractor 2"), employerRef = "222/11111")))
 
   private val updateCISDeductionsUrl: String = s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
   private val deleteCISDeductionsUrl: String = s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
@@ -107,7 +130,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
         s"${taxYear - 1}-04-06",
         s"$taxYear-04-05",
         None,
-        "111/11111",
+        "123/AB123456",
         Some(100.00),
         None,
         None,
@@ -135,8 +158,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
        |	"cisDeductions": [{
        |		"fromDate": "${taxYear - 1}-04-06",
        |		"toDate": "$taxYear-04-05",
-       |		"contractorName": "Contractor 1",
-       |		"employerRef": "111/11111",
+       |		"contractorName": "ABC Steelworks",
+       |		"employerRef": "123/AB123456",
        |		"totalDeductionAmount": 200.00,
        |		"totalCostOfMaterials": 200.00,
        |		"totalGrossAmountPaid": 200.00,
@@ -197,8 +220,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
        |	"cisDeductions": [{
        |		"fromDate": "${taxYear - 1}-04-06",
        |		"toDate": "$taxYear-04-05",
-       |		"contractorName": "Contractor 1",
-       |		"employerRef": "111/11111",
+       |		"contractorName": "ABC Steelworks",
+       |		"employerRef": "123/AB123456",
        |		"totalDeductionAmount": 200.00,
        |		"totalCostOfMaterials": 200.00,
        |		"totalGrossAmountPaid": 200.00,
@@ -253,7 +276,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
        |	"cisDeductions": [{
        |		"fromDate": "${taxYear - 1}-04-06",
        |		"toDate": "$taxYear-04-05",
-       |		"employerRef": "111/11111",
+       |		"employerRef": "123/AB123456",
        |		"totalDeductionAmount": 100.00,
        |		"periodData": [{
        |			"deductionFromDate": "${taxYear - 1}-04-06",
@@ -276,14 +299,14 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
         stubGetWithResponseBody(getUrl(taxYear, "customer"), OK, customerResponse(taxYear), headersSentToDes)
 
         Await.result(connectorWithInternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe
-          Right(Some(customerCISSource(taxYear)))
+          Right(Some(customerCISSource))
       }
 
       "the host for DES is 'External' and is retrieving customer data" in {
         stubGetWithResponseBody(getUrl(taxYear, "customer"), OK, customerResponse(taxYear))
 
         Await.result(connectorWithExternalHost.get(nino, taxYear, "customer"), Duration.Inf) shouldBe
-          Right(Some(customerCISSource(taxYear)))
+          Right(Some(customerCISSource))
       }
     }
 
@@ -291,7 +314,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
       stubGetWithResponseBody(getUrl(taxYear - 1, "contractor"), OK, contractorResponse(taxYear - 1))
 
       Await.result(connectorWithExternalHost.get(nino, taxYear - 1, "contractor"), Duration.Inf) shouldBe
-        Right(Some(contractorCISSource(taxYear - 1)))
+        Right(Some(contractorCISSource))
     }
 
     "return smallest model" in {
@@ -434,5 +457,3 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
     }
   }
 }
-
-

@@ -16,15 +16,21 @@
 
 package support.builders
 
-import models.get.CISSource
-import support.builders.CISDeductionsBuilder.aCISDeductions
+import models.get.CISDeductions
+import support.builders.CISSubmissionBuilder.aCISSubmission
+import support.builders.GetPeriodDataBuilder.aGetPeriodData
+import support.utils.TaxYearUtils.{taxYear, taxYearEOY}
 
-object CISSourceBuilder {
+object CISDeductionsBuilder {
 
-  val aCISSource: CISSource = CISSource(
-    totalDeductionAmount = Some(400),
-    totalCostOfMaterials = Some(500),
-    totalGrossAmountPaid = Some(600),
-    cisDeductions = Seq(aCISDeductions)
+  val aCISDeductions: CISDeductions = CISDeductions(
+    fromDate = s"$taxYearEOY-04-06",
+    toDate = s"$taxYear-04-05",
+    contractorName = aCISSubmission.contractorName,
+    employerRef = aCISSubmission.employerRef.get,
+    totalDeductionAmount = Some(200.00),
+    totalCostOfMaterials = Some(300.00),
+    totalGrossAmountPaid = Some(400.00),
+    periodData = Seq(aGetPeriodData)
   )
 }

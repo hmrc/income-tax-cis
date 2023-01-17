@@ -20,7 +20,7 @@ import connectors.errors.{ApiError, SingleErrorBody}
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import support.UnitTest
-import support.builders.CISSourceBuilder.customerCISSource
+import support.builders.CISSourceBuilder.aCISSource
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HttpResponse
 
@@ -38,13 +38,13 @@ class GetCISDeductionsHttpParserSpec extends UnitTest
   "GetCISDeductionsResponseHttpReads" should {
     "convert JsValue to GetCISDeductionsResponse" when {
       "status is OK and source with deductions" in {
-        val httpResponse = HttpResponse.apply(OK, Json.toJson(customerCISSource(taxYear)).toString, anyHeaders)
+        val httpResponse = HttpResponse.apply(OK, Json.toJson(aCISSource).toString, anyHeaders)
 
-        underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(Some(customerCISSource(taxYear)))
+        underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(Some(aCISSource))
       }
 
       "status is OK and source has no deductions" in {
-        val source = customerCISSource(taxYear).copy(cisDeductions = Seq.empty)
+        val source = aCISSource.copy(cisDeductions = Seq.empty)
         val httpResponse = HttpResponse.apply(OK, Json.toJson(source).toString, anyHeaders)
 
         underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(None)

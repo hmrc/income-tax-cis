@@ -20,7 +20,7 @@ import connectors.errors.{ApiError, SingleErrorBody}
 import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import support.ConnectorIntegrationTest
-import support.builders.CISSourceBuilder.customerCISSource
+import support.builders.CISSourceBuilder.aCISSource
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, SessionId}
 import utils.CISTaxYearHelper
@@ -44,13 +44,13 @@ class IntegrationFrameworkConnectorISpec extends ConnectorIntegrationTest
 
   ".getCisDeductions" should {
     "return correct IF response when correct parameters are passed" in {
-      val httpResponse = HttpResponse(OK, Json.toJson(Some(customerCISSource(taxYear))).toString())
+      val httpResponse = HttpResponse(OK, Json.toJson(Some(aCISSource)).toString())
       val cisTaxYear = CISTaxYearHelper.cisTaxYearConverter(taxYear)
 
       val url = s"/income-tax/cis/deductions/${toTaxYearParam(taxYear)}/$nino\\?startDate=${cisTaxYear.fromDate}&endDate=${cisTaxYear.toDate}&source=$source"
       stubGetHttpClientCall(url, httpResponse)
 
-      await(underTest.getCisDeductions(taxYear, nino, source)(hc)) shouldBe Right(Some(customerCISSource(taxYear)))
+      await(underTest.getCisDeductions(taxYear, nino, source)(hc)) shouldBe Right(Some(aCISSource))
     }
 
     "return IF error when Left is returned" in {
