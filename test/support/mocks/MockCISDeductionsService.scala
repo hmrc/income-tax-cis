@@ -17,17 +17,26 @@
 package support.mocks
 
 import connectors.errors.ApiError
+import models.get.AllCISDeductions
 import models.submission.CISSubmission
-import org.scalamock.handlers.{CallHandler4, CallHandler5}
+import org.scalamock.handlers.{CallHandler3, CallHandler4}
 import org.scalamock.scalatest.MockFactory
 import services.CISDeductionsService
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait MockCISDeductionsService extends MockFactory {
 
   protected val mockCISDeductionsService: CISDeductionsService = mock[CISDeductionsService]
+
+  def mockGetCISDeductions(nino: String,
+                           taxYear: Int,
+                           result: Either[ApiError, AllCISDeductions]): CallHandler3[String, Int, HeaderCarrier, Future[Either[ApiError, AllCISDeductions]]] = {
+    (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
+      .expects(nino, taxYear, *)
+      .returning(Future.successful(result))
+  }
 
   def mockDeleteCISDeductionsSubmission(taxYear: Int,
                                         nino: String,
@@ -41,10 +50,9 @@ trait MockCISDeductionsService extends MockFactory {
   def mockSubmitCISDeductions(nino: String,
                               taxYear: Int,
                               data: CISSubmission,
-                              response: Either[ApiError, Option[String]]): CallHandler5[String, Int, CISSubmission, HeaderCarrier,
-    ExecutionContext, Future[Either[ApiError, Option[String]]]] = {
-    (mockCISDeductionsService.submitCISDeductions(_: String, _: Int, _: CISSubmission)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(nino, taxYear, data, *, *)
+                              response: Either[ApiError, Option[String]]): CallHandler4[String, Int, CISSubmission, HeaderCarrier, Future[Either[ApiError, Option[String]]]] = {
+    (mockCISDeductionsService.submitCISDeductions(_: String, _: Int, _: CISSubmission)(_: HeaderCarrier))
+      .expects(nino, taxYear, data, *)
       .returning(Future.successful(response))
   }
 }

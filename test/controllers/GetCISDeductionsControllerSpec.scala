@@ -16,93 +16,63 @@
 
 package controllers
 
-import common.CISSource.CONTRACTOR
 import connectors.errors.{ApiError, SingleErrorBody}
 import models.get.AllCISDeductions
-import org.scalamock.handlers.CallHandler4
 import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.libs.json.Json
-import play.api.test.FakeRequest
-import services.CISDeductionsService
-import support.builders.CISDeductionsBuilder.aCISDeductions
-import support.builders.CISSourceBuilder.aCISSource
-import support.builders.GetPeriodDataBuilder.aGetPeriodData
-import uk.gov.hmrc.http.HeaderCarrier
-import utils.TestUtils
+import play.api.test.Helpers.status
+import support.ControllerUnitTest
+import support.builders.AllCISDeductionsBuilder.anAllCISDeductions
+import support.mocks.{MockAuthorisedAction, MockCISDeductionsService}
+import support.providers.FakeRequestProvider
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class GetCISDeductionsControllerSpec extends TestUtils {
-
-  private val service: CISDeductionsService = mock[CISDeductionsService]
-  private val controller = new GetCISDeductionsController(service, authorisedAction, mockControllerComponents)
+class GetCISDeductionsControllerSpec extends ControllerUnitTest
+  with MockCISDeductionsService
+  with MockAuthorisedAction
+  with FakeRequestProvider {
 
   private val nino: String = "123456789"
-  private val mtdItID: String = "1234567890"
-  private val taxYear: Int = 2022
-  private val contractorCISSource = aCISSource.copy(cisDeductions = Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(submissionId = None, source = CONTRACTOR)))))
+  private val anyTaxYear: Int = 2022
 
-  private val fakeGetRequest = FakeRequest("GET", "/").withHeaders("MTDITID" -> mtdItID)
-
-  def mockGetCISDeductions(data: AllCISDeductions):
-  CallHandler4[String, Int, HeaderCarrier, ExecutionContext, Future[Either[ApiError, AllCISDeductions]]] = {
-    (service.getCISDeductions(_: String, _: Int)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(*, *, *, *)
-      .returning(Future.successful(Right(data)))
-  }
-
-  def mockGetCISDeductionsError(): CallHandler4[String, Int, HeaderCarrier, ExecutionContext, Future[Either[ApiError, AllCISDeductions]]] = {
-    (service.getCISDeductions(_: String, _: Int)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(*, *, *, *)
-      .returning(Future.successful(Left(ApiError(
-        INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError
-      ))))
-  }
+  private val underTest = new GetCISDeductionsController(
+    mockCISDeductionsService,
+    mockAuthorisedAction,
+    cc)
 
   "calling .getCISDeductions" should {
     "with existing customer and contractor data" should {
       "return an OK 200 response when called as an individual" in {
-        val result = {
-          mockAuth()
-          mockGetCISDeductions(AllCISDeductions(
-            customerCISDeductions = Some(aCISSource),
-            contractorCISDeductions = Some(contractorCISSource)
-          ))
-          controller.getCISDeductions(nino, taxYear)(fakeGetRequest)
-        }
-        status(result) mustBe OK
-        Json.parse(bodyOf(result)) mustBe Json.toJson(
-          AllCISDeductions(
-            customerCISDeductions = Some(aCISSource),
-            contractorCISDeductions = Some(contractorCISSource)
-          )
-        )
+        mockAuthorisation()
+        mockGetCISDeductions(nino, anyTaxYear, Right(anAllCISDeductions))
+
+        val result = await(underTest.getCISDeductions(nino, anyTaxYear)(fakeGetRequest))
+
+        result.header.status shouldBe OK
+        Json.parse(consumeBody(result)) shouldBe Json.toJson(anAllCISDeductions)
       }
     }
 
     "without existing customer and contractor data" should {
       "return an NO CONTENT 204 response when called as an individual" in {
-        val result = {
-          mockAuth()
-          mockGetCISDeductions(AllCISDeductions(
-            customerCISDeductions = None,
-            contractorCISDeductions = None
-          ))
-          controller.getCISDeductions(nino, taxYear)(fakeGetRequest)
-        }
-        status(result) mustBe NO_CONTENT
+        mockAuthorisation()
+        mockGetCISDeductions(nino, anyTaxYear, Right(AllCISDeductions(None, None)))
+
+        val result = underTest.getCISDeductions(nino, anyTaxYear)(fakeGetRequest)
+
+        status(result) shouldBe NO_CONTENT
       }
     }
 
     "when an error is returned" should {
       "return the error response when called as an individual" in {
-        val result = {
-          mockAuth()
-          mockGetCISDeductionsError()
-          controller.getCISDeductions(nino, taxYear)(fakeGetRequest)
-        }
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        bodyOf(result) mustBe """{"code":"PARSING_ERROR","reason":"Error parsing response from DES"}"""
+        mockAuthorisation()
+        mockGetCISDeductions(nino, anyTaxYear, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("any-code", "any-reason"))))
+
+        val result = await(underTest.getCISDeductions(nino, anyTaxYear)(fakeGetRequest))
+
+        result.header.status shouldBe INTERNAL_SERVER_ERROR
       }
     }
   }

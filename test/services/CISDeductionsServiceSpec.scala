@@ -19,14 +19,11 @@ package services
 import common.CISSource.{CONTRACTOR, CUSTOMER}
 import connectors.errors.{ApiError, SingleErrorBody}
 import models._
-import models.get.AllCISDeductions
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import support.UnitTest
-import support.builders.CISDeductionsBuilder.aCISDeductions
-import support.builders.CISSourceBuilder.aCISSource
+import support.builders.AllCISDeductionsBuilder.anAllCISDeductions
 import support.builders.CISSubmissionBuilder.aCISSubmission
 import support.builders.CreateCISDeductionsBuilder.aCreateCISDeductions
-import support.builders.GetPeriodDataBuilder.aGetPeriodData
 import support.mocks.{MockCISDeductionsConnector, MockIntegrationFrameworkService}
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HeaderCarrier
@@ -42,7 +39,6 @@ class CISDeductionsServiceSpec extends UnitTest
 
   private val nino = "AA66666B"
   private val taxYear2023_24 = 2024
-  private val contractorCISSource = aCISSource.copy(cisDeductions = Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(submissionId = None, source = CONTRACTOR)))))
 
   private val underTest = new CISDeductionsService(
     mockCISDeductionsConnector,
@@ -87,16 +83,16 @@ class CISDeductionsServiceSpec extends UnitTest
 
       "return an error from the second customer call" in {
         mockGet(nino, taxYear, CUSTOMER, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
-        mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource)))
+        mockGet(nino, taxYear, CONTRACTOR, Right(anAllCISDeductions.contractorCISDeductions))
 
         await(underTest.getCISDeductions(nino, taxYear)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
       }
 
       "return both customer and contractor data" in {
-        mockGet(nino, taxYear, CUSTOMER, Right(Some(aCISSource)))
-        mockGet(nino, taxYear, CONTRACTOR, Right(Some(contractorCISSource)))
+        mockGet(nino, taxYear, CUSTOMER, Right(anAllCISDeductions.customerCISDeductions))
+        mockGet(nino, taxYear, CONTRACTOR, Right(anAllCISDeductions.contractorCISDeductions))
 
-        await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(AllCISDeductions(Some(aCISSource), Some(contractorCISSource)))
+        await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(anAllCISDeductions)
       }
     }
 
@@ -110,16 +106,16 @@ class CISDeductionsServiceSpec extends UnitTest
 
       "return an error from the second customer call" in {
         mockGetCisDeductions(taxYearForIF, nino, CUSTOMER, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
-        mockGetCisDeductions(taxYearForIF, nino, CONTRACTOR, Right(Some(contractorCISSource)))
+        mockGetCisDeductions(taxYearForIF, nino, CONTRACTOR, Right(anAllCISDeductions.contractorCISDeductions))
 
         await(underTest.getCISDeductions(nino, taxYearForIF)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
       }
 
       "return both customer and contractor data" in {
-        mockGetCisDeductions(taxYearForIF, nino, CUSTOMER, Right(Some(aCISSource)))
-        mockGetCisDeductions(taxYearForIF, nino, CONTRACTOR, Right(Some(contractorCISSource)))
+        mockGetCisDeductions(taxYearForIF, nino, CUSTOMER, Right(anAllCISDeductions.customerCISDeductions))
+        mockGetCisDeductions(taxYearForIF, nino, CONTRACTOR, Right(anAllCISDeductions.contractorCISDeductions))
 
-        await(underTest.getCISDeductions(nino, taxYearForIF)) shouldBe Right(AllCISDeductions(Some(aCISSource), Some(contractorCISSource)))
+        await(underTest.getCISDeductions(nino, taxYearForIF)) shouldBe Right(anAllCISDeductions)
       }
     }
   }

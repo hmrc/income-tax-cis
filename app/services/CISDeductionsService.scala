@@ -29,10 +29,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 // TODO: Refactor to use services instead of connector
 class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnector,
-                                     integrationFrameworkService: IntegrationFrameworkService) {
+                                     integrationFrameworkService: IntegrationFrameworkService)
+                                    (implicit ec: ExecutionContext) {
 
   def submitCISDeductions(nino: String, taxYear: Int, cisSubmission: CISSubmission)
-                         (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[ApiError, Option[String]]] = {
+                         (implicit hc: HeaderCarrier): Future[Either[ApiError, Option[String]]] = {
     (cisSubmission: @unchecked) match {
       case CISSubmission(Some(employerRef), Some(contractorName), periodData, None) =>
         cisDeductionsConnector.create(nino, taxYear, CreateCISDeductions(employerRef, contractorName, periodData)).map(response =>
@@ -43,7 +44,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
   }
 
   def getCISDeductions(nino: String, taxYear: Int)
-                      (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[ApiError, AllCISDeductions]] = {
+                      (implicit hc: HeaderCarrier): Future[Either[ApiError, AllCISDeductions]] = {
     getCISDeductions(nino, taxYear, CONTRACTOR).flatMap {
       case Left(error) => Future.successful(Left(error))
       case Right(contractorCISDeductions) => getCISDeductions(nino, taxYear, CUSTOMER).map {
