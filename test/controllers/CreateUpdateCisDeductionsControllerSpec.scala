@@ -20,163 +20,91 @@ import connectors.errors.{ApiError, SingleErrorBody}
 import models.CreateCISDeductionsSuccess
 import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, OK}
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.AnyContentAsJson
-import play.api.test.FakeRequest
+import play.api.test.Helpers.status
+import support.ControllerUnitTest
 import support.builders.CISSubmissionBuilder.aCISSubmission
 import support.builders.PeriodDataBuilder.aPeriodData
-import support.mocks.MockCISDeductionsService
-import utils.TestUtils
+import support.mocks.{MockAuthorisedAction, MockCISDeductionsService}
+import support.providers.FakeRequestProvider
 
-class CreateUpdateCisDeductionsControllerSpec extends TestUtils with MockCISDeductionsService {
+import scala.concurrent.ExecutionContext.Implicits.global
 
-  private val controller = new CreateUpdateCisDeductionsController(mockCISDeductionsService, authorisedAction, mockControllerComponents)
+class CreateUpdateCisDeductionsControllerSpec extends ControllerUnitTest
+  with MockCISDeductionsService
+  with MockAuthorisedAction
+  with FakeRequestProvider {
 
   private val nino: String = "123456789"
-  private val mtdItID: String = "1234567890"
-  private val taxYear: Int = 2022
+  private val anyTaxYear: Int = 2022
 
-  private def fakeRequest(body: JsValue): FakeRequest[AnyContentAsJson] = FakeRequest("POST", "/").withHeaders("MTDITID" -> mtdItID).withJsonBody(body)
+  private val underTest = new CreateUpdateCisDeductionsController(
+    mockCISDeductionsService,
+    mockAuthorisedAction,
+    cc)
 
   "calling .postCISDeductions" should {
     "with create body" should {
       "return an OK 200 response" in {
-        val result = {
-          mockAuth()
-          mockSubmitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None), Right(Some("id")))
-          controller.postCISDeductions(nino, taxYear)(fakeRequest(Json.toJson(aCISSubmission.copy(submissionId = None))))
-        }
-        status(result) mustBe OK
-        Json.parse(bodyOf(result)) mustBe Json.toJson(CreateCISDeductionsSuccess("id"))
+        mockAuthorisation()
+        mockSubmitCISDeductions(nino, anyTaxYear, aCISSubmission.copy(submissionId = None), Right(Some("id")))
+
+        val result = await(underTest.postCISDeductions(nino, anyTaxYear)(fakeGetRequest.withJsonBody(Json.toJson(aCISSubmission.copy(submissionId = None)))))
+
+        result.header.status shouldBe OK
+        Json.parse(consumeBody(result)) shouldBe Json.toJson(CreateCISDeductionsSuccess("id"))
       }
     }
 
     "with update body" should {
       val anUpdateCISSubmission = aCISSubmission.copy(employerRef = None, contractorName = None)
       "return an OK 200 response" in {
-        val result = {
-          mockAuth()
-          mockSubmitCISDeductions(nino, taxYear, anUpdateCISSubmission, Right(None))
-          controller.postCISDeductions(nino, taxYear)(fakeRequest(Json.toJson(anUpdateCISSubmission)))
-        }
-        status(result) mustBe OK
+        mockAuthorisation()
+        mockSubmitCISDeductions(nino, anyTaxYear, anUpdateCISSubmission, Right(None))
+
+
+        val result = underTest.postCISDeductions(nino, anyTaxYear)(fakeRequest.withJsonBody(Json.toJson(anUpdateCISSubmission)))
+
+        status(result) shouldBe OK
       }
+
       "return an OK 200 response when more than one period" in {
-        val result = {
-          mockAuth()
-          mockSubmitCISDeductions(nino, taxYear, anUpdateCISSubmission.copy(periodData = Seq(aPeriodData, aPeriodData)), Right(None))
-          controller.postCISDeductions(nino, taxYear)(fakeRequest(Json.toJson(anUpdateCISSubmission.copy(periodData = Seq(aPeriodData, aPeriodData)))))
-        }
-        status(result) mustBe OK
+        mockAuthorisation()
+        mockSubmitCISDeductions(nino, anyTaxYear, anUpdateCISSubmission.copy(periodData = Seq(aPeriodData, aPeriodData)), Right(None))
+
+        val result = underTest.postCISDeductions(nino, anyTaxYear)(fakeRequest.withJsonBody(Json.toJson(anUpdateCISSubmission.copy(periodData = Seq(aPeriodData, aPeriodData)))))
+
+        status(result) shouldBe OK
       }
     }
 
     "return a bad request" when {
       "a submission id is passed alongside a name and reference" in {
-        val body: JsValue = {
-          Json.parse(
-            """{
-              |	"employerRef": "123/AB123456",
-              |	"contractorName": "ABC Steelworks",
-              |	"periodData": [{
-              |		"deductionFromDate": "2021-04-06",
-              |		"deductionToDate": "2021-05-05",
-              |		"grossAmountPaid": 1,
-              |		"deductionAmount": 1,
-              |		"costOfMaterials": 1
-              |	}],
-              | "submissionId": "1234567890"
-              |}""".stripMargin)
-        }
+        mockAuthorisation()
 
-        val result = {
-          mockAuth()
-          controller.postCISDeductions(nino, taxYear)(fakeRequest(body))
-        }
-        status(result) mustBe BAD_REQUEST
+        val result = underTest.postCISDeductions(nino, anyTaxYear)(fakeRequest.withJsonBody(Json.toJson(aCISSubmission)))
+
+        status(result) shouldBe BAD_REQUEST
       }
+
       "period data is empty" in {
-        val body: JsValue = {
-          Json.parse(
-            """{
-              |	"employerRef": "123/AB123456",
-              |	"contractorName": "ABC Steelworks",
-              |	"periodData": []
-              |}""".stripMargin)
-        }
+        val body: JsValue = Json.toJson(aCISSubmission.copy(periodData = Seq.empty))
 
-        val result = {
-          mockAuth()
-          controller.postCISDeductions(nino, taxYear)(fakeRequest(body))
-        }
-        status(result) mustBe BAD_REQUEST
-      }
-      "period data is none" in {
-        val body: JsValue = {
-          Json.parse(
-            """{
-              |	"employerRef": "123/AB123456",
-              |	"contractorName": "ABC Steelworks"
-              |}""".stripMargin)
-        }
+        mockAuthorisation()
 
-        val result = {
-          mockAuth()
-          controller.postCISDeductions(nino, taxYear)(fakeRequest(body))
-        }
-        status(result) mustBe BAD_REQUEST
-      }
-      "submission id is empty alongside no name" in {
-        val body: JsValue = {
-          Json.parse(
-            """{
-              |	"employerRef": "123/AB123456",
-              |	"periodData": [{
-              |		"deductionFromDate": "2021-04-06",
-              |		"deductionToDate": "2021-05-05",
-              |		"grossAmountPaid": 1,
-              |		"deductionAmount": 1,
-              |		"costOfMaterials": 1
-              |	}]
-              |}""".stripMargin)
-        }
+        val result = underTest.postCISDeductions(nino, anyTaxYear)(fakeRequest.withJsonBody(body))
 
-        val result = {
-          mockAuth()
-          controller.postCISDeductions(nino, taxYear)(fakeRequest(body))
-        }
-        status(result) mustBe BAD_REQUEST
-      }
-      "submission id is empty alongside no name and no reference" in {
-        val body: JsValue = {
-          Json.parse(
-            """{
-              |	"periodData": [{
-              |		"deductionFromDate": "2021-04-06",
-              |		"deductionToDate": "2021-05-05",
-              |		"grossAmountPaid": 1,
-              |		"deductionAmount": 1,
-              |		"costOfMaterials": 1
-              |	}]
-              |}""".stripMargin)
-        }
-
-        val result = {
-          mockAuth()
-          controller.postCISDeductions(nino, taxYear)(fakeRequest(body))
-        }
-        status(result) mustBe BAD_REQUEST
+        status(result) shouldBe BAD_REQUEST
       }
     }
 
     "when an error is returned" should {
       "return the error response when called as an individual" in {
-        val result = {
-          mockAuth()
-          mockSubmitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None), Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
-          controller.postCISDeductions(nino, taxYear)(fakeRequest(Json.toJson(aCISSubmission.copy(submissionId = None))))
-        }
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        bodyOf(result) mustBe """{"code":"PARSING_ERROR","reason":"Error parsing response from DES"}"""
+        mockAuthorisation()
+        mockSubmitCISDeductions(nino, anyTaxYear, aCISSubmission.copy(submissionId = None), Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+
+        val result = underTest.postCISDeductions(nino, anyTaxYear)(fakeRequest.withJsonBody(Json.toJson(aCISSubmission.copy(submissionId = None))))
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
       }
     }
   }

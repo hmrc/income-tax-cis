@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 
-package models
+package support.builders
 
-case class User(mtditid: String, arn: Option[String]) {
+import common.CISSource.CONTRACTOR
+import models.get.AllCISDeductions
+import support.builders.CISDeductionsBuilder.aCISDeductions
+import support.builders.CISSourceBuilder.aCISSource
+import support.builders.GetPeriodDataBuilder.aGetPeriodData
 
-  def isAgent: Boolean = arn.nonEmpty
+object AllCISDeductionsBuilder {
+
+  val anAllCISDeductions: AllCISDeductions = AllCISDeductions(
+    customerCISDeductions = Some(aCISSource),
+    contractorCISDeductions = Some(aCISSource.copy(cisDeductions = Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(source = CONTRACTOR))))))
+  )
 }

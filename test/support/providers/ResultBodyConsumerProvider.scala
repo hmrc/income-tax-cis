@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package common
+package support.providers
 
-object EnrolmentKeys {
-  val Individual = "HMRC-MTD-IT"
-  val Agent = "HMRC-AS-AGENT"
-  val nino = "HMRC-NI"
-}
+import akka.actor.ActorSystem
+import play.api.mvc.Result
+import play.api.test.DefaultAwaitTimeout
+import play.api.test.Helpers.await
 
-object EnrolmentIdentifiers {
-  val individualId = "MTDITID"
-  val agentReference = "AgentReferenceNumber"
-  val nino = "NINO"
+import scala.concurrent.ExecutionContext.Implicits.global
+
+trait ResultBodyConsumerProvider extends DefaultAwaitTimeout {
+
+  private implicit val actorSystem: ActorSystem = ActorSystem()
+
+  def consumeBody(result: Result): String =
+    await(result.body.consumeData.map(_.utf8String))
 }

@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-package models
+package support
 
-case class User(mtditid: String, arn: Option[String]) {
+import play.api.mvc.ControllerComponents
+import play.api.test.Helpers.stubControllerComponents
+import support.providers.ResultBodyConsumerProvider
 
-  def isAgent: Boolean = arn.nonEmpty
+trait ControllerUnitTest extends UnitTest
+  with ResultBodyConsumerProvider {
+
+  protected val cc: ControllerComponents = stubControllerComponents()
 }

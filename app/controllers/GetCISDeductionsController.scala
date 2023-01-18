@@ -17,13 +17,13 @@
 package controllers
 
 import actions.AuthorisedAction
-import javax.inject.Inject
 import models.get.AllCISDeductions
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.CISDeductionsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class GetCISDeductionsController @Inject()(service: CISDeductionsService,

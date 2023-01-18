@@ -19,8 +19,6 @@ package controllers
 import actions.AuthorisedAction
 import connectors.errors.ApiError
 import models.CreateCISDeductionsSuccess
-
-import javax.inject.Inject
 import models.submission.CISSubmission
 import play.api.Logging
 import play.api.libs.json.{JsSuccess, Json}
@@ -28,6 +26,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import services.CISDeductionsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class CreateUpdateCisDeductionsController @Inject()(service: CISDeductionsService,
@@ -37,9 +36,9 @@ class CreateUpdateCisDeductionsController @Inject()(service: CISDeductionsServic
 
   def postCISDeductions(nino: String, taxYear: Int): Action[AnyContent] = auth.async { implicit user =>
     user.request.body.asJson.map(_.validate[CISSubmission]) match {
-      case Some(JsSuccess(model@CISSubmission(Some(_), Some(_), periodData, None), _)) if periodData.nonEmpty  =>
+      case Some(JsSuccess(model@CISSubmission(Some(_), Some(_), periodData, None), _)) if periodData.nonEmpty =>
         responseHandler(service.submitCISDeductions(nino, taxYear, model))
-      case Some(JsSuccess(model@CISSubmission(None, None, periodData, Some(_)), _)) if periodData.nonEmpty  =>
+      case Some(JsSuccess(model@CISSubmission(None, None, periodData, Some(_)), _)) if periodData.nonEmpty =>
         responseHandler(service.submitCISDeductions(nino, taxYear, model))
       case _ =>
         logger.warn("[CreateUpdateCisDeductionsController][postCISDeductions] Create update CIS request is invalid")
@@ -47,7 +46,7 @@ class CreateUpdateCisDeductionsController @Inject()(service: CISDeductionsServic
     }
   }
 
-  private def responseHandler(serviceResponse: Future[Either[ApiError, Option[String]]]): Future[Result] ={
+  private def responseHandler(serviceResponse: Future[Either[ApiError, Option[String]]]): Future[Result] = {
     serviceResponse.map {
       case Right(Some(submissionId)) => Ok(Json.toJson(CreateCISDeductionsSuccess(submissionId)))
       case Right(_) => Ok

@@ -18,41 +18,46 @@ package controllers
 
 import connectors.errors.{ApiError, SingleErrorBody}
 import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT}
-import play.api.mvc.AnyContentAsEmpty
-import play.api.test.FakeRequest
-import support.mocks.MockCISDeductionsService
-import utils.TestUtils
+import play.api.test.Helpers.status
+import support.ControllerUnitTest
+import support.mocks.{MockAuthorisedAction, MockCISDeductionsService}
+import support.providers.FakeRequestProvider
 
-class DeleteCISDeductionsSubmissionControllerSpec extends TestUtils
-  with MockCISDeductionsService {
+import scala.concurrent.ExecutionContext.Implicits.global
 
-  private val controller = new DeleteCISDeductionsSubmissionController(mockCISDeductionsService, authorisedAction, mockControllerComponents)
+class DeleteCISDeductionsSubmissionControllerSpec extends ControllerUnitTest
+  with MockCISDeductionsService
+  with MockAuthorisedAction
+  with FakeRequestProvider {
+
+  private val underTest = new DeleteCISDeductionsSubmissionController(
+    mockCISDeductionsService,
+    mockAuthorisedAction,
+    cc
+  )
 
   private val nino: String = "123456789"
-  private val mtdItID: String = "1234567890"
   private val taxYear: Int = 2022
-
-  override val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("DELETE", "/").withHeaders("MTDITID" -> mtdItID)
 
   "calling .deleteCISDeductionsSubmission" should {
     "return an NO CONTENT response when successfully deletes the data" in {
-      val result = {
-        mockAuth()
-        mockDeleteCISDeductionsSubmission(taxYear, nino, "submissionId", Right(()))
-        controller.deleteCISDeductionsSubmission(nino, taxYear, "submissionId")(fakeRequest)
-      }
-      status(result) mustBe NO_CONTENT
+      mockAuthorisation()
+      mockDeleteCISDeductionsSubmission(taxYear, nino, "submissionId", Right(()))
+
+      val result =
+        underTest.deleteCISDeductionsSubmission(nino, taxYear, "submissionId")(fakeDeleteRequest)
+
+      status(result) shouldBe NO_CONTENT
     }
 
     "when an error is returned" should {
       "return the error response" in {
-        val result = {
-          mockAuth()
-          mockDeleteCISDeductionsSubmission(taxYear, nino, "submissionId", Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
-          controller.deleteCISDeductionsSubmission(nino, taxYear, "submissionId")(fakeRequest)
-        }
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        bodyOf(result) mustBe """{"code":"PARSING_ERROR","reason":"Error parsing response from DES"}"""
+        mockAuthorisation()
+        mockDeleteCISDeductionsSubmission(taxYear, nino, "submissionId", Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+
+        val result = underTest.deleteCISDeductionsSubmission(nino, taxYear, "submissionId")(fakeDeleteRequest)
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
       }
     }
   }

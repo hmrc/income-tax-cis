@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package models
+package models.authorisation
 
-case class User(mtditid: String, arn: Option[String]) {
+sealed abstract class Enrolment(val key: String, val value: String)
 
-  def isAgent: Boolean = arn.nonEmpty
+object Enrolment {
+  case object Individual extends Enrolment(key = "HMRC-MTD-IT", value = "MTDITID")
+  case object Agent extends Enrolment(key = "HMRC-AS-AGENT", value = "AgentReferenceNumber")
+  case object Nino extends Enrolment(key = "HMRC-NI", value = "NINO")
 }

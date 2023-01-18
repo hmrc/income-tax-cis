@@ -37,7 +37,7 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
-// TODO: Refactor tests. Use builders. Get rid of methods that create data and use builders instead
+// TODO: Refactor tests. Use builders. Get rid of methods that create data and use builders instead. Move tests related to Parsing to the parsers unit tests.
 class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
   with TaxYearProvider {
 
@@ -46,24 +46,16 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
   private val nino: String = "AA123123A"
   private val submissionId: String = "a111111a-abcd-111a-123a-11a1a111a1"
 
-  private val customerPeriodData = aGetPeriodData.copy(costOfMaterials = Some(100.00), grossAmountPaid = Some(100.00))
-  private val contractorPeriodData = customerPeriodData.copy(deductionFromDate = s"${taxYearEOY - 1}-04-06", deductionToDate = s"${taxYearEOY - 1}-05-05", submissionId = None, source = CONTRACTOR)
+  private val contractorPeriodData = aGetPeriodData.copy(deductionFromDate = s"${taxYearEOY - 1}-04-06", deductionToDate = s"${taxYearEOY - 1}-05-05", submissionId = None, source = CONTRACTOR)
   private val customerCisDeductions = aCISDeductions.copy(
-    totalCostOfMaterials = Some(200.00),
-    totalGrossAmountPaid = Some(200.00),
-    periodData = Seq(customerPeriodData, customerPeriodData.copy(deductionFromDate = s"$taxYearEOY-05-06", deductionToDate = s"$taxYearEOY-06-05"))
+    periodData = Seq(aGetPeriodData, aGetPeriodData.copy(deductionFromDate = s"$taxYearEOY-05-06", deductionToDate = s"$taxYearEOY-06-05"))
   )
-  private val contractorCisDeductions =
-    customerCisDeductions.copy(
-      fromDate = s"${taxYearEOY - 1}-04-06",
-      toDate = s"$taxYearEOY-04-05",
-      periodData = Seq(contractorPeriodData, contractorPeriodData.copy(deductionFromDate = s"${taxYearEOY - 1}-05-06", deductionToDate = s"${taxYearEOY - 1}-06-05")))
-  private val customerCISSource =
-    aCISSource.copy(
-      totalCostOfMaterials = Some(400),
-      totalGrossAmountPaid = Some(400),
-      cisDeductions = Seq(customerCisDeductions, customerCisDeductions.copy(contractorName = Some("Contractor 2"), employerRef = "222/11111"))
-    )
+  private val contractorCisDeductions = customerCisDeductions.copy(
+    fromDate = s"${taxYearEOY - 1}-04-06",
+    toDate = s"$taxYearEOY-04-05",
+    periodData = Seq(contractorPeriodData, contractorPeriodData.copy(deductionFromDate = s"${taxYearEOY - 1}-05-06", deductionToDate = s"${taxYearEOY - 1}-06-05")))
+
+  private val customerCISSource = aCISSource.copy(cisDeductions = Seq(customerCisDeductions))
   private val contractorCISSource = customerCISSource.copy(cisDeductions = Seq(contractorCisDeductions, contractorCisDeductions.copy(contractorName = Some("Contractor 2"), employerRef = "222/11111")))
 
   private val updateCISDeductionsUrl: String = s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
@@ -91,8 +83,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
       }
 
       "the host for DES is 'External'" in {
-        stubPutWithoutResponseBody(
-          updateCISDeductionsUrl, Json.toJson(anUpdateCISDeductions).toString(), NO_CONTENT)
+        stubPutWithoutResponseBody(updateCISDeductionsUrl, Json.toJson(anUpdateCISDeductions).toString(), NO_CONTENT)
 
         Await.result(connectorWithExternalHost.update(nino, submissionId, anUpdateCISDeductions), Duration.Inf) shouldBe Right(())
       }
@@ -153,22 +144,22 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
   def customerResponse(taxYear: Int): String =
     s"""{
        |	"totalDeductionAmount": 400.00,
-       |	"totalCostOfMaterials": 400.00,
-       |	"totalGrossAmountPaid": 400.00,
+       |	"totalCostOfMaterials": 500.00,
+       |	"totalGrossAmountPaid": 600.00,
        |	"cisDeductions": [{
        |		"fromDate": "${taxYear - 1}-04-06",
        |		"toDate": "$taxYear-04-05",
        |		"contractorName": "ABC Steelworks",
        |		"employerRef": "123/AB123456",
        |		"totalDeductionAmount": 200.00,
-       |		"totalCostOfMaterials": 200.00,
-       |		"totalGrossAmountPaid": 200.00,
+       |		"totalCostOfMaterials": 300.00,
+       |		"totalGrossAmountPaid": 400.00,
        |		"periodData": [{
        |			"deductionFromDate": "${taxYear - 1}-04-06",
        |			"deductionToDate": "${taxYear - 1}-05-05",
        |			"deductionAmount": 100.00,
-       |			"costOfMaterials": 100.00,
-       |			"grossAmountPaid": 100.00,
+       |			"costOfMaterials": 200.00,
+       |			"grossAmountPaid": 300.00,
        |			"submissionDate": "2022-05-11T16:38:57.489Z",
        |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
        |			"source": "customer"
@@ -176,35 +167,8 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
        |			"deductionFromDate": "${taxYear - 1}-05-06",
        |			"deductionToDate": "${taxYear - 1}-06-05",
        |			"deductionAmount": 100.00,
-       |			"costOfMaterials": 100.00,
-       |			"grossAmountPaid": 100.00,
-       |			"submissionDate": "2022-05-11T16:38:57.489Z",
-       |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
-       |			"source": "customer"
-       |		}]
-       |	},{
-       |		"fromDate": "${taxYear - 1}-04-06",
-       |		"toDate": "$taxYear-04-05",
-       |		"contractorName": "Contractor 2",
-       |		"employerRef": "222/11111",
-       |		"totalDeductionAmount": 200.00,
-       |		"totalCostOfMaterials": 200.00,
-       |		"totalGrossAmountPaid": 200.00,
-       |		"periodData": [{
-       |			"deductionFromDate": "${taxYear - 1}-04-06",
-       |			"deductionToDate": "${taxYear - 1}-05-05",
-       |			"deductionAmount": 100.00,
-       |			"costOfMaterials": 100.00,
-       |			"grossAmountPaid": 100.00,
-       |			"submissionDate": "2022-05-11T16:38:57.489Z",
-       |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
-       |			"source": "customer"
-       |		},{
-       |			"deductionFromDate": "${taxYear - 1}-05-06",
-       |			"deductionToDate": "${taxYear - 1}-06-05",
-       |			"deductionAmount": 100.00,
-       |			"costOfMaterials": 100.00,
-       |			"grossAmountPaid": 100.00,
+       |			"costOfMaterials": 200.00,
+       |			"grossAmountPaid": 300.00,
        |			"submissionDate": "2022-05-11T16:38:57.489Z",
        |			"submissionId": "4557ecb5-fd32-48cc-81f5-e6acd1099f3c",
        |			"source": "customer"
@@ -215,30 +179,30 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
   def contractorResponse(taxYear: Int): String =
     s"""{
        |	"totalDeductionAmount": 400.00,
-       |	"totalCostOfMaterials": 400.00,
-       |	"totalGrossAmountPaid": 400.00,
+       |	"totalCostOfMaterials": 500.00,
+       |	"totalGrossAmountPaid": 600.00,
        |	"cisDeductions": [{
        |		"fromDate": "${taxYear - 1}-04-06",
        |		"toDate": "$taxYear-04-05",
        |		"contractorName": "ABC Steelworks",
        |		"employerRef": "123/AB123456",
        |		"totalDeductionAmount": 200.00,
-       |		"totalCostOfMaterials": 200.00,
-       |		"totalGrossAmountPaid": 200.00,
+       |		"totalCostOfMaterials": 300.00,
+       |		"totalGrossAmountPaid": 400.00,
        |		"periodData": [{
        |			"deductionFromDate": "${taxYear - 1}-04-06",
        |			"deductionToDate": "${taxYear - 1}-05-05",
        |			"deductionAmount": 100.00,
-       |			"costOfMaterials": 100.00,
-       |			"grossAmountPaid": 100.00,
+       |			"costOfMaterials": 200.00,
+       |			"grossAmountPaid": 300.00,
        |			"submissionDate": "2022-05-11T16:38:57.489Z",
        |			"source": "contractor"
        |		},{
        |			"deductionFromDate": "${taxYear - 1}-05-06",
        |			"deductionToDate": "${taxYear - 1}-06-05",
        |			"deductionAmount": 100.00,
-       |			"costOfMaterials": 100.00,
-       |			"grossAmountPaid": 100.00,
+       |			"costOfMaterials": 200.00,
+       |			"grossAmountPaid": 300.00,
        |			"submissionDate": "2022-05-11T16:38:57.489Z",
        |			"source": "contractor"
        |		}]
@@ -248,22 +212,22 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
        |		"contractorName": "Contractor 2",
        |		"employerRef": "222/11111",
        |		"totalDeductionAmount": 200.00,
-       |		"totalCostOfMaterials": 200.00,
-       |		"totalGrossAmountPaid": 200.00,
+       |		"totalCostOfMaterials": 300.00,
+       |		"totalGrossAmountPaid": 400.00,
        |		"periodData": [{
        |			"deductionFromDate": "${taxYear - 1}-04-06",
        |			"deductionToDate": "${taxYear - 1}-05-05",
        |			"deductionAmount": 100.00,
-       |			"costOfMaterials": 100.00,
-       |			"grossAmountPaid": 100.00,
+       |			"costOfMaterials": 200.00,
+       |			"grossAmountPaid": 300.00,
        |			"submissionDate": "2022-05-11T16:38:57.489Z",
        |			"source": "contractor"
        |		},{
        |			"deductionFromDate": "${taxYear - 1}-05-06",
        |			"deductionToDate": "${taxYear - 1}-06-05",
        |			"deductionAmount": 100.00,
-       |			"costOfMaterials": 100.00,
-       |			"grossAmountPaid": 100.00,
+       |			"costOfMaterials": 200.00,
+       |			"grossAmountPaid": 300.00,
        |			"submissionDate": "2022-05-11T16:38:57.489Z",
        |			"source": "contractor"
        |		}]
