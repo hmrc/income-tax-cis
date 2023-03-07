@@ -20,46 +20,26 @@ import connectors.errors.{ApiError, SingleErrorBody}
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import support.UnitTest
-import support.builders.CISSourceBuilder.aCISSource
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HttpResponse
 
-class GetCISDeductionsHttpParserSpec extends UnitTest
+class UpdateCISDeductionsHttpParserSpec extends UnitTest
   with TaxYearProvider {
 
   private val anyHeaders: Map[String, Seq[String]] = Map.empty
-  private val anyMethod: String = "GET"
+  private val anyMethod: String = "PUT"
   private val anyUrl = "/any-url"
   private val singleErrorBody: SingleErrorBody = SingleErrorBody("some-code", "some-reason")
   private val singleErrorBodyJson: JsValue = Json.toJson(singleErrorBody)
 
-  private val underTest = GetCISDeductionsHttpParser.GetCISDeductionsResponseHttpReads
+  private val underTest = UpdateCISDeductionsHttpParser.UpdateCISDeductionsResponseHttpReads
 
-  "GetCISDeductionsResponseHttpReads" should {
-    "convert JsValue to GetCISDeductionsResponse" when {
-      "status is OK and source with deductions" in {
-        val httpResponse = HttpResponse.apply(OK, Json.toJson(aCISSource).toString, anyHeaders)
+  "UpdateCISDeductionsResponseHttpReads" should {
+    "convert JsValue to UpdateCISDeductionsResponse" when {
+      "status is NO_CONTENT and any jsValue" in {
+        val httpResponse = HttpResponse.apply(NO_CONTENT, "", anyHeaders)
 
-        underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(Some(aCISSource))
-      }
-
-      "status is OK and source has no deductions" in {
-        val source = aCISSource.copy(cisDeductions = Seq.empty)
-        val httpResponse = HttpResponse.apply(OK, Json.toJson(source).toString, anyHeaders)
-
-        underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(None)
-      }
-
-      "status is OK and bad json" in {
-        val httpResponse = HttpResponse.apply(OK, "{}", anyHeaders)
-
-        underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
-      }
-
-      "status is NOT_FOUND" in {
-        val httpResponse = HttpResponse.apply(NOT_FOUND, singleErrorBodyJson, anyHeaders)
-
-        underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(None)
+        underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(())
       }
 
       "status is INTERNAL_SERVER_ERROR" in {
@@ -84,6 +64,12 @@ class GetCISDeductionsHttpParserSpec extends UnitTest
         val httpResponse = HttpResponse.apply(UNPROCESSABLE_ENTITY, singleErrorBodyJson, anyHeaders)
 
         underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Left(ApiError(UNPROCESSABLE_ENTITY, singleErrorBody))
+      }
+
+      "status is NOT_FOUND" in {
+        val httpResponse = HttpResponse.apply(NOT_FOUND, singleErrorBodyJson, anyHeaders)
+
+        underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Left(ApiError(NOT_FOUND, singleErrorBody))
       }
 
       "status is any other error" in {
