@@ -18,6 +18,7 @@ package services
 
 import support.UnitTest
 import support.builders.CISSourceBuilder.aCISSource
+import support.builders.UpdateCISDeductionsBuilder.anUpdateCISDeductions
 import support.mocks.MockIntegrationFrameworkConnector
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HeaderCarrier
@@ -41,6 +42,14 @@ class IntegrationFrameworkServiceSpec extends UnitTest
       mockGetCisDeductions(taxYear, nino, source, Right(Some(aCISSource)))
 
       await(underTest.getCisDeductions(taxYear, nino, source))
+    }
+  }
+
+  ".updateCisDeductions" should {
+    "delegate to IFConnector and return the result" in {
+      mockUpdate(taxYear, nino, submissionId, anUpdateCISDeductions, Right(()))
+
+      await(underTest.updateCisDeductions(taxYear, nino, submissionId, anUpdateCISDeductions)) shouldBe Right(())
     }
   }
 

@@ -45,7 +45,7 @@ class CISDeductionsServiceSpec extends UnitTest
     mockIntegrationFrameworkService
   )
 
-  "submitCISDeductions" should {
+  ".submitCISDeductions" should {
     "return an error from the create contractor call" in {
       mockCreate(nino, taxYear, aCreateCISDeductions, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
@@ -58,18 +58,36 @@ class CISDeductionsServiceSpec extends UnitTest
       await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None))) shouldBe Right(Some("id"))
     }
 
-    "return None from the update contractor call" in {
-      mockUpdate(nino, aCISSubmission.submissionId.get, UpdateCISDeductions(aCISSubmission.periodData), Right(()))
+    "return None from update contractor call" when {
+      "taxYear is before 2024" in {
+        mockUpdate(nino, aCISSubmission.submissionId.get, UpdateCISDeductions(aCISSubmission.periodData), Right(()))
 
-      await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe Right(None)
+        await(underTest.submitCISDeductions(nino, 2023, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe Right(None)
+      }
+
+      "taxYear is 2024" in {
+        mockUpdateCisDeductions(2024, nino, aCISSubmission.submissionId.get, UpdateCISDeductions(aCISSubmission.periodData), Right(()))
+
+        await(underTest.submitCISDeductions(nino, 2024, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe Right(None)
+      }
     }
 
-    "return an error from the update contractor call" in {
-      mockUpdate(nino, aCISSubmission.submissionId.get, UpdateCISDeductions(aCISSubmission.periodData),
-        Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+    "return an error from the update contractor call" when {
+      "taxYear is before 2024" in {
+        mockUpdate(nino, aCISSubmission.submissionId.get, UpdateCISDeductions(aCISSubmission.periodData),
+          Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-      await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe
-        Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+        await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe
+          Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      }
+
+      "taxYear is 2024" in {
+        mockUpdateCisDeductions(2024, nino, aCISSubmission.submissionId.get, UpdateCISDeductions(aCISSubmission.periodData),
+          Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+
+        await(underTest.submitCISDeductions(nino, 2024, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe
+          Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      }
     }
   }
 

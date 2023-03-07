@@ -39,7 +39,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
         cisDeductionsConnector.create(nino, taxYear, CreateCISDeductions(employerRef, contractorName, periodData)).map(response =>
           response.map(success => Some(success.submissionId)))
       case CISSubmission(None, None, periodData, Some(submissionId)) =>
-        cisDeductionsConnector.update(nino, submissionId, UpdateCISDeductions(periodData = periodData)).map(response => response.map(_ => None))
+        updateCisDeductions(nino, taxYear, UpdateCISDeductions(periodData = periodData), submissionId)
     }
   }
 
@@ -66,15 +66,25 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
     }
   }
 
-  private def shouldUseIFApi(taxYear: Int): Boolean = {
-    taxYear - 1 == 2023
-  }
-
   private def getCISDeductions(nino: String, taxYear: Int, source: String)(implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
     if (shouldUseIFApi(taxYear)) {
       integrationFrameworkService.getCisDeductions(taxYear, nino, source)
     } else {
       cisDeductionsConnector.get(nino, taxYear, source)
     }
+  }
+
+  private def updateCisDeductions(nino: String, taxYear: Int, updateCisDeductions: UpdateCISDeductions, submissionId: String)
+                                 (implicit hc: HeaderCarrier): Future[Either[ApiError, None.type]] = {
+    if (shouldUseIFApi(taxYear)) {
+      integrationFrameworkService.updateCisDeductions(taxYear, nino, submissionId, updateCisDeductions)
+        .map(response => response.map(_ => None))
+    } else {
+      cisDeductionsConnector.update(nino, submissionId, updateCisDeductions).map(response => response.map(_ => None))
+    }
+  }
+
+  private def shouldUseIFApi(taxYear: Int): Boolean = {
+    taxYear > 2023
   }
 }

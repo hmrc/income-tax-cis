@@ -17,10 +17,11 @@
 package connectors
 
 import connectors.errors.{ApiError, SingleErrorBody}
-import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
+import play.api.http.Status.{BAD_GATEWAY, INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import support.ConnectorIntegrationTest
 import support.builders.CISSourceBuilder.aCISSource
+import support.builders.UpdateCISDeductionsBuilder.anUpdateCISDeductions
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, SessionId}
 import utils.CISTaxYearHelper
@@ -35,12 +36,13 @@ class IntegrationFrameworkConnectorISpec extends ConnectorIntegrationTest
   private val source = "some-source"
   private val submissionId = UUID.randomUUID().toString
   private val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
-
-  private val underTest = new IntegrationFrameworkConnector(httpClient, appConfigStub)
+  private val errorBody: SingleErrorBody = SingleErrorBody("some-code", "some-reason")
 
   private def toTaxYearParam(taxYear: Int): String = {
     s"${(taxYear - 1).toString takeRight 2}-${taxYear.toString takeRight 2}"
   }
+
+  private val underTest = new IntegrationFrameworkConnector(httpClient, appConfigStub)
 
   ".getCisDeductions" should {
     "return correct IF response when correct parameters are passed" in {
@@ -54,14 +56,31 @@ class IntegrationFrameworkConnectorISpec extends ConnectorIntegrationTest
     }
 
     "return IF error when Left is returned" in {
-      val httpResponse = HttpResponse(INTERNAL_SERVER_ERROR, Json.toJson(SingleErrorBody("some-code", "some-reason")).toString())
+      val httpResponse = HttpResponse(INTERNAL_SERVER_ERROR, Json.toJson(errorBody).toString())
       val cisTaxYear = CISTaxYearHelper.cisTaxYearConverter(taxYear)
 
       val url = s"/income-tax/cis/deductions/${toTaxYearParam(taxYear)}/$nino\\?startDate=${cisTaxYear.fromDate}&endDate=${cisTaxYear.toDate}&source=$source"
       stubGetHttpClientCall(url, httpResponse)
 
       await(underTest.getCisDeductions(taxYear, nino, source)(hc)) shouldBe
-        Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("some-code", "some-reason")))
+        Left(ApiError(INTERNAL_SERVER_ERROR, errorBody))
+    }
+  }
+
+  ".update" should {
+    val url = s"/income-tax/23-24/cis/deductions/$nino/$submissionId"
+    "return correct IF response when correct parameters are passed" in {
+      stubPutWithoutResponseBody(url, Json.toJson(anUpdateCISDeductions).toString(), NO_CONTENT)
+
+      await(underTest.update(taxYear, nino, submissionId, anUpdateCISDeductions)(hc)) shouldBe Right(())
+    }
+
+    "return IF error when left is returned" in {
+      val api = ApiError(INTERNAL_SERVER_ERROR, errorBody)
+
+      stubPutWithResponseBody(url, Json.toJson(anUpdateCISDeductions).toString(), api.toJson.toString(), BAD_GATEWAY)
+
+      await(underTest.update(taxYear, nino, submissionId, anUpdateCISDeductions)(hc)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, errorBody))
     }
   }
 
@@ -75,12 +94,12 @@ class IntegrationFrameworkConnectorISpec extends ConnectorIntegrationTest
     }
 
     "return IF error when Left is returned" in {
-      val httpResponse = HttpResponse(INTERNAL_SERVER_ERROR, Json.toJson(SingleErrorBody("some-code", "some-reason")).toString())
+      val httpResponse = HttpResponse(INTERNAL_SERVER_ERROR, Json.toJson(errorBody).toString())
 
       stubDeleteHttpClientCall(s"/income-tax/cis/deductions/${toTaxYearParam(taxYear)}/$nino/submissionId/$submissionId", httpResponse)
 
       await(underTest.deleteCisDeductions(taxYear, nino, submissionId)(hc)) shouldBe
-        Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("some-code", "some-reason")))
+        Left(ApiError(INTERNAL_SERVER_ERROR, errorBody))
     }
   }
 }

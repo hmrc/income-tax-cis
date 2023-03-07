@@ -19,8 +19,10 @@ package support.mocks
 import connectors.IntegrationFrameworkConnector
 import connectors.errors.ApiError
 import connectors.parsers.GetCISDeductionsHttpParser.GetCISDeductionsResponse
+import connectors.parsers.UpdateCISDeductionsHttpParser.UpdateCISDeductionsResponse
+import models.UpdateCISDeductions
 import models.get.CISSource
-import org.scalamock.handlers.CallHandler4
+import org.scalamock.handlers.{CallHandler4, CallHandler5}
 import org.scalamock.scalatest.MockFactory
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -36,6 +38,16 @@ trait MockIntegrationFrameworkConnector extends MockFactory {
                            result: Either[ApiError, Option[CISSource]]): CallHandler4[Int, String, String, HeaderCarrier, Future[GetCISDeductionsResponse]] = {
     (mockIntegrationFrameworkConnector.getCisDeductions(_: Int, _: String, _: String)(_: HeaderCarrier))
       .expects(taxYear, nino, source, *)
+      .returning(Future.successful(result))
+  }
+
+  def mockUpdate(taxYear: Int,
+                 nino: String,
+                 submissionId: String,
+                 updateCISDeductions: UpdateCISDeductions,
+                 result: Either[ApiError, Unit]): CallHandler5[Int, String, String, UpdateCISDeductions, HeaderCarrier, Future[UpdateCISDeductionsResponse]] = {
+    (mockIntegrationFrameworkConnector.update(_: Int, _: String, _: String, _: UpdateCISDeductions)(_: HeaderCarrier))
+      .expects(taxYear, nino, submissionId, updateCISDeductions, *)
       .returning(Future.successful(result))
   }
 

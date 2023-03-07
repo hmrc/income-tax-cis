@@ -33,7 +33,6 @@ class CISDeductionsConnector @Inject()(val http: HttpClient,
 
   def update(nino: String, submissionId: String, model: UpdateCISDeductions)
             (implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] = {
-
     val updateUri: String = baseUrl + s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
 
     def desCall(implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] = {
