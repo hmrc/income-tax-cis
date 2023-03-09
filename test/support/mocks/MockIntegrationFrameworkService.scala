@@ -17,7 +17,7 @@
 package support.mocks
 
 import connectors.errors.ApiError
-import models.UpdateCISDeductions
+import models.{CreateCISDeductions, CreateCISDeductionsSuccess, UpdateCISDeductions}
 import models.get.CISSource
 import org.scalamock.handlers.{CallHandler4, CallHandler5}
 import org.scalamock.scalatest.MockFactory
@@ -37,6 +37,16 @@ trait MockIntegrationFrameworkService extends MockFactory {
     (mockIntegrationFrameworkService.getCisDeductions(_: Int, _: String, _: String)(_: HeaderCarrier))
       .expects(taxYear, nino, source, *)
       .returning(Future.successful(response))
+  }
+
+  def mockCreateCisDeductions(taxYear: Int,
+                              nino: String,
+                              createCISDeductions: CreateCISDeductions,
+                              result: Either[ApiError, CreateCISDeductionsSuccess]):
+  CallHandler4[Int, String, CreateCISDeductions, HeaderCarrier, Future[Either[ApiError, CreateCISDeductionsSuccess]]] = {
+    (mockIntegrationFrameworkService.createCisDeductions(_: Int, _: String, _: CreateCISDeductions)(_: HeaderCarrier))
+      .expects(taxYear, nino, createCISDeductions, *)
+      .returning(Future.successful(result))
   }
 
   def mockUpdateCisDeductions(taxYear: Int,

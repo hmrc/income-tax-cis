@@ -46,16 +46,32 @@ class CISDeductionsServiceSpec extends UnitTest
   )
 
   ".submitCISDeductions" should {
-    "return an error from the create contractor call" in {
-      mockCreate(nino, taxYear, aCreateCISDeductions, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+    "return an error from the create contractor call" when {
+      "taxYear is before 2024" in {
+        mockCreate(nino, taxYear, aCreateCISDeductions, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-      await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None))) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+        await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None))) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      }
+
+      "taxYear is 2024" in {
+        mockCreateCisDeductions(2024, nino, aCreateCISDeductions, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+
+        await(underTest.submitCISDeductions(nino, 2024, aCISSubmission.copy(submissionId = None))) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+      }
     }
 
-    "return an id from the create contractor call" in {
-      mockCreate(nino, taxYear, aCreateCISDeductions, Right(CreateCISDeductionsSuccess("id")))
+    "return an id from the create contractor call" when {
+      "taxYear is before 2024" in {
+        mockCreate(nino, taxYear, aCreateCISDeductions, Right(CreateCISDeductionsSuccess("id")))
 
-      await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None))) shouldBe Right(Some("id"))
+        await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None))) shouldBe Right(Some("id"))
+      }
+
+      "taxYear is 2024" in {
+        mockCreateCisDeductions(2024, nino, aCreateCISDeductions, Right(CreateCISDeductionsSuccess("id")))
+
+        await(underTest.submitCISDeductions(nino, 2024, aCISSubmission.copy(submissionId = None))) shouldBe Right(Some("id"))
+      }
     }
 
     "return None from update contractor call" when {

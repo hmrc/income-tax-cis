@@ -24,7 +24,6 @@ import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 import utils.PagerDutyHelper.PagerDutyKeys._
 import utils.PagerDutyHelper.pagerDutyLog
 
-// TODO: Write unit test
 object CreateCISDeductionsParser extends ResponseParser with Logging {
   type CreateCISDeductionsResponse = Either[ApiError, CreateCISDeductionsSuccess]
 
@@ -33,7 +32,7 @@ object CreateCISDeductionsParser extends ResponseParser with Logging {
   implicit object CreateCISDeductionsResponseHttpReads extends HttpReads[CreateCISDeductionsResponse] {
     override def read(method: String, url: String, response: HttpResponse): CreateCISDeductionsResponse = {
       response.status match {
-        case OK => response.json.validate[CreateCISDeductionsSuccess].fold[CreateCISDeductionsResponse](
+        case OK | CREATED => response.json.validate[CreateCISDeductionsSuccess].fold[CreateCISDeductionsResponse](
           _ => badSuccessJsonFromDES,
           responseModel => Right(responseModel)
         )
