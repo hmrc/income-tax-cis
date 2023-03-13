@@ -16,8 +16,10 @@
 
 package services
 
+import models.CreateCISDeductionsSuccess
 import support.UnitTest
 import support.builders.CISSourceBuilder.aCISSource
+import support.builders.CreateCISDeductionsBuilder.aCreateCISDeductions
 import support.builders.UpdateCISDeductionsBuilder.anUpdateCISDeductions
 import support.mocks.MockIntegrationFrameworkConnector
 import support.providers.TaxYearProvider
@@ -42,6 +44,14 @@ class IntegrationFrameworkServiceSpec extends UnitTest
       mockGetCisDeductions(taxYear, nino, source, Right(Some(aCISSource)))
 
       await(underTest.getCisDeductions(taxYear, nino, source))
+    }
+  }
+
+  ".createCisDeductions" should {
+    "delegate to IFConnector and return the result" in {
+      mockCreateCisDeductions(taxYear, nino, aCreateCISDeductions, Right(CreateCISDeductionsSuccess(submissionId)))
+
+      await(underTest.createCisDeductions(taxYear, nino, aCreateCISDeductions))
     }
   }
 

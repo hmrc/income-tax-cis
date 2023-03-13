@@ -18,10 +18,11 @@ package connectors
 
 import config.AppConfig
 import connectors.errors.ApiError
+import connectors.parsers.CreateCISDeductionsParser.{CreateCISDeductionsResponse, CreateCISDeductionsResponseHttpReads}
 import connectors.parsers.DeleteCISDeductionsHttpParser.{DeleteCISDeductionsHttpReads, DeleteCISDeductionsResponse}
 import connectors.parsers.GetCISDeductionsHttpParser.{GetCISDeductionsResponse, GetCISDeductionsResponseHttpReads}
 import connectors.parsers.UpdateCISDeductionsHttpParser.{UpdateCISDeductionsResponse, UpdateCISDeductionsResponseHttpReads}
-import models.UpdateCISDeductions
+import models.{CreateCISDeductions, UpdateCISDeductions}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import utils.CISTaxYearHelper
 
@@ -34,6 +35,7 @@ class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
                                              (implicit ec: ExecutionContext) extends IFConnector {
 
   private val GET_API_VERSION = "1792"
+  private val CREATE_API_VERSION = "1789"
   private val UPDATE_API_VERSION = "1791"
   private val DELETE_API_VERSION = "1790"
 
@@ -52,6 +54,17 @@ class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
     }
 
     ifCall(ifHeaderCarrier(url, GET_API_VERSION))
+  }
+
+  def create(taxYear: Int, nino: String, model: CreateCISDeductions)
+            (implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
+    val url = s"$baseUrl/income-tax/${taxYearParam(taxYear, CREATE_API_VERSION)}/cis/deductions/$nino"
+
+    def ifCall(implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
+      httpClient.POST[CreateCISDeductions, CreateCISDeductionsResponse](url, model)(CreateCISDeductions.format, CreateCISDeductionsResponseHttpReads, hc, ec)
+    }
+
+    ifCall(ifHeaderCarrier(url, CREATE_API_VERSION))
   }
 
   def update(taxYear: Int, nino: String, submissionId: String, model: UpdateCISDeductions)
@@ -83,7 +96,7 @@ class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
 
     apiVersion match {
       case GET_API_VERSION | DELETE_API_VERSION => taxYearParam
-      case UPDATE_API_VERSION => "23-24"
+      case UPDATE_API_VERSION | CREATE_API_VERSION => "23-24"
       case _ => throw new NotImplementedError
     }
   }

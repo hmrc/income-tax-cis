@@ -17,10 +17,13 @@
 package connectors
 
 import connectors.errors.{ApiError, SingleErrorBody}
-import play.api.http.Status.{BAD_GATEWAY, INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
+import models.CreateCISDeductionsSuccess
+import play.api.http.Status.{BAD_GATEWAY, CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.libs.json.Json
 import support.ConnectorIntegrationTest
 import support.builders.CISSourceBuilder.aCISSource
+import support.builders.CISSubmissionBuilder.aCISSubmission
+import support.builders.CreateCISDeductionsBuilder.aCreateCISDeductions
 import support.builders.UpdateCISDeductionsBuilder.anUpdateCISDeductions
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, SessionId}
@@ -64,6 +67,22 @@ class IntegrationFrameworkConnectorISpec extends ConnectorIntegrationTest
 
       await(underTest.getCisDeductions(taxYear, nino, source)(hc)) shouldBe
         Left(ApiError(INTERNAL_SERVER_ERROR, errorBody))
+    }
+  }
+
+  ".create" should {
+    val url = s"/income-tax/23-24/cis/deductions/$nino"
+    "return correct IF response when correct parameters are passed" in {
+      val success = CreateCISDeductionsSuccess(aCISSubmission.submissionId.get)
+      stubPostWithResponseBody(url, CREATED, Json.toJson(aCreateCISDeductions).toString(), Json.toJson(success).toString())
+
+      await(underTest.create(taxYear, nino, aCreateCISDeductions)(hc)) shouldBe Right(success)
+    }
+
+    "return IF error when left is returned" in {
+      stubPostWithResponseBody(url, INTERNAL_SERVER_ERROR, Json.toJson(aCreateCISDeductions).toString(), Json.toJson(errorBody).toString())
+
+      await(underTest.create(taxYear, nino, aCreateCISDeductions)(hc)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, errorBody))
     }
   }
 

@@ -18,7 +18,7 @@ package services
 
 import connectors.IntegrationFrameworkConnector
 import connectors.errors.ApiError
-import models.UpdateCISDeductions
+import models.{CreateCISDeductions, CreateCISDeductionsSuccess, UpdateCISDeductions}
 import models.get.CISSource
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -33,6 +33,13 @@ class IntegrationFrameworkService @Inject()(integrationFrameworkConnector: Integ
                        source: String)
                       (implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
     integrationFrameworkConnector.getCisDeductions(taxYear, nino, source)
+  }
+
+  def createCisDeductions(taxYear: Int,
+                          nino: String,
+                          createCISDeductions: CreateCISDeductions)
+                         (implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
+    integrationFrameworkConnector.create(taxYear, nino, createCISDeductions)
   }
 
   def updateCisDeductions(taxYear: Int,

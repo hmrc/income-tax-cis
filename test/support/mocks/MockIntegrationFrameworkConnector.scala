@@ -18,9 +18,10 @@ package support.mocks
 
 import connectors.IntegrationFrameworkConnector
 import connectors.errors.ApiError
+import connectors.parsers.CreateCISDeductionsParser.CreateCISDeductionsResponse
 import connectors.parsers.GetCISDeductionsHttpParser.GetCISDeductionsResponse
 import connectors.parsers.UpdateCISDeductionsHttpParser.UpdateCISDeductionsResponse
-import models.UpdateCISDeductions
+import models.{CreateCISDeductions, CreateCISDeductionsSuccess, UpdateCISDeductions}
 import models.get.CISSource
 import org.scalamock.handlers.{CallHandler4, CallHandler5}
 import org.scalamock.scalatest.MockFactory
@@ -38,6 +39,15 @@ trait MockIntegrationFrameworkConnector extends MockFactory {
                            result: Either[ApiError, Option[CISSource]]): CallHandler4[Int, String, String, HeaderCarrier, Future[GetCISDeductionsResponse]] = {
     (mockIntegrationFrameworkConnector.getCisDeductions(_: Int, _: String, _: String)(_: HeaderCarrier))
       .expects(taxYear, nino, source, *)
+      .returning(Future.successful(result))
+  }
+
+  def mockCreateCisDeductions(taxYear: Int,
+                              nino: String,
+                              createCISDeductions: CreateCISDeductions,
+                              result: Either[ApiError, CreateCISDeductionsSuccess]): CallHandler4[Int, String, CreateCISDeductions, HeaderCarrier, Future[CreateCISDeductionsResponse]] = {
+    (mockIntegrationFrameworkConnector.create(_: Int, _: String, _: CreateCISDeductions)(_: HeaderCarrier))
+      .expects(taxYear, nino, createCISDeductions, *)
       .returning(Future.successful(result))
   }
 

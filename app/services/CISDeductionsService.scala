@@ -21,7 +21,7 @@ import connectors.CISDeductionsConnector
 import connectors.errors.ApiError
 import models.get.{AllCISDeductions, CISSource}
 import models.submission.CISSubmission
-import models.{CreateCISDeductions, UpdateCISDeductions}
+import models.{CreateCISDeductions, CreateCISDeductionsSuccess, UpdateCISDeductions}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
@@ -36,7 +36,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
                          (implicit hc: HeaderCarrier): Future[Either[ApiError, Option[String]]] = {
     (cisSubmission: @unchecked) match {
       case CISSubmission(Some(employerRef), Some(contractorName), periodData, None) =>
-        cisDeductionsConnector.create(nino, taxYear, CreateCISDeductions(employerRef, contractorName, periodData)).map(response =>
+        createCisDeductions(nino, taxYear, CreateCISDeductions(employerRef, contractorName, periodData)).map(response =>
           response.map(success => Some(success.submissionId)))
       case CISSubmission(None, None, periodData, Some(submissionId)) =>
         updateCisDeductions(nino, taxYear, UpdateCISDeductions(periodData = periodData), submissionId)
@@ -71,6 +71,15 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
       integrationFrameworkService.getCisDeductions(taxYear, nino, source)
     } else {
       cisDeductionsConnector.get(nino, taxYear, source)
+    }
+  }
+
+  private def createCisDeductions(nino: String, taxYear: Int, createCisDeductions: CreateCISDeductions)
+                                 (implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
+    if (shouldUseIFApi(taxYear)) {
+      integrationFrameworkService.createCisDeductions(taxYear, nino, createCisDeductions)
+    } else {
+      cisDeductionsConnector.create(nino, taxYear, createCisDeductions)
     }
   }
 
