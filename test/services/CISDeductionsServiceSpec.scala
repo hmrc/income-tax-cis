@@ -38,6 +38,7 @@ class CISDeductionsServiceSpec extends UnitTest
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
   private val nino = "AA66666B"
+  private val taxYearBefore2023_24 = 2023
   private val taxYear2023_24 = 2024
 
   private val underTest = new CISDeductionsService(
@@ -48,9 +49,9 @@ class CISDeductionsServiceSpec extends UnitTest
   ".submitCISDeductions" should {
     "return an error from the create contractor call" when {
       "taxYear is before 2024" in {
-        mockCreate(nino, taxYear, aCreateCISDeductions, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+        mockCreate(nino, 2023, aCreateCISDeductions, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-        await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None))) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+        await(underTest.submitCISDeductions(nino, 2023, aCISSubmission.copy(submissionId = None))) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
       }
 
       "taxYear is 2024" in {
@@ -62,9 +63,9 @@ class CISDeductionsServiceSpec extends UnitTest
 
     "return an id from the create contractor call" when {
       "taxYear is before 2024" in {
-        mockCreate(nino, taxYear, aCreateCISDeductions, Right(CreateCISDeductionsSuccess("id")))
+        mockCreate(nino, 2023, aCreateCISDeductions, Right(CreateCISDeductionsSuccess("id")))
 
-        await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(submissionId = None))) shouldBe Right(Some("id"))
+        await(underTest.submitCISDeductions(nino, 2023, aCISSubmission.copy(submissionId = None))) shouldBe Right(Some("id"))
       }
 
       "taxYear is 2024" in {
@@ -93,7 +94,7 @@ class CISDeductionsServiceSpec extends UnitTest
         mockUpdate(nino, aCISSubmission.submissionId.get, UpdateCISDeductions(aCISSubmission.periodData),
           Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-        await(underTest.submitCISDeductions(nino, taxYear, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe
+        await(underTest.submitCISDeductions(nino, 2023, aCISSubmission.copy(employerRef = None, contractorName = None))) shouldBe
           Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
       }
 
@@ -110,23 +111,23 @@ class CISDeductionsServiceSpec extends UnitTest
   "getCISDeductions" should {
     "when DES Connector is used" when {
       "return an error from the first contractor call" in {
-        mockGet(nino, taxYear, CONTRACTOR, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+        mockGet(nino, 2023, CONTRACTOR, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
-        await(underTest.getCISDeductions(nino, taxYear)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+        await(underTest.getCISDeductions(nino, 2023)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
       }
 
       "return an error from the second customer call" in {
-        mockGet(nino, taxYear, CUSTOMER, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
-        mockGet(nino, taxYear, CONTRACTOR, Right(anAllCISDeductions.contractorCISDeductions))
+        mockGet(nino, 2023, CUSTOMER, Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+        mockGet(nino, 2023, CONTRACTOR, Right(anAllCISDeductions.contractorCISDeductions))
 
-        await(underTest.getCISDeductions(nino, taxYear)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+        await(underTest.getCISDeductions(nino, 2023)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
       }
 
       "return both customer and contractor data" in {
-        mockGet(nino, taxYear, CUSTOMER, Right(anAllCISDeductions.customerCISDeductions))
-        mockGet(nino, taxYear, CONTRACTOR, Right(anAllCISDeductions.contractorCISDeductions))
+        mockGet(nino, 2023, CUSTOMER, Right(anAllCISDeductions.customerCISDeductions))
+        mockGet(nino, 2023, CONTRACTOR, Right(anAllCISDeductions.contractorCISDeductions))
 
-        await(underTest.getCISDeductions(nino, taxYear)) shouldBe Right(anAllCISDeductions)
+        await(underTest.getCISDeductions(nino, 2023)) shouldBe Right(anAllCISDeductions)
       }
     }
 
@@ -164,7 +165,7 @@ class CISDeductionsServiceSpec extends UnitTest
     "delegate to DES Connector when tax year is different than 2023-24" in {
       mockDelete(nino, "submissionId", Right(()))
 
-      await(underTest.deleteCISDeductionsSubmission(taxYear, nino, "submissionId")) shouldBe Right(())
+      await(underTest.deleteCISDeductionsSubmission(taxYearBefore2023_24, nino, "submissionId")) shouldBe Right(())
     }
   }
 }
