@@ -74,13 +74,13 @@ class IntegrationFrameworkConnectorISpec extends ConnectorIntegrationTest
     val url = s"/income-tax/23-24/cis/deductions/$nino"
     "return correct IF response when correct parameters are passed" in {
       val success = CreateCISDeductionsSuccess(aCISSubmission.submissionId.get)
-      stubPostWithResponseBody(url, CREATED, Json.toJson(aCreateCISDeductions).toString(), Json.toJson(success).toString())
+      stubPostWithResponseBody(url, CREATED, Json.toJson(aCreateCISDeductions.toApiModel(taxYear)).toString(), Json.toJson(success).toString())
 
       await(underTest.create(taxYear, nino, aCreateCISDeductions)(hc)) shouldBe Right(success)
     }
 
     "return IF error when left is returned" in {
-      stubPostWithResponseBody(url, INTERNAL_SERVER_ERROR, Json.toJson(aCreateCISDeductions).toString(), Json.toJson(errorBody).toString())
+      stubPostWithResponseBody(url, INTERNAL_SERVER_ERROR, Json.toJson(aCreateCISDeductions.toApiModel(taxYear)).toString(), Json.toJson(errorBody).toString())
 
       await(underTest.create(taxYear, nino, aCreateCISDeductions)(hc)) shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, errorBody))
     }

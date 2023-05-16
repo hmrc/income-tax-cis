@@ -22,7 +22,7 @@ import connectors.parsers.CreateCISDeductionsParser.{CreateCISDeductionsResponse
 import connectors.parsers.DeleteCISDeductionsHttpParser.{DeleteCISDeductionsHttpReads, DeleteCISDeductionsResponse}
 import connectors.parsers.GetCISDeductionsHttpParser.{GetCISDeductionsResponse, GetCISDeductionsResponseHttpReads}
 import connectors.parsers.UpdateCISDeductionsHttpParser.{UpdateCISDeductionsResponse, UpdateCISDeductionsResponseHttpReads}
-import models.{CreateCISDeductions, UpdateCISDeductions}
+import models.{CreateCISDeductions, CreateCISDeductionsApi, UpdateCISDeductions}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import utils.CISTaxYearHelper
 
@@ -61,7 +61,7 @@ class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
     val url = s"$baseUrl/income-tax/${taxYearParam(taxYear, CREATE_API_VERSION)}/cis/deductions/$nino"
 
     def ifCall(implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
-      httpClient.POST[CreateCISDeductions, CreateCISDeductionsResponse](url, model)(CreateCISDeductions.format, CreateCISDeductionsResponseHttpReads, hc, ec)
+      httpClient.POST[CreateCISDeductionsApi, CreateCISDeductionsResponse](url, model.toApiModel(taxYear))(CreateCISDeductionsApi.format, CreateCISDeductionsResponseHttpReads, hc, ec)
     }
 
     ifCall(ifHeaderCarrier(url, CREATE_API_VERSION))
