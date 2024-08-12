@@ -6,3 +6,5 @@ DELETE  /income-tax/nino/:nino/sources/:submissionId        controllers.DeleteCI
 
 POST    /income-tax/nino/:nino/sources                      controllers.CreateUpdateCisDeductionsController.postCISDeductions(nino: String, taxYear: Int)
 
+GET     /:taxYear/tasks/:nino                               controllers.CommonTaskListController.getCommonTaskList(taxYear: Int, nino: String)
+

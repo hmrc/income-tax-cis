@@ -31,6 +31,8 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
 
   def authorisationTokenFor(apiVersion: String): String = servicesConfig.getString(ifAuthorisationTokenKey + s".$apiVersion")
 
+  lazy val cisFrontendBaseUrl: String = config.get[String]("microservice.services.income-tax-cis-frontend.url")
+
   lazy val authBaseUrl: String = servicesConfig.baseUrl("auth")
   lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
   lazy val graphiteHost: String = config.get[String]("microservice.metrics.graphite.host")
