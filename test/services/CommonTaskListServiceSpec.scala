@@ -16,12 +16,15 @@
 
 package services
 
+import common.CISSource.CONTRACTOR
 import connectors.errors.{ApiError, SingleErrorBody}
 import models.get.{AllCISDeductions, CISSource}
 import models.tasklist._
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import play.api.http.Status.NOT_FOUND
 import support.ControllerUnitTest
+import support.builders.CISDeductionsBuilder.aCISDeductions
+import support.builders.GetPeriodDataBuilder.aGetPeriodData
 import support.builders.{AllCISDeductionsBuilder, CISSourceBuilder}
 import support.mocks.{MockAuthorisedAction, MockCISDeductionsService}
 import support.providers.{AppConfigStubProvider, FakeRequestProvider}
@@ -45,21 +48,27 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
 
   val customerCISResult: CISSource = CISSourceBuilder.aCISSource
 
-  val fullCISResult: Right[ApiError, AllCISDeductions] = Right(AllCISDeductionsBuilder.anAllCISDeductions)
+  val contractorCISResult: CISSource = CISSourceBuilder.aCISSource.copy(cisDeductions =
+    Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(source = CONTRACTOR)))))
+
+  val fullCISResult: Right[ApiError, AllCISDeductions] = Right(AllCISDeductionsBuilder.allCISDeductionsCustomerFocussed)
+
+  val fullCISResultContractorFocused : Right[ApiError, AllCISDeductions] = Right(AllCISDeductionsBuilder.allCISDeductionsContractorFocussed)
 
   val emptyCISResult: Left[ApiError, AllCISDeductions] = Left(ApiError(NOT_FOUND, SingleErrorBody("code", "Some_Reason")))
 
-  val fullTaskSection: TaskListSection =
-    TaskListSection(SectionTitle.CISTitle,
-      Some(List(
-        TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.Completed,
-          Some("http://localhost:9338/update-and-submit-income-tax-return/construction-industry-scheme-deductions/1234/check-construction-industry-scheme-deductions")),
-      ))
-    )
+  val taskListUrl: String = "http://localhost:9338/update-and-submit-income-tax-return/construction-industry-scheme-deductions/1234/check-construction-industry-scheme-deductions"
+
+  val completeCustomerTaskListSection: TaskListSection =
+    TaskListSection(SectionTitle.CISTitle, Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.Completed, Some(taskListUrl))))
+
+  val completeContractorTaskListSection: TaskListSection =
+    TaskListSection(SectionTitle.CISTitle, Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.CheckNow, Some(taskListUrl))))
+
 
   "CommonTaskListService.get" should {
 
-    "return a full task list section model" in {
+    "return a task list section model with status completed when Customer Data is the latest data" in {
 
       (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
         .expects(nino, taxYear, *)
@@ -67,10 +76,21 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
 
       val underTest = service.get(taxYear, nino)
 
-      await(underTest) mustBe fullTaskSection
+      await(underTest) mustBe completeCustomerTaskListSection
     }
 
-    "return a minimal task list section model" in {
+    "return a task list section model with status checkNow when Contractor Data is the latest data" in {
+
+      (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
+        .expects(nino, taxYear, *)
+        .returning(Future.successful(fullCISResultContractorFocused))
+
+      val underTest = service.get(taxYear, nino)
+
+      await(underTest) mustBe completeContractorTaskListSection
+    }
+
+    "return a task list section model when only customer data exists" in {
 
       (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
         .expects(nino, taxYear, *)
@@ -78,11 +98,21 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
 
       val underTest = service.get(taxYear, nino)
 
-      await(underTest) mustBe fullTaskSection.copy(
-        taskItems = Some(List(
-          TaskListSectionItem(
-            TaskTitle.cisDeductions, TaskStatus.Completed, Some("http://localhost:9338/update-and-submit-income-tax-return/construction-industry-scheme-deductions/1234/check-construction-industry-scheme-deductions"))
-        ))
+      await(underTest) mustBe completeCustomerTaskListSection.copy(
+        taskItems = Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.Completed, Some(taskListUrl)))
+      )
+    }
+
+    "return a task list section model when only contractor data exists" in {
+
+      (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
+        .expects(nino, taxYear, *)
+        .returning(Future.successful(Right(AllCISDeductions(Some(CISSource(None, None, None, Seq())), Some(contractorCISResult)))))
+
+      val underTest = service.get(taxYear, nino)
+
+      await(underTest) mustBe completeCustomerTaskListSection.copy(
+        taskItems = Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.CheckNow, Some(taskListUrl)))
       )
     }
 

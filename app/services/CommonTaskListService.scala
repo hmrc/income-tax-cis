@@ -17,10 +17,11 @@
 package services
 
 import config.AppConfig
-import models.get.AllCISDeductions
+import models.get.{AllCISDeductions, CISSource}
 import models.tasklist._
 import uk.gov.hmrc.http.HeaderCarrier
 
+import java.time.Instant
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,38 +30,41 @@ class CommonTaskListService @Inject()(appConfig: AppConfig,
                                      ) {
 
   def get(taxYear: Int, nino: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[TaskListSection] = {
-
-    val cis: Future[AllCISDeductions] = cisDeductionsService.getCISDeductions(nino, taxYear).map {
+    cisDeductionsService.getCISDeductions(nino, taxYear).map {
       case Left(_) => AllCISDeductions(None, None)
-      case Right(value) => value
-    }
-
-    cis.map { c =>
-      val tasks: Option[Seq[TaskListSectionItem]] = {
-        val optionalTasks: Seq[TaskListSectionItem] = getTasks(c, taxYear)
-        if (optionalTasks.nonEmpty) {
-          Some(optionalTasks)
-        } else {
-          None
-        }
-      }
+      case Right(cis) => cis
+    }.map { cis =>
+      val tasks: Option[TaskListSectionItem] = getTasks(cis, taxYear)
       TaskListSection(SectionTitle.CISTitle, tasks)
     }
   }
 
-  private def getTasks(cisDeductions: AllCISDeductions, taxYear: Int): Seq[TaskListSectionItem] = {
+  private def getTasks(cisDeductions: AllCISDeductions, taxYear: Int): Option[TaskListSectionItem] = {
 
     // TODO: these will be links to the new individual CYA pages when they are made
     val cisCustomerUrl: String =
       s"${appConfig.cisFrontendBaseUrl}/update-and-submit-income-tax-return/construction-industry-scheme-deductions/$taxYear/check-construction-industry-scheme-deductions"
 
-    val cisCustomerDeductions: Option[TaskListSectionItem] = cisDeductions.customerCISDeductions.map(_ =>
-      TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.Completed, Some(cisCustomerUrl)))
+    def getSubmissionDate(cisSource: Option[CISSource]): Long = {
+      cisSource.flatMap(_
+        .cisDeductions.headOption.flatMap(_.periodData
+          .map(_.submissionDate).maxOption
+          .map(Instant.parse(_).getEpochSecond)
+        )).getOrElse(0)
+    }
 
-    // TODO: waiting on more information regarding Contractor Data
-    val cisContractorDeductions: Option[TaskListSectionItem] = cisDeductions.contractorCISDeductions.map(_ =>
-      TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.Completed, Some(cisCustomerUrl)))
+    val customerSubmittedOn: Long = getSubmissionDate(cisDeductions.customerCISDeductions)
 
-    Seq[Option[TaskListSectionItem]](cisCustomerDeductions).flatten
+    val hmrcSubmittedOn: Long = getSubmissionDate(cisDeductions.contractorCISDeductions)
+
+    val hasCustomerData: Boolean = cisDeductions.customerCISDeductions.exists(_.cisDeductions.nonEmpty)
+
+    val hasHMRCData: Boolean = cisDeductions.contractorCISDeductions.exists(_.cisDeductions.nonEmpty)
+
+    (hmrcSubmittedOn >= customerSubmittedOn && hasHMRCData, hasCustomerData) match {
+      case (true, _) => Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.CheckNow, Some(cisCustomerUrl)))
+      case (false, true) => Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.Completed, Some(cisCustomerUrl)))
+      case (_, _) => None
+    }
   }
 }
