@@ -41,7 +41,6 @@ class CommonTaskListService @Inject()(appConfig: AppConfig,
 
   private def getTasks(cisDeductions: AllCISDeductions, taxYear: Int): Option[TaskListSectionItem] = {
 
-    // TODO: these will be links to the new individual CYA pages when they are made
     val cisCustomerUrl: String =
       s"${appConfig.cisFrontendBaseUrl}/update-and-submit-income-tax-return/construction-industry-scheme-deductions/$taxYear/check-construction-industry-scheme-deductions"
 

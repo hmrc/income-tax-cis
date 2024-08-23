@@ -28,7 +28,7 @@ class TaskTitleSpec extends AnyFreeSpec with Matchers {
 
     "must contain the correct values" in {
       TaskTitle.values mustEqual Seq[TaskTitle](
-        cisDeductions,
+        cisDeductions
       )
     }
 
