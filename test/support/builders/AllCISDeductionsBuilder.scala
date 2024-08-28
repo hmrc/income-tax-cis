@@ -28,4 +28,14 @@ object AllCISDeductionsBuilder {
     customerCISDeductions = Some(aCISSource),
     contractorCISDeductions = Some(aCISSource.copy(cisDeductions = Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(source = CONTRACTOR))))))
   )
+
+  val allCISDeductionsContractorFocussed: AllCISDeductions = AllCISDeductions(
+    customerCISDeductions = Some(aCISSource),
+    contractorCISDeductions = Some(aCISSource.copy(cisDeductions = Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(submissionDate = "2026-05-11T16:38:57.489Z",source = CONTRACTOR))))))
+  )
+
+  val allCISDeductionsCustomerFocussed: AllCISDeductions = AllCISDeductions(
+    customerCISDeductions = Some(aCISSource.copy(cisDeductions = Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(submissionDate = "2026-05-11T16:38:57.489Z")))))),
+    contractorCISDeductions = Some(aCISSource.copy(cisDeductions = Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(source = CONTRACTOR))))))
+  )
 }
