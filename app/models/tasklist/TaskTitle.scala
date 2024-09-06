@@ -27,6 +27,6 @@ object TaskTitle extends Enum[TaskTitle] with PlayJsonEnum[TaskTitle] {
   val values: IndexedSeq[TaskTitle] = findValues
 
   // UK Self-Employment
-  case object cisDeductions extends TaskTitle("Construction Industry Scheme deductions")
+  case object CIS extends TaskTitle("CISTitle")
 
 }

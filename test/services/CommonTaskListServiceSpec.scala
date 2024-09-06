@@ -19,6 +19,8 @@ package services
 import common.CISSource.CONTRACTOR
 import connectors.errors.{ApiError, SingleErrorBody}
 import models.get.{AllCISDeductions, CISSource}
+import models.tasklist.SectionTitle.SelfEmploymentTitle
+import models.tasklist.TaskTitle.CIS
 import models.tasklist._
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import play.api.http.Status.NOT_FOUND
@@ -60,10 +62,10 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
   val taskListUrl: String = "http://localhost:9338/update-and-submit-income-tax-return/construction-industry-scheme-deductions/1234/check-construction-industry-scheme-deductions"
 
   val completeCustomerTaskListSection: TaskListSection =
-    TaskListSection(SectionTitle.CISTitle, Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.Completed, Some(taskListUrl))))
+    TaskListSection(SelfEmploymentTitle, Some(Seq(TaskListSectionItem(CIS, TaskStatus.Completed, Some(taskListUrl)))))
 
   val completeContractorTaskListSection: TaskListSection =
-    TaskListSection(SectionTitle.CISTitle, Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.CheckNow, Some(taskListUrl))))
+    TaskListSection(SelfEmploymentTitle, Some(Seq(TaskListSectionItem(CIS, TaskStatus.CheckNow, Some(taskListUrl)))))
 
 
   "CommonTaskListService.get" should {
@@ -99,7 +101,7 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
       val underTest = service.get(taxYear, nino)
 
       await(underTest) mustBe completeCustomerTaskListSection.copy(
-        taskItems = Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.Completed, Some(taskListUrl)))
+        taskItems = Some(Seq(TaskListSectionItem(CIS, TaskStatus.Completed, Some(taskListUrl))))
       )
     }
 
@@ -112,7 +114,7 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
       val underTest = service.get(taxYear, nino)
 
       await(underTest) mustBe completeCustomerTaskListSection.copy(
-        taskItems = Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.CheckNow, Some(taskListUrl)))
+        taskItems = Some(Seq(TaskListSectionItem(CIS, TaskStatus.CheckNow, Some(taskListUrl))))
       )
     }
 
@@ -124,7 +126,7 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
 
       val underTest = service.get(taxYear, nino)
 
-      await(underTest) mustBe TaskListSection(SectionTitle.CISTitle, None)
+      await(underTest) mustBe TaskListSection(SelfEmploymentTitle, None)
     }
   }
 }

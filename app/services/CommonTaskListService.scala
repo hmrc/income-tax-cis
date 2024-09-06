@@ -18,6 +18,8 @@ package services
 
 import config.AppConfig
 import models.get.{AllCISDeductions, CISSource}
+import models.tasklist.SectionTitle.SelfEmploymentTitle
+import models.tasklist.TaskTitle.CIS
 import models.tasklist._
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -34,12 +36,12 @@ class CommonTaskListService @Inject()(appConfig: AppConfig,
       case Left(_) => AllCISDeductions(None, None)
       case Right(cis) => cis
     }.map { cis =>
-      val tasks: Option[TaskListSectionItem] = getTasks(cis, taxYear)
-      TaskListSection(SectionTitle.CISTitle, tasks)
+      val tasks: Option[Seq[TaskListSectionItem]] = getTasks(cis, taxYear)
+      TaskListSection(SelfEmploymentTitle, tasks)
     }
   }
 
-  private def getTasks(cisDeductions: AllCISDeductions, taxYear: Int): Option[TaskListSectionItem] = {
+  private def getTasks(cisDeductions: AllCISDeductions, taxYear: Int): Option[Seq[TaskListSectionItem]] = {
 
     val cisCustomerUrl: String =
       s"${appConfig.cisFrontendBaseUrl}/update-and-submit-income-tax-return/construction-industry-scheme-deductions/$taxYear/check-construction-industry-scheme-deductions"
@@ -61,8 +63,8 @@ class CommonTaskListService @Inject()(appConfig: AppConfig,
     val hasHMRCData: Boolean = cisDeductions.contractorCISDeductions.exists(_.cisDeductions.nonEmpty)
 
     (hmrcSubmittedOn >= customerSubmittedOn && hasHMRCData, hasCustomerData) match {
-      case (true, _) => Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.CheckNow, Some(cisCustomerUrl)))
-      case (false, true) => Some(TaskListSectionItem(TaskTitle.cisDeductions, TaskStatus.Completed, Some(cisCustomerUrl)))
+      case (true, _) => Some(Seq(TaskListSectionItem(CIS, TaskStatus.CheckNow, Some(cisCustomerUrl))))
+      case (false, true) => Some(Seq(TaskListSectionItem(CIS, TaskStatus.Completed, Some(cisCustomerUrl))))
       case (_, _) => None
     }
   }
