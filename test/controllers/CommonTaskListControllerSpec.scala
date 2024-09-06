@@ -16,7 +16,9 @@
 
 package controllers
 
-import models.tasklist.{SectionTitle, TaskListSection}
+import models.tasklist.SectionTitle.SelfEmploymentTitle
+import models.tasklist.TaskListSection
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalamock.handlers.CallHandler4
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
@@ -47,7 +49,7 @@ with FakeRequestProvider {
   def mockCISService(): CallHandler4[Int, String, ExecutionContext, HeaderCarrier, Future[TaskListSection]] = {
     (commonTaskListService.get(_: Int, _: String)(_: ExecutionContext, _: HeaderCarrier))
       .expects(*, *, *, *)
-      .returning(Future.successful(TaskListSection(SectionTitle.CISTitle, None)))
+      .returning(Future.successful(TaskListSection(SelfEmploymentTitle, None)))
   }
 
   ".getCommonTaskList" should {

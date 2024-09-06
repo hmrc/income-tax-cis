@@ -28,7 +28,7 @@ class TaskTitleSpec extends AnyFreeSpec with Matchers {
 
     "must contain the correct values" in {
       TaskTitle.values mustEqual Seq[TaskTitle](
-        cisDeductions
+        CIS
       )
     }
 
@@ -41,10 +41,10 @@ class TaskTitleSpec extends AnyFreeSpec with Matchers {
   "CIS Deductions" - {
 
     "must parse to and from json" in {
-      val underTest = Json.toJson(cisDeductions)
+      val underTest = Json.toJson(CIS)
 
-      underTest.toString() mustBe s"\"$cisDeductions\""
-      underTest.validate[TaskTitle] mustBe JsSuccess(cisDeductions, JsPath())
+      underTest.toString() mustBe s"\"$CIS\""
+      underTest.validate[TaskTitle] mustBe JsSuccess(CIS, JsPath())
     }
   }
 }

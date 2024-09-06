@@ -17,7 +17,7 @@
 package models.taskList
 
 import models.tasklist.SectionTitle
-import models.tasklist.SectionTitle.CISTitle
+import models.tasklist.SectionTitle.SelfEmploymentTitle
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.{JsPath, JsSuccess, Json}
@@ -27,10 +27,10 @@ class SectionTitleSpec extends AnyFreeSpec with Matchers {
   "CISTitle" - {
 
     "must parse to and from json" in {
-      val underTest = Json.toJson(CISTitle)
+      val underTest = Json.toJson(SelfEmploymentTitle)
 
-      underTest.toString() mustBe s"\"$CISTitle\""
-      underTest.validate[SectionTitle] mustBe JsSuccess(CISTitle, JsPath())
+      underTest.toString() mustBe s"\"$SelfEmploymentTitle\""
+      underTest.validate[SectionTitle] mustBe JsSuccess(SelfEmploymentTitle, JsPath())
     }
   }
 }
