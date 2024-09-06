@@ -26,6 +26,6 @@ object SectionTitle extends Enum[SectionTitle] with PlayJsonEnum[SectionTitle] {
 
   val values: IndexedSeq[SectionTitle] = findValues
 
-  case object CISTitle extends SectionTitle("Self-Employment")
+  case object CISTitle extends SectionTitle("SelfEmployment")
 
 }
