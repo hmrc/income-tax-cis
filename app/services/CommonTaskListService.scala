@@ -44,7 +44,7 @@ class CommonTaskListService @Inject()(appConfig: AppConfig,
   private def getTasks(cisDeductions: AllCISDeductions, taxYear: Int): Option[Seq[TaskListSectionItem]] = {
 
     val cisCustomerUrl: String =
-      s"${appConfig.cisFrontendBaseUrl}/update-and-submit-income-tax-return/construction-industry-scheme-deductions/$taxYear/check-construction-industry-scheme-deductions"
+      s"${appConfig.cisFrontendBaseUrl}/update-and-submit-income-tax-return/construction-industry-scheme-deductions/$taxYear/summary"
 
     def getSubmissionDate(cisSource: Option[CISSource]): Long = {
       cisSource.flatMap(_

@@ -59,7 +59,7 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
 
   val emptyCISResult: Left[ApiError, AllCISDeductions] = Left(ApiError(NOT_FOUND, SingleErrorBody("code", "Some_Reason")))
 
-  val taskListUrl: String = "http://localhost:9338/update-and-submit-income-tax-return/construction-industry-scheme-deductions/1234/check-construction-industry-scheme-deductions"
+  val taskListUrl: String = s"http://localhost:9338/update-and-submit-income-tax-return/construction-industry-scheme-deductions/$taxYear/summary"
 
   val completeCustomerTaskListSection: TaskListSection =
     TaskListSection(SelfEmploymentTitle, Some(Seq(TaskListSectionItem(CIS, TaskStatus.Completed, Some(taskListUrl)))))
