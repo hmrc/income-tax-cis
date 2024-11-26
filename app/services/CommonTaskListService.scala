@@ -16,11 +16,17 @@
 
 package services
 
+import cats.data.EitherT
 import config.AppConfig
+import connectors.errors.ApiError
 import models.get.{AllCISDeductions, CISSource}
+import models.mongo.JourneyAnswers
 import models.tasklist.SectionTitle.SelfEmploymentTitle
+import models.tasklist.TaskStatus.{CheckNow, Completed, InProgress, NotStarted}
 import models.tasklist.TaskTitle.CIS
 import models.tasklist._
+import play.api.Logging
+import repositories.JourneyAnswersRepository
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.Instant
@@ -28,23 +34,14 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class CommonTaskListService @Inject()(appConfig: AppConfig,
-                                      cisDeductionsService: CISDeductionsService
-                                     ) {
+                                      cisDeductionsService: CISDeductionsService,
+                                      journeyAnswersRepository: JourneyAnswersRepository) extends Logging {
 
-  def get(taxYear: Int, nino: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[TaskListSection] = {
-    cisDeductionsService.getCISDeductions(nino, taxYear).map {
-      case Left(_) => AllCISDeductions(None, None)
-      case Right(cis) => cis
-    }.map { cis =>
-      val tasks: Option[Seq[TaskListSectionItem]] = getTasks(cis, taxYear)
-      TaskListSection(SelfEmploymentTitle, tasks)
-    }
-  }
-
-  private def getTasks(cisDeductions: AllCISDeductions, taxYear: Int): Option[Seq[TaskListSectionItem]] = {
-
-    val cisCustomerUrl: String =
-      s"${appConfig.cisFrontendBaseUrl}/update-and-submit-income-tax-return/construction-industry-scheme-deductions/$taxYear/summary"
+  private def getTasks(cisDeductions: AllCISDeductions,
+                       taxYear: Int,
+                       journeyAnswers: Option[JourneyAnswers]): Option[Seq[TaskListSectionItem]] = {
+    val baseUrl: String = s"${appConfig.cisFrontendBaseUrl}/update-and-submit-income-tax-return"
+    val cisCustomerUrl: String = s"$baseUrl/construction-industry-scheme-deductions/$taxYear/summary"
 
     def getSubmissionDate(cisSource: Option[CISSource]): Long = {
       cisSource.flatMap(_
@@ -54,18 +51,43 @@ class CommonTaskListService @Inject()(appConfig: AppConfig,
         )).getOrElse(0)
     }
 
-    val customerSubmittedOn: Long = getSubmissionDate(cisDeductions.customerCISDeductions)
+    def cisTask(status: TaskStatus): Option[Seq[TaskListSectionItem]] = Some(Seq(
+      TaskListSectionItem(CIS, status, Some(cisCustomerUrl))
+    ))
 
-    val hmrcSubmittedOn: Long = getSubmissionDate(cisDeductions.contractorCISDeductions)
+    val hmrcDataLatest: Boolean = getSubmissionDate(cisDeductions.contractorCISDeductions) >=
+      getSubmissionDate(cisDeductions.customerCISDeductions)
 
     val hasCustomerData: Boolean = cisDeductions.customerCISDeductions.exists(_.cisDeductions.nonEmpty)
-
     val hasHMRCData: Boolean = cisDeductions.contractorCISDeductions.exists(_.cisDeductions.nonEmpty)
 
-    (hmrcSubmittedOn >= customerSubmittedOn && hasHMRCData, hasCustomerData) match {
-      case (true, _) => Some(Seq(TaskListSectionItem(CIS, TaskStatus.CheckNow, Some(cisCustomerUrl))))
-      case (false, true) => Some(Seq(TaskListSectionItem(CIS, TaskStatus.Completed, Some(cisCustomerUrl))))
-      case (_, _) => None
+    (hasHMRCData && hmrcDataLatest, hasCustomerData, journeyAnswers) match {
+      case (true, _, _) => cisTask(CheckNow)
+      case (_, _, Some(ja)) =>
+        val status: TaskStatus = ja.data.value("status").validate[TaskStatus].asOpt match {
+          case Some(TaskStatus.Completed) => Completed
+          case Some(TaskStatus.InProgress) => InProgress
+          case _ =>
+            logger.info("[CommonTaskListService][getStatus] status stored in an invalid format, setting as 'Not yet started'.")
+            NotStarted
+        }
+
+        cisTask(status)
+      case (_, true, _) => cisTask(if (appConfig.sectionCompletedQuestionEnabled) InProgress else Completed)
+      case (_, _, _) => None
     }
+  }
+
+  def get(taxYear: Int, nino: String, mtditid: String)
+         (implicit ec: ExecutionContext, hc: HeaderCarrier): Future[TaskListSection] = {
+    val result: EitherT[Future, ApiError, Option[Seq[TaskListSectionItem]]] = for {
+      cisResult <- EitherT(cisDeductionsService.getCISDeductions(nino, taxYear))
+      ja <- EitherT.right(journeyAnswersRepository.get(mtditid, taxYear, "cis"))
+    } yield getTasks(cisResult, taxYear, ja)
+
+    result
+      .leftMap(_ => Option.empty[Seq[TaskListSectionItem]])
+      .merge
+      .map(TaskListSection(SelfEmploymentTitle, _))
   }
 }

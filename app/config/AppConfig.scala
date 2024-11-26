@@ -43,11 +43,16 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
 
   lazy val cisFrontendBaseUrl: String = config.get[String]("microservice.services.income-tax-cis-frontend.url")
 
-  lazy val authBaseUrl: String = servicesConfig.baseUrl("auth")
-  lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
-  lazy val graphiteHost: String = config.get[String]("microservice.metrics.graphite.host")
-
   lazy val desBaseUrl: String = servicesConfig.baseUrl("des")
   lazy val desEnvironment: String = config.get[String]("microservice.services.des.environment")
   lazy val desAuthorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
+
+  lazy val sectionCompletedQuestionEnabled: Boolean = servicesConfig.getBoolean("feature-switch.sectionCompletedQuestionEnabled")
+
+  //User data Mongo config
+  lazy val encryptionKey: String = servicesConfig.getString("mongodb.encryption.key")
+
+  //Journey answers Mongo config
+  lazy val mongoJourneyAnswersTTL: Int = Duration(servicesConfig.getString("mongodb.journeyAnswersTimeToLive")).toDays.toInt
+  lazy val replaceJourneyAnswersIndexes: Boolean = servicesConfig.getBoolean("mongodb.replaceJourneyAnswersIndexes")
 }

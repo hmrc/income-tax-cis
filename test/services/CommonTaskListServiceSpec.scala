@@ -17,116 +17,202 @@
 package services
 
 import common.CISSource.CONTRACTOR
+import config.AppConfig
 import connectors.errors.{ApiError, SingleErrorBody}
 import models.get.{AllCISDeductions, CISSource}
+import models.mongo.JourneyAnswers
 import models.tasklist.SectionTitle.SelfEmploymentTitle
+import models.tasklist.TaskStatus.{CheckNow, Completed, InProgress, NotStarted}
 import models.tasklist.TaskTitle.CIS
 import models.tasklist._
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
-import play.api.http.Status.NOT_FOUND
+import play.api.Configuration
+import play.api.libs.json.{JsObject, JsString, Json}
 import support.ControllerUnitTest
 import support.builders.CISDeductionsBuilder.aCISDeductions
+import support.builders.CISSourceBuilder
 import support.builders.GetPeriodDataBuilder.aGetPeriodData
-import support.builders.{AllCISDeductionsBuilder, CISSourceBuilder}
-import support.mocks.{MockAuthorisedAction, MockCISDeductionsService}
+import support.mocks.{MockAuthorisedAction, MockCISDeductionsService, MockJourneyAnswersRepository}
 import support.providers.{AppConfigStubProvider, FakeRequestProvider}
 import uk.gov.hmrc.http.{HeaderCarrier, SessionId}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 class CommonTaskListServiceSpec extends ControllerUnitTest
   with MockCISDeductionsService
   with MockAuthorisedAction
   with FakeRequestProvider
-  with AppConfigStubProvider {
+  with AppConfigStubProvider
+  with MockJourneyAnswersRepository {
 
-  private implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
+  trait Test {
+    implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
 
-  val service: CommonTaskListService = new CommonTaskListService(appConfigStub, mockCISDeductionsService)
+    val nino: String = "12345678"
+    val taxYear: Int = 1234
+    val mtditid: String = "dummyMtditid"
 
-  val nino: String = "12345678"
-  val taxYear: Int = 1234
+    val appConfig: AppConfig = appConfigStub
 
-  val customerCISResult: CISSource = CISSourceBuilder.aCISSource
+    def service: CommonTaskListService = new CommonTaskListService(
+      appConfig = appConfigStub,
+      cisDeductionsService = mockCISDeductionsService,
+      journeyAnswersRepository = mockJourneyAnswersRepo
+    )
 
-  val contractorCISResult: CISSource = CISSourceBuilder.aCISSource.copy(cisDeductions =
-    Seq(aCISDeductions.copy(periodData = Seq(aGetPeriodData.copy(source = CONTRACTOR)))))
+    val baseUrl = "http://localhost:9338/update-and-submit-income-tax-return"
+    val cisCustomerUrl = s"$baseUrl/construction-industry-scheme-deductions/$taxYear/summary"
 
-  val fullCISResult: Right[ApiError, AllCISDeductions] = Right(AllCISDeductionsBuilder.allCISDeductionsCustomerFocussed)
+    def cisTask(status: TaskStatus): TaskListSection = TaskListSection(
+      sectionTitle = SelfEmploymentTitle,
+      taskItems = Some(Seq(TaskListSectionItem(CIS, status, Some(cisCustomerUrl))))
+    )
 
-  val fullCISResultContractorFocused : Right[ApiError, AllCISDeductions] = Right(AllCISDeductionsBuilder.allCISDeductionsContractorFocussed)
+    def journeyAnswers(status: String): JourneyAnswers = JourneyAnswers(
+      mtdItId = mtditid,
+      taxYear = taxYear,
+      journey = "cis",
+      data = Json.obj("status" -> JsString(status)),
+      lastUpdated = Instant.MIN
+    )
 
-  val emptyCISResult: Left[ApiError, AllCISDeductions] = Left(ApiError(NOT_FOUND, SingleErrorBody("code", "Some_Reason")))
-
-  val taskListUrl: String = s"http://localhost:9338/update-and-submit-income-tax-return/construction-industry-scheme-deductions/$taxYear/summary"
-
-  val completeCustomerTaskListSection: TaskListSection =
-    TaskListSection(SelfEmploymentTitle, Some(Seq(TaskListSectionItem(CIS, TaskStatus.Completed, Some(taskListUrl)))))
-
-  val completeContractorTaskListSection: TaskListSection =
-    TaskListSection(SelfEmploymentTitle, Some(Seq(TaskListSectionItem(CIS, TaskStatus.CheckNow, Some(taskListUrl)))))
-
-
-  "CommonTaskListService.get" should {
-
-    "return a task list section model with status completed when Customer Data is the latest data" in {
-
-      (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
-        .expects(nino, taxYear, *)
-        .returning(Future.successful(fullCISResult))
-
-      val underTest = service.get(taxYear, nino)
-
-      await(underTest) mustBe completeCustomerTaskListSection
-    }
-
-    "return a task list section model with status checkNow when Contractor Data is the latest data" in {
-
-      (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
-        .expects(nino, taxYear, *)
-        .returning(Future.successful(fullCISResultContractorFocused))
-
-      val underTest = service.get(taxYear, nino)
-
-      await(underTest) mustBe completeContractorTaskListSection
-    }
-
-    "return a task list section model when only customer data exists" in {
-
-      (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
-        .expects(nino, taxYear, *)
-        .returning(Future.successful(Right(AllCISDeductions(Some(customerCISResult), Some(CISSource(None, None, None, Seq()))))))
-
-      val underTest = service.get(taxYear, nino)
-
-      await(underTest) mustBe completeCustomerTaskListSection.copy(
-        taskItems = Some(Seq(TaskListSectionItem(CIS, TaskStatus.Completed, Some(taskListUrl))))
+    val customerCISResult: CISSource = CISSourceBuilder.aCISSource.copy(
+      cisDeductions = Seq(
+        aCISDeductions.copy(
+          periodData = Seq(aGetPeriodData.copy(submissionDate = Instant.MIN.toString))
+        )
       )
-    }
+    )
 
-    "return a task list section model when only contractor data exists" in {
-
-      (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
-        .expects(nino, taxYear, *)
-        .returning(Future.successful(Right(AllCISDeductions(Some(CISSource(None, None, None, Seq())), Some(contractorCISResult)))))
-
-      val underTest = service.get(taxYear, nino)
-
-      await(underTest) mustBe completeCustomerTaskListSection.copy(
-        taskItems = Some(Seq(TaskListSectionItem(CIS, TaskStatus.CheckNow, Some(taskListUrl))))
+    val contractorCISResult: CISSource = CISSourceBuilder.aCISSource.copy(
+      cisDeductions = Seq(
+        aCISDeductions.copy(
+          periodData = Seq(aGetPeriodData.copy(source = CONTRACTOR, submissionDate = Instant.now().toString))
+        )
       )
+    )
+
+    val emptyTaskListResult: TaskListSection = TaskListSection(sectionTitle = SelfEmploymentTitle, taskItems = None)
+  }
+
+  "CommonTaskListService.get" when {
+    "errors occur" should {
+      "return an empty task list when call to retrieve CIS deductions returns an API error" in new Test {
+        mockGetCISDeductions(nino, taxYear, Left(ApiError(404, SingleErrorBody("DummyCode", "DummyReason"))))
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        result shouldBe emptyTaskListResult
+      }
+
+      "throw an exception when call to retrieve CIS deductions fails" in new Test {
+        mockGetCISDeductionsException(nino, taxYear, new RuntimeException("Dummy error"))
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        assertThrows[RuntimeException](result)
+      }
+
+      "throw an exception when call to retrieve Journey Answers fails" in new Test {
+        mockGetCISDeductions(nino, taxYear, Right(AllCISDeductions(None, None)))
+        mockGetJourneyAnswersException(mtditid, taxYear, "cis", new RuntimeException("Dummy"))
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        assertThrows[RuntimeException](result)
+      }
     }
 
-    "return an empty task list section model" in {
+    "CIS deductions response contains only HMRC data" should {
+      "return expected task list with 'CheckNow' status" in new Test {
+        mockGetCISDeductions(nino, taxYear, Right(AllCISDeductions(None, Some(contractorCISResult))))
+        mockGetJourneyAnswers(mtditid, taxYear, "cis", None)
 
-      (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
-        .expects(nino, taxYear, *)
-        .returning(Future.successful(emptyCISResult))
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
 
-      val underTest = service.get(taxYear, nino)
+        result shouldBe cisTask(CheckNow)
+      }
+    }
 
-      await(underTest) mustBe TaskListSection(SelfEmploymentTitle, None)
+    "HMRC data in CIS deductions response is newer than customer data" should {
+      "return expected task list with 'CheckNow' status" in new Test {
+        mockGetCISDeductions(nino, taxYear, Right(AllCISDeductions(Some(customerCISResult), Some(contractorCISResult))))
+        mockGetJourneyAnswers(mtditid, taxYear, "cis", None)
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        result shouldBe cisTask(CheckNow)
+      }
+    }
+
+    "HMRC data is omitted, or is not latest and Journey Answers are defined" should {
+      "return expected task list with status from Journey Answers data if it can be parsed" in new Test {
+        mockGetCISDeductions(nino, taxYear, Right(AllCISDeductions(None, None)))
+        mockGetJourneyAnswers(mtditid, taxYear, "cis", Some(journeyAnswers("completed")))
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        result shouldBe cisTask(Completed)
+      }
+
+      "throw an exception if an error occurs while parsing Journey Answers status" in new Test {
+        mockGetCISDeductions(nino, taxYear, Right(AllCISDeductions(None, None)))
+        mockGetJourneyAnswers(mtditid, taxYear, "cis", Some(journeyAnswers("").copy(data = JsObject.empty)))
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        assertThrows[RuntimeException](result)
+      }
+
+      "return expected task list with 'NotStarted' status if Journey Answers status value is unexpected" in new Test {
+        mockGetCISDeductions(nino, taxYear, Right(AllCISDeductions(None, None)))
+        mockGetJourneyAnswers(mtditid, taxYear, "cis", Some(journeyAnswers("beep boop")))
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        result shouldBe cisTask(NotStarted)
+      }
+    }
+
+    "HMRC data is omitted, or not latest, Journey Answers are not defined, and customer data exists" should {
+      "return expected task list with 'InProgress' status if section completed feature switch is enabled" in new Test {
+        override val service: CommonTaskListService = new CommonTaskListService(
+          appConfig = new AppConfig(mock[Configuration], mock[ServicesConfig]) {
+            override lazy val cisFrontendBaseUrl: String = "http://localhost:9338"
+            override lazy val sectionCompletedQuestionEnabled: Boolean = true
+          },
+          cisDeductionsService = mockCISDeductionsService,
+          journeyAnswersRepository = mockJourneyAnswersRepo
+        )
+
+        mockGetCISDeductions(nino, taxYear, Right(AllCISDeductions(Some(customerCISResult), None)))
+        mockGetJourneyAnswers(mtditid, taxYear, "cis", None)
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        result shouldBe cisTask(InProgress)
+      }
+
+      "return expected task list with 'Completed' status if section completed feature switch is disabled" in new Test {
+        mockGetCISDeductions(nino, taxYear, Right(AllCISDeductions(Some(customerCISResult), None)))
+        mockGetJourneyAnswers(mtditid, taxYear, "cis", None)
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        result shouldBe cisTask(Completed)
+      }
+    }
+
+    "no data exists" should {
+      "return with an empty task list" in new Test {
+        mockGetCISDeductions(nino, taxYear, Right(AllCISDeductions(None, None)))
+        mockGetJourneyAnswers(mtditid, taxYear, "cis", None)
+
+        def result: TaskListSection = await(service.get(taxYear, nino, mtditid))
+
+        result shouldBe emptyTaskListResult
+      }
     }
   }
 }
