@@ -16,29 +16,42 @@
 
 package support
 
+import config.AppConfig
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
-import support.helpers.WireMockServer
-import support.providers.AppConfigStubProvider
-import support.stubs.WireMockStubs
-import uk.gov.hmrc.http.test.HttpClientSupport
+import play.api.{Application, Environment, Mode}
+import support.providers.TaxYearProvider
 
-trait ConnectorIntegrationTest extends AnyWordSpec with Matchers
+import scala.concurrent.ExecutionContext
+
+trait IntegrationTest extends AnyWordSpec
   with FutureAwaits with DefaultAwaitTimeout
-  with HttpClientSupport
-  with AppConfigStubProvider
-  with WireMockServer with WireMockStubs
-  with BeforeAndAfterAll {
+  with Matchers
+  with GuiceOneServerPerSuite
+  with BeforeAndAfterAll
+  with TaxYearProvider {
+
+  protected implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
+  protected implicit lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+
+  protected val config: Map[String, String] = Map(
+    "useEncryption" -> "true"
+  )
+
+  override implicit lazy val app: Application = new GuiceApplicationBuilder()
+    .in(Environment.simple(mode = Mode.Dev))
+    .configure(config)
+    .build()
 
   protected override def beforeAll(): Unit = {
     super.beforeAll()
-    startWiremock()
   }
 
   protected override def afterAll(): Unit = {
-    stopWiremock()
     super.afterAll()
   }
 }
