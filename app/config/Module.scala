@@ -16,10 +16,8 @@
 
 package config
 
-import com.google.inject.AbstractModule
 import play.api.inject.Binding
 import play.api.{Configuration, Environment}
-import repositories.JourneyAnswersRepository
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import utils.AesGcmCryptoProvider
 import repositories.{JourneyAnswersRepository, JourneyAnswersRepositoryImpl}
