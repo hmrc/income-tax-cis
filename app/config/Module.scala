@@ -32,7 +32,7 @@ class Module extends play.api.inject.Module {
       bind[Encrypter with Decrypter].toProvider[AesGcmCryptoProvider],
       bind[AppConfig].toSelf.eagerly(),
       bind[Clock].toInstance(Clock.systemUTC()),
-      bind[JourneyAnswersRepository].to[JourneyAnswersRepositoryImpl].eagerly(),
+      bind[JourneyAnswersRepository].to[JourneyAnswersRepositoryImpl].eagerly()
     )
   }
 }
