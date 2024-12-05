@@ -30,15 +30,6 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   lazy val ifBaseUrl: String = servicesConfig.baseUrl(serviceName = "integration-framework")
   lazy val ifEnvironment: String = servicesConfig.getString(key = "microservice.services.integration-framework.environment")
 
-  //User data Mongo config
-  lazy val mongoTTL: Int = Duration(servicesConfig.getString("mongodb.timeToLive")).toMinutes.toInt
-  lazy val encryptionKey: String = servicesConfig.getString("mongodb.encryption.key")
-  lazy val useEncryption: Boolean = servicesConfig.getBoolean("useEncryption")
-
-  //Journey answers Mongo config
-  lazy val mongoJourneyAnswersTTL: Int = Duration(servicesConfig.getString("mongodb.journeyAnswersTimeToLive")).toDays.toInt
-  lazy val replaceJourneyAnswersIndexes: Boolean = servicesConfig.getBoolean("mongodb.replaceJourneyAnswersIndexes")
-
   def authorisationTokenFor(apiVersion: String): String = servicesConfig.getString(ifAuthorisationTokenKey + s".$apiVersion")
 
   lazy val cisFrontendBaseUrl: String = config.get[String]("microservice.services.income-tax-cis-frontend.url")
