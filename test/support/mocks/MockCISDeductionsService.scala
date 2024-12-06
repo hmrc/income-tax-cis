@@ -38,6 +38,14 @@ trait MockCISDeductionsService extends MockFactory {
       .returning(Future.successful(result))
   }
 
+  def mockGetCISDeductionsException(nino: String,
+                                    taxYear: Int,
+                                    result: Throwable): CallHandler3[String, Int, HeaderCarrier, Future[Either[ApiError, AllCISDeductions]]] = {
+    (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
+      .expects(nino, taxYear, *)
+      .returning(Future.failed(result))
+  }
+
   def mockDeleteCISDeductionsSubmission(taxYear: Int,
                                         nino: String,
                                         submissionId: String,

@@ -18,9 +18,7 @@ package controllers
 
 import models.tasklist.SectionTitle.SelfEmploymentTitle
 import models.tasklist.TaskListSection
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import org.scalamock.handlers.CallHandler4
+import org.scalamock.handlers.CallHandler5
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import play.api.http.Status.OK
 import play.api.test.Helpers.status
@@ -31,6 +29,7 @@ import support.providers.FakeRequestProvider
 import support.utils.TaxYearUtils
 import uk.gov.hmrc.http.HeaderCarrier
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class CommonTaskListControllerSpec extends ControllerUnitTest
@@ -46,9 +45,9 @@ with FakeRequestProvider {
 
   val controller = new CommonTaskListController(commonTaskListService, auth = mockAuthorisedAction, cc = cc)
 
-  def mockCISService(): CallHandler4[Int, String, ExecutionContext, HeaderCarrier, Future[TaskListSection]] = {
-    (commonTaskListService.get(_: Int, _: String)(_: ExecutionContext, _: HeaderCarrier))
-      .expects(*, *, *, *)
+  def mockCISService(): CallHandler5[Int, String, String, ExecutionContext, HeaderCarrier, Future[TaskListSection]] = {
+    (commonTaskListService.get(_: Int, _: String, _: String)(_: ExecutionContext, _: HeaderCarrier))
+      .expects(*, *, *, *, *)
       .returning(Future.successful(TaskListSection(SelfEmploymentTitle, None)))
   }
 

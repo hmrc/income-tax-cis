@@ -37,5 +37,7 @@ class AppConfigStub extends MockFactory {
     override lazy val desBaseUrl: String = s"http://$desHost:$wireMockPort"
     override lazy val desAuthorisationToken: String = "authorisation-token"
     override lazy val desEnvironment: String = "environment"
+
+    override lazy val sectionCompletedQuestionEnabled: Boolean = false
   }
 }
