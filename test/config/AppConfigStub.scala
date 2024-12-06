@@ -22,7 +22,7 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class AppConfigStub extends MockFactory {
 
-  def config(desHost: String = "localhost", environment: String = "test"): AppConfig = new AppConfig(mock[Configuration], mock[ServicesConfig]) {
+  def config(desHost: String = "localhost", environment: String = "test"): AppConfig = new AppConfigImpl(mock[Configuration], mock[ServicesConfig]) {
     private val wireMockPort = 11111
 
     private lazy val authorisationToken: String = "secret"

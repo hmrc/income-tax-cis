@@ -17,7 +17,7 @@
 package services
 
 import common.CISSource.CONTRACTOR
-import config.AppConfig
+import config.{AppConfig, AppConfigImpl}
 import connectors.errors.{ApiError, SingleErrorBody}
 import models.get.{AllCISDeductions, CISSource}
 import models.mongo.JourneyAnswers
@@ -178,7 +178,7 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
     "HMRC data is omitted, or not latest, Journey Answers are not defined, and customer data exists" should {
       "return expected task list with 'InProgress' status if section completed feature switch is enabled" in new Test {
         override val service: CommonTaskListService = new CommonTaskListService(
-          appConfig = new AppConfig(mock[Configuration], mock[ServicesConfig]) {
+          appConfig = new AppConfigImpl(mock[Configuration], mock[ServicesConfig]) {
             override lazy val cisFrontendBaseUrl: String = "http://localhost:9338"
             override lazy val sectionCompletedQuestionEnabled: Boolean = true
           },
