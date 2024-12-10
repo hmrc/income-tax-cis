@@ -17,6 +17,7 @@
 package config
 
 import com.google.inject.ImplementedBy
+import featureswitch.core.config.FeatureSwitching
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -24,7 +25,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.Duration
 
 @ImplementedBy(classOf[AppConfigImpl])
-trait AppConfig {
+trait AppConfig extends FeatureSwitching {
   def ifBaseUrl: String
   def ifEnvironment: String
   def authorisationTokenFor(apiVersion: String): String
@@ -34,9 +35,8 @@ trait AppConfig {
   def desAuthorisationToken: String
   def encryptionKey: String
   def mongoJourneyAnswersTTL: Int
-  def emaSupportingAgentsEnabled: Boolean
-  def sectionCompletedQuestionEnabled: Boolean
   def replaceJourneyAnswersIndexes: Boolean
+  def getFeatureSwitchValue(feature: String): Boolean
 }
 
 @Singleton
@@ -59,7 +59,6 @@ class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesCon
   def desBaseUrl: String = servicesConfig.baseUrl("des")
   def desEnvironment: String = config.get[String]("microservice.services.des.environment")
   def desAuthorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
-  
-  def emaSupportingAgentsEnabled: Boolean = config.get[Boolean]("feature-switch.ema-supporting-agents-enabled")
-  def sectionCompletedQuestionEnabled: Boolean = config.get[Boolean]("feature-switch.sectionCompletedQuestionEnabled")
+
+  def getFeatureSwitchValue(feature: String): Boolean = servicesConfig.getBoolean(feature)
 }

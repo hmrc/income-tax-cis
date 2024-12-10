@@ -16,13 +16,21 @@
 
 package config
 
+import featureswitch.core.config.SectionCompletedQuestion
+import featureswitch.core.models.FeatureSwitch
 import org.scalamock.scalatest.MockFactory
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 class AppConfigStub extends MockFactory {
 
-  def config(desHost: String = "localhost", environment: String = "test"): AppConfig = new AppConfigImpl(mock[Configuration], mock[ServicesConfig]) {
+  lazy val mockConfiguration = mock[Configuration]
+  lazy val mockServicesConfig = mock[ServicesConfig]
+
+  def config(desHost: String = "localhost",
+             environment: String = "test",
+             sectionCompletedQuestionEnabled: Boolean = false
+            ): AppConfig = new AppConfigImpl(mockConfiguration, mockServicesConfig) {
     private val wireMockPort = 11111
 
     private lazy val authorisationToken: String = "secret"
@@ -38,6 +46,10 @@ class AppConfigStub extends MockFactory {
     override lazy val desAuthorisationToken: String = "authorisation-token"
     override lazy val desEnvironment: String = "environment"
 
-    override lazy val sectionCompletedQuestionEnabled: Boolean = false
+    private def mockFeatureSwitchResponse(featureSwitch: FeatureSwitch, isEnabled: Boolean): Unit = {
+      sys.props.remove(featureSwitch.configName)
+      (mockServicesConfig.getBoolean(_: String)).expects(featureSwitch.configName).returning(isEnabled).anyNumberOfTimes()
+    }
+    mockFeatureSwitchResponse(SectionCompletedQuestion, isEnabled = sectionCompletedQuestionEnabled)
   }
 }

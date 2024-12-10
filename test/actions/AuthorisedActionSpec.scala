@@ -17,11 +17,13 @@
 package actions
 
 import config.AppConfig
+import featureswitch.core.config.EmaSupportingAgent
+import featureswitch.core.models.FeatureSwitch
 import models.authorisation.Enrolment.{Agent, Individual, Nino, SupportingAgent}
 import models.requests.AuthorisationRequest
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.SystemMaterializer
-import org.scalamock.handlers.{CallHandler0, CallHandler4}
+import org.scalamock.handlers.{CallHandler1, CallHandler4}
 import play.api.http.{HeaderNames, Status => TestStatus}
 import play.api.mvc.Results._
 import play.api.mvc._
@@ -81,9 +83,9 @@ class AuthorisedActionSpec extends UnitTest
         .withIdentifier("MTDITID", mtdId)
         .withDelegatedAuthRule("mtd-it-auth-supp")
 
-    def mockMultipleAgentsSwitch(bool: Boolean): CallHandler0[Boolean] =
-      (mockAppConfig.emaSupportingAgentsEnabled _: () => Boolean)
-        .expects()
+    def mockMultipleAgentsSwitch(bool: Boolean): CallHandler1[FeatureSwitch, Boolean] =
+      (mockAppConfig.isEnabled(_: FeatureSwitch))
+        .expects(EmaSupportingAgent)
         .returning(bool)
         .anyNumberOfTimes()
 
