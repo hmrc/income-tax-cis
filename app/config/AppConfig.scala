@@ -16,34 +16,50 @@
 
 package config
 
+import com.google.inject.ImplementedBy
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.Duration
 
+@ImplementedBy(classOf[AppConfigImpl])
+trait AppConfig {
+  def ifBaseUrl: String
+  def ifEnvironment: String
+  def authorisationTokenFor(apiVersion: String): String
+  def cisFrontendBaseUrl: String
+  def desBaseUrl: String
+  def desEnvironment: String
+  def desAuthorisationToken: String
+  def encryptionKey: String
+  def mongoJourneyAnswersTTL: Int
+  def emaSupportingAgentsEnabled: Boolean
+  def sectionCompletedQuestionEnabled: Boolean
+  def replaceJourneyAnswersIndexes: Boolean
+}
+
 @Singleton
-class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
+class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesConfig) extends AppConfig {
 
-  private lazy val ifAuthorisationTokenKey: String = "microservice.services.integration-framework.authorisation-token"
+  private def ifAuthorisationTokenKey: String = "microservice.services.integration-framework.authorisation-token"
 
-  lazy val ifBaseUrl: String = servicesConfig.baseUrl(serviceName = "integration-framework")
-  lazy val ifEnvironment: String = servicesConfig.getString(key = "microservice.services.integration-framework.environment")
+  def ifBaseUrl: String = servicesConfig.baseUrl(serviceName = "integration-framework")
+  def ifEnvironment: String = servicesConfig.getString(key = "microservice.services.integration-framework.environment")
+
+  //Journey answers Mongo config
+  lazy val encryptionKey: String = servicesConfig.getString("mongodb.encryption.key")
+  lazy val mongoJourneyAnswersTTL: Int = Duration(servicesConfig.getString("mongodb.journeyAnswersTimeToLive")).toDays.toInt
+  lazy val replaceJourneyAnswersIndexes: Boolean = servicesConfig.getBoolean("mongodb.replaceJourneyAnswersIndexes")
 
   def authorisationTokenFor(apiVersion: String): String = servicesConfig.getString(ifAuthorisationTokenKey + s".$apiVersion")
 
-  lazy val cisFrontendBaseUrl: String = config.get[String]("microservice.services.income-tax-cis-frontend.url")
+  def cisFrontendBaseUrl: String = config.get[String]("microservice.services.income-tax-cis-frontend.url")
 
-  lazy val desBaseUrl: String = servicesConfig.baseUrl("des")
-  lazy val desEnvironment: String = config.get[String]("microservice.services.des.environment")
-  lazy val desAuthorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
-
-  lazy val sectionCompletedQuestionEnabled: Boolean = servicesConfig.getBoolean("feature-switch.sectionCompletedQuestionEnabled")
-
-  //User data Mongo config
-  lazy val encryptionKey: String = servicesConfig.getString("mongodb.encryption.key")
-
-  //Journey answers Mongo config
-  lazy val mongoJourneyAnswersTTL: Int = Duration(servicesConfig.getString("mongodb.journeyAnswersTimeToLive")).toDays.toInt
-  lazy val replaceJourneyAnswersIndexes: Boolean = servicesConfig.getBoolean("mongodb.replaceJourneyAnswersIndexes")
+  def desBaseUrl: String = servicesConfig.baseUrl("des")
+  def desEnvironment: String = config.get[String]("microservice.services.des.environment")
+  def desAuthorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
+  
+  def emaSupportingAgentsEnabled: Boolean = config.get[Boolean]("feature-switch.ema-supporting-agents-enabled")
+  def sectionCompletedQuestionEnabled: Boolean = config.get[Boolean]("feature-switch.sectionCompletedQuestionEnabled")
 }
