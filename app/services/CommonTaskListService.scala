@@ -19,6 +19,7 @@ package services
 import cats.data.EitherT
 import config.AppConfig
 import connectors.errors.ApiError
+import featureswitch.core.config.SectionCompletedQuestion
 import models.get.{AllCISDeductions, CISSource}
 import models.mongo.JourneyAnswers
 import models.tasklist.SectionTitle.SelfEmploymentTitle
@@ -73,7 +74,7 @@ class CommonTaskListService @Inject()(appConfig: AppConfig,
         }
 
         cisTask(status)
-      case (_, true, _) => cisTask(if (appConfig.sectionCompletedQuestionEnabled) InProgress else Completed)
+      case (_, true, _) => cisTask(if (appConfig.isEnabled(SectionCompletedQuestion)) InProgress else Completed)
       case (_, _, _) => None
     }
   }

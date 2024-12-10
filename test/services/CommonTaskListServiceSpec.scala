@@ -17,7 +17,7 @@
 package services
 
 import common.CISSource.CONTRACTOR
-import config.{AppConfig, AppConfigImpl}
+import config.{AppConfig, AppConfigStub}
 import connectors.errors.{ApiError, SingleErrorBody}
 import models.get.{AllCISDeductions, CISSource}
 import models.mongo.JourneyAnswers
@@ -25,7 +25,6 @@ import models.tasklist.SectionTitle.SelfEmploymentTitle
 import models.tasklist.TaskStatus.{CheckNow, Completed, InProgress, NotStarted}
 import models.tasklist.TaskTitle.CIS
 import models.tasklist._
-import play.api.Configuration
 import play.api.libs.json.{JsObject, JsString, Json}
 import support.ControllerUnitTest
 import support.builders.CISDeductionsBuilder.aCISDeductions
@@ -34,7 +33,6 @@ import support.builders.GetPeriodDataBuilder.aGetPeriodData
 import support.mocks.{MockAuthorisedAction, MockCISDeductionsService, MockJourneyAnswersRepository}
 import support.providers.{AppConfigStubProvider, FakeRequestProvider}
 import uk.gov.hmrc.http.{HeaderCarrier, SessionId}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -52,8 +50,6 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
     val nino: String = "12345678"
     val taxYear: Int = 1234
     val mtditid: String = "dummyMtditid"
-
-    val appConfig: AppConfig = appConfigStub
 
     def service: CommonTaskListService = new CommonTaskListService(
       appConfig = appConfigStub,
@@ -178,10 +174,7 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
     "HMRC data is omitted, or not latest, Journey Answers are not defined, and customer data exists" should {
       "return expected task list with 'InProgress' status if section completed feature switch is enabled" in new Test {
         override val service: CommonTaskListService = new CommonTaskListService(
-          appConfig = new AppConfigImpl(mock[Configuration], mock[ServicesConfig]) {
-            override lazy val cisFrontendBaseUrl: String = "http://localhost:9338"
-            override lazy val sectionCompletedQuestionEnabled: Boolean = true
-          },
+          appConfig = new AppConfigStub().config(sectionCompletedQuestionEnabled = true),
           cisDeductionsService = mockCISDeductionsService,
           journeyAnswersRepository = mockJourneyAnswersRepo
         )

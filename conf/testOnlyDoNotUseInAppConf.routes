@@ -10,4 +10,9 @@
 # Failing to follow this rule may result in test routes deployed in production.
 
 # Add all the application routes to the prod.routes file
+
+GET        /income-tax-cis/test-only/api/feature-switches                             featureswitch.api.controllers.FeatureSwitchApiController.getFeatureSwitches()
++ nocsrf
+POST       /income-tax-cis/test-only/api/feature-switches                             featureswitch.api.controllers.FeatureSwitchApiController.updateFeatureSwitches()
+
 ->         /                          prod.Routes

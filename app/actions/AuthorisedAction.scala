@@ -17,6 +17,7 @@
 package actions
 
 import config.AppConfig
+import featureswitch.core.config.EmaSupportingAgent
 import models.User
 import models.authorisation.DelegatedAuthRules
 import models.authorisation.Enrolment.{Agent, Individual, Nino, SupportingAgent}
@@ -122,7 +123,7 @@ class AuthorisedAction @Inject()(defaultActionBuilder: DefaultActionBuilder,
       val logMessage = s"$agentAuthLogString - No active session."
       logger.info(logMessage)
       unauthorized
-    case _: AuthorisationException if appConfig.emaSupportingAgentsEnabled =>
+    case _: AuthorisationException if appConfig.isEnabled(EmaSupportingAgent) =>
       authorised(secondaryAgentPredicate(mtdItId))
         .retrieve(allEnrolments)(
           enrolments => handleForValidAgent(block, mtdItId, enrolments, isSupportingAgent = true)
