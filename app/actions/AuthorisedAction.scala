@@ -22,7 +22,7 @@ import models.authorisation.DelegatedAuthRules
 import models.authorisation.Enrolment.{Agent, Individual, Nino, SupportingAgent}
 import models.requests.AuthorisationRequest
 import play.api.Logger
-import play.api.mvc.Results.Unauthorized
+import play.api.mvc.Results.{InternalServerError, Unauthorized}
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
@@ -131,10 +131,16 @@ class AuthorisedAction @Inject()(defaultActionBuilder: DefaultActionBuilder,
           case _: AuthorisationException =>
             logger.info(s"$agentAuthLogString - Agent does not have delegated primary or secondary authority for Client.")
             Unauthorized
+          case e =>
+            logger.info(s"$agentAuthLogString - Unexpected exception of type '${e.getClass.getSimpleName}' was caught.")
+            InternalServerError
         }
     case _: AuthorisationException =>
       logger.info(s"$agentAuthLogString - Agent does not have delegated authority for Client.")
       unauthorized
+    case e =>
+      logger.info(s"$agentAuthLogString - Unexpected exception of type '${e.getClass.getSimpleName}' was caught.")
+      Future(InternalServerError)
   }
 
   private def handleForValidAgent[A](block: AuthorisationRequest[A] => Future[Result],
