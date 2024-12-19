@@ -82,7 +82,7 @@ class AuthorisedActionSpec extends UnitTest
         .withDelegatedAuthRule("mtd-it-auth-supp")
 
     def mockMultipleAgentsSwitch(bool: Boolean): CallHandler0[Boolean] =
-      (mockAppConfig.emaSupportingAgentsEnabled _: () => Boolean)
+      (() => mockAppConfig.emaSupportingAgentsEnabled: Boolean)
         .expects()
         .returning(bool)
         .anyNumberOfTimes()
@@ -158,9 +158,8 @@ class AuthorisedActionSpec extends UnitTest
 
     "return an Unauthorised" when {
       "the authorisation service returns an AuthorisationException exception" in {
-        object AuthException extends AuthorisationException("Some reason")
 
-        mockAuthReturnException(AuthException)
+        mockAuthReturnException(InsufficientEnrolments())
 
         await(underTest.async(block)(requestWithMtditid)).header.status shouldBe UNAUTHORIZED
       }
@@ -393,12 +392,27 @@ class AuthorisedActionSpec extends UnitTest
         }
       }
 
+      "results in an Exception error being returned from Auth that is not an AuthException (Primary Agent)" should {
+        "return an InternalServerError response" in new AgentTest {
+          mockMultipleAgentsSwitch(false)
+
+          mockAuthReturnException(new Exception("bang"), primaryAgentPredicate(mtdItId))
+
+          val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
+            request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
+            hc = emptyHeaderCarrier
+          )
+
+          status(result) shouldBe INTERNAL_SERVER_ERROR
+          contentAsString(result) shouldBe ""
+        }
+      }
+
       "[EMA disabled] results in an AuthorisationException error being returned from Auth" should {
         "return an Unauthorised response" in new AgentTest {
           mockMultipleAgentsSwitch(false)
 
-          object AuthException extends AuthorisationException("Some reason")
-          mockAuthReturnException(AuthException, primaryAgentPredicate(mtdItId))
+          mockAuthReturnException(InsufficientEnrolments(), primaryAgentPredicate(mtdItId))
 
           val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
             request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
@@ -414,9 +428,8 @@ class AuthorisedActionSpec extends UnitTest
         "return an Unauthorised response when secondary agent auth call also fails" in new AgentTest {
           mockMultipleAgentsSwitch(true)
 
-          object AuthException extends AuthorisationException("Some reason")
-          mockAuthReturnException(AuthException, primaryAgentPredicate(mtdItId))
-          mockAuthReturnException(AuthException, secondaryAgentPredicate(mtdItId))
+          mockAuthReturnException(InsufficientEnrolments(), primaryAgentPredicate(mtdItId))
+          mockAuthReturnException(InsufficientEnrolments(), secondaryAgentPredicate(mtdItId))
 
           lazy val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
             request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
@@ -427,11 +440,25 @@ class AuthorisedActionSpec extends UnitTest
           contentAsString(result) shouldBe ""
         }
 
+        "return an InternalServerError response when secondary agent auth call also fails without an AuthException" in new AgentTest {
+          mockMultipleAgentsSwitch(true)
+
+          mockAuthReturnException(InsufficientEnrolments(), primaryAgentPredicate(mtdItId))
+          mockAuthReturnException(new Exception("bang"), secondaryAgentPredicate(mtdItId))
+
+          lazy val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
+            request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
+            hc = emptyHeaderCarrier
+          )
+
+          status(result) shouldBe INTERNAL_SERVER_ERROR
+          contentAsString(result) shouldBe ""
+        }
+
         "handle appropriately when a supporting agent is properly authorised" in new AgentTest {
           mockMultipleAgentsSwitch(true)
 
-          object AuthException extends AuthorisationException("Some reason")
-          mockAuthReturnException(AuthException, primaryAgentPredicate(mtdItId))
+          mockAuthReturnException(InsufficientEnrolments(), primaryAgentPredicate(mtdItId))
           mockAuthReturn(supportingAgentEnrolment, secondaryAgentPredicate(mtdItId))
 
           lazy val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
