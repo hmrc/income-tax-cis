@@ -21,7 +21,16 @@ import play.api.libs.json.{Json, OFormat}
 case class CISSource(totalDeductionAmount: Option[BigDecimal],
                      totalCostOfMaterials: Option[BigDecimal],
                      totalGrossAmountPaid: Option[BigDecimal],
-                     cisDeductions: Seq[CISDeductions])
+                     cisDeductions: Seq[CISDeductions]) {
+  /*TODO: Need to figure out if this is a 'correct' way to determine if a CIS source is empty or not. I presume that
+   we would simply not get anything back from IF when no data exists rather than getting an empty object like this
+   but I need to check what the zero'd out data looks like to confirm this.
+   */
+  def isEmpty: Boolean = this match {
+    case CISSource(None, None, None, Nil) => true
+    case _ => false
+  }
+}
 
 object CISSource {
   implicit val format: OFormat[CISSource] = Json.format[CISSource]

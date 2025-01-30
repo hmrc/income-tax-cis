@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package connectors.errors
+package models.get
 
-import play.api.libs.json.{JsValue, Json}
+import support.UnitTest
 
-case class ApiError(status: Int, body: ApiErrorBody) {
+class CisSourceSpec extends UnitTest {
 
-  def toJson: JsValue = body match {
-    case error: SingleErrorBody => Json.toJson(error)
-    case errors: MultiErrorsBody => Json.toJson(errors)
+  "CisSource" when {
+    "isEmpty" should {
+      "return 'false' when any data is defined" in {
+        CISSource(Some(1), Some(2), Some(3), Nil).isEmpty shouldBe false
+      }
+
+      "return 'true' when no data is defined" in {
+        CISSource(None, None, None, Nil).isEmpty shouldBe true
+      }
+    }
   }
-
-  def toLogString: String = s"with status: $status, and body: $body"
 }
