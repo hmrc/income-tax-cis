@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package models.tasklist
+package models.taskList
 
-import enumeratum._
+import play.api.libs.json.{Json, OFormat}
 
-sealed abstract class SectionTitle(override val entryName: String) extends EnumEntry {
-  override def toString: String = entryName
-}
+case class TaskListSection(sectionTitle: SectionTitle, taskItems: Option[Seq[TaskListSectionItem]])
 
-object SectionTitle extends Enum[SectionTitle] with PlayJsonEnum[SectionTitle] {
-
-  val values: IndexedSeq[SectionTitle] = findValues
-
-  case object SelfEmploymentTitle extends SectionTitle("SelfEmployment")
-
+object TaskListSection {
+  implicit val format: OFormat[TaskListSection] = Json.format[TaskListSection]
 }

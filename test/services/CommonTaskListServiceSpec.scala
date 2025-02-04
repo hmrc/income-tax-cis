@@ -21,10 +21,10 @@ import config.{AppConfig, AppConfigImpl}
 import connectors.errors.{ApiError, SingleErrorBody}
 import models.get.{AllCISDeductions, CISSource}
 import models.mongo.JourneyAnswers
-import models.tasklist.SectionTitle.SelfEmploymentTitle
-import models.tasklist.TaskStatus.{CheckNow, Completed, InProgress, NotStarted}
-import models.tasklist.TaskTitle.CIS
-import models.tasklist._
+import models.taskList.SectionTitle.SelfEmploymentTitle
+import models.taskList.TaskStatus.{CheckNow, Completed, InProgress, NotStarted}
+import models.taskList.TaskTitle.CIS
+import models.taskList._
 import play.api.Configuration
 import play.api.libs.json.{JsObject, JsString, Json}
 import support.ControllerUnitTest

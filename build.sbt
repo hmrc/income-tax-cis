@@ -58,7 +58,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(PlayKeys.playDefaultPort := 9328)
   .settings(RoutesKeys.routesImport ++= Seq("models.TaxYearPathBindable._", "models.TaxYearPathBindable.TaxYear"))
-  .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
   .disablePlugins(JUnitXmlReportPlugin)
   .settings(coverageSettings *)
 

@@ -16,8 +16,8 @@
 
 package controllers
 
-import models.tasklist.SectionTitle.SelfEmploymentTitle
-import models.tasklist.TaskListSection
+import models.taskList.SectionTitle.SelfEmploymentTitle
+import models.taskList.TaskListSection
 import org.scalamock.handlers.CallHandler5
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import play.api.http.Status.OK

@@ -108,7 +108,7 @@ class PrePopulationServiceSpec extends UnitTest
       }
 
       "return pre-pop flags as 'false' when only zeroed HMRC-held data exists" in new Test {
-        val hmrcHeldOnlyIfResponse: AllCISDeductions = AllCISDeductions(
+        val zeroedIfResponse: AllCISDeductions = AllCISDeductions(
           customerCISDeductions = None,
           contractorCISDeductions = Some(CISSource(
             totalDeductionAmount = Some(0),
@@ -140,7 +140,7 @@ class PrePopulationServiceSpec extends UnitTest
           ))
         )
 
-        mockGetCISDeductions(taxYear = taxYear, nino = nino, result = Right(hmrcHeldOnlyIfResponse))
+        mockGetCISDeductions(taxYear = taxYear, nino = nino, result = Right(zeroedIfResponse))
         val result: Either[ApiError, PrePopulationResponse] = await(service.get(taxYear, nino).value)
 
         result shouldBe a[Right[_, _]]

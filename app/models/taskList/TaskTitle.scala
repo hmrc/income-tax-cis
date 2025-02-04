@@ -14,26 +14,19 @@
  * limitations under the License.
  */
 
-package models.tasklist
+package models.taskList
 
 import enumeratum._
 
-sealed abstract class TaskStatus(override val entryName: String) extends EnumEntry {
+sealed abstract class TaskTitle(override val entryName: String) extends EnumEntry {
   override def toString: String = entryName
 }
 
-object TaskStatus extends Enum[TaskStatus] with PlayJsonEnum[TaskStatus] {
+object TaskTitle extends Enum[TaskTitle] with PlayJsonEnum[TaskTitle] {
 
-  val values: IndexedSeq[TaskStatus] = findValues
+  val values: IndexedSeq[TaskTitle] = findValues
 
-  case object Completed extends TaskStatus("completed")
-
-  case object InProgress extends TaskStatus("inProgress")
-
-  case object NotStarted extends TaskStatus("notStarted")
-
-  case object CheckNow extends TaskStatus("checkNow")
-
-  case object UnderMaintenance extends TaskStatus("underMaintenance")
+  // UK Self-Employment
+  case object CIS extends TaskTitle("CISTitle")
 
 }
