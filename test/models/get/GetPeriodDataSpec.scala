@@ -18,16 +18,22 @@ package models.get
 
 import support.UnitTest
 
-class CisSourceSpec extends UnitTest {
+class GetPeriodDataSpec extends UnitTest {
 
-  "CisSource" when {
+  "GetPeriodData" when {
     "isEmpty" should {
+      val nonEmptyPeriodData: GetPeriodData = GetPeriodData("", "", None, None, Some(1), "", None, "")
+      val emptyPeriodData: GetPeriodData = nonEmptyPeriodData.copy(grossAmountPaid = None)
       "return 'false' when any data is defined" in {
-        CISSource(Some(1), Some(2), Some(3), Nil).isEmpty shouldBe false
+        nonEmptyPeriodData.isEmpty shouldBe false
       }
 
-      "return 'true' when no data is defined" in {
-        CISSource(None, None, None, Nil).isEmpty shouldBe true
+      "return 'true' when there is no data" in {
+        emptyPeriodData.isEmpty shouldBe true
+      }
+
+      "return 'true' when data matches zeroed response" in {
+        GetPeriodData("", "", Some(0), Some(0), Some(0), "", None, "").isEmpty shouldBe true
       }
     }
   }

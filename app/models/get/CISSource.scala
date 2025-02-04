@@ -22,12 +22,13 @@ case class CISSource(totalDeductionAmount: Option[BigDecimal],
                      totalCostOfMaterials: Option[BigDecimal],
                      totalGrossAmountPaid: Option[BigDecimal],
                      cisDeductions: Seq[CISDeductions]) {
-  /*TODO: Need to figure out if this is a 'correct' way to determine if a CIS source is empty or not. I presume that
-   we would simply not get anything back from IF when no data exists rather than getting an empty object like this
-   but I need to check what the zero'd out data looks like to confirm this.
-   */
-  def isEmpty: Boolean = this match {
-    case CISSource(None, None, None, Nil) => true
+  private val isCisDeductionsEmpty: Boolean = cisDeductions.forall(_.isEmpty)
+
+  val zero: Option[BigDecimal] = Some(BigDecimal(0))
+
+  val isEmpty: Boolean = this match {
+    case CISSource(`zero`, `zero`, `zero`, _) if isCisDeductionsEmpty => true
+    case CISSource(None, None, None, _) if isCisDeductionsEmpty => true
     case _ => false
   }
 }

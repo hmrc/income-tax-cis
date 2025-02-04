@@ -25,7 +25,17 @@ case class CISDeductions(fromDate: String,
                          totalDeductionAmount: Option[BigDecimal],
                          totalCostOfMaterials: Option[BigDecimal],
                          totalGrossAmountPaid: Option[BigDecimal],
-                         periodData: Seq[GetPeriodData])
+                         periodData: Seq[GetPeriodData]) {
+  private val isPeriodDataEmpty: Boolean = periodData.forall(_.isEmpty)
+
+  private val zero: Option[BigDecimal] = Some(BigDecimal(0))
+
+  val isEmpty: Boolean = this match {
+    case CISDeductions(_, _, _, _, `zero`, `zero`, `zero`, _) if isPeriodDataEmpty => true
+    case CISDeductions(_, _, _, _, None, None, None, _) if isPeriodDataEmpty => true
+    case _ => false
+  }
+}
 
 object CISDeductions {
   implicit val format: OFormat[CISDeductions] = Json.format[CISDeductions]
