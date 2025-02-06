@@ -21,7 +21,17 @@ import play.api.libs.json.{Json, OFormat}
 case class CISSource(totalDeductionAmount: Option[BigDecimal],
                      totalCostOfMaterials: Option[BigDecimal],
                      totalGrossAmountPaid: Option[BigDecimal],
-                     cisDeductions: Seq[CISDeductions])
+                     cisDeductions: Seq[CISDeductions]) {
+  private val isCisDeductionsEmpty: Boolean = cisDeductions.forall(_.isEmpty)
+
+  val zero: Option[BigDecimal] = Some(BigDecimal(0))
+
+  val isEmpty: Boolean = this match {
+    case CISSource(`zero`, `zero`, `zero`, _) if isCisDeductionsEmpty => true
+    case CISSource(None, None, None, _) if isCisDeductionsEmpty => true
+    case _ => false
+  }
+}
 
 object CISSource {
   implicit val format: OFormat[CISSource] = Json.format[CISSource]

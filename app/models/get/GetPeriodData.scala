@@ -25,7 +25,15 @@ case class GetPeriodData(deductionFromDate: String,
                          grossAmountPaid: Option[BigDecimal],
                          submissionDate: String,
                          submissionId: Option[String],
-                         source: String)
+                         source: String) {
+  val zero: Option[BigDecimal] = Some(BigDecimal(0))
+
+  val isEmpty: Boolean = this match {
+    case GetPeriodData(_, _, `zero`, `zero`, `zero`, _, _, _) => true
+    case GetPeriodData(_, _, None, None, None, _, _, _) => true
+    case _ => false
+  }
+}
 
 object GetPeriodData {
   implicit val format: OFormat[GetPeriodData] = Json.format[GetPeriodData]

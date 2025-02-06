@@ -24,4 +24,6 @@ case class ApiError(status: Int, body: ApiErrorBody) {
     case error: SingleErrorBody => Json.toJson(error)
     case errors: MultiErrorsBody => Json.toJson(errors)
   }
+
+  def toLogString: String = s"with status: $status, and body: $body"
 }
