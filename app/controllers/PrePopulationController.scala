@@ -17,6 +17,7 @@
 package controllers
 
 import actions.AuthorisedAction
+import models.prePopulation.PrePopulationResponse
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.PrePopulationService
@@ -46,9 +47,11 @@ class PrePopulationController @Inject()(service: PrePopulationService,
         warnLogger(s"An error occurred while checking the user's CIS data for pre-pop ${serviceError.toLogString}")
         InternalServerError
       },
-      prePopData => {
+      _ => {
         infoLogger("CIS pre-pop check completed successfully. Returning response")
-        Ok(Json.toJson(prePopData))
+        Ok(Json.toJson(new PrePopulationResponse(
+          true
+        )))
       }
     ).merge
   }}
