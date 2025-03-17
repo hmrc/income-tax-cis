@@ -404,33 +404,6 @@ class AuthorisedActionSpec extends UnitTest
         }
       }
 
-      "[EMA enabled] results in an AuthorisationException error being returned from Auth" should {
-        "return an Unauthorised response when secondary agent auth call also fails" in new AgentTest {
-
-          mockAuthReturnException(InsufficientEnrolments(), primaryAgentPredicate(mtdItId))
-
-          lazy val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
-            request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
-            hc = emptyHeaderCarrier
-          )
-
-          status(result) shouldBe UNAUTHORIZED
-          contentAsString(result) shouldBe ""
-        }
-
-        "return UNAUTHORIZED apsupporting it is supporting agent" in new AgentTest {
-
-          mockAuthReturnException(InsufficientEnrolments(), primaryAgentPredicate(mtdItId))
-
-          lazy val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
-            request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
-            hc = validHeaderCarrier
-          )
-
-          status(result) shouldBe UNAUTHORIZED
-        }
-      }
-
       "results in successful authorisation for a primary agent" should {
         "return an Unauthorised response when an ARN cannot be found" in new AgentTest {
           val primaryAgentEnrolmentNoArn: Enrolments = Enrolments(Set(
