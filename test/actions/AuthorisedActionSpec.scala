@@ -389,6 +389,21 @@ class AuthorisedActionSpec extends UnitTest
         }
       }
 
+      "results in an AuthorisationException error being returned from Auth" should {
+        "return an Unauthorised response" in new AgentTest {
+
+          mockAuthReturnException(InsufficientEnrolments(), primaryAgentPredicate(mtdItId))
+
+          val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
+            request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
+            hc = emptyHeaderCarrier
+          )
+
+          status(result) shouldBe UNAUTHORIZED
+          contentAsString(result) shouldBe ""
+        }
+      }
+
       "results in successful authorisation for a primary agent" should {
         "return an Unauthorised response when an ARN cannot be found" in new AgentTest {
           val primaryAgentEnrolmentNoArn: Enrolments = Enrolments(Set(
