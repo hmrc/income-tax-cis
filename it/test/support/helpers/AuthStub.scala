@@ -82,15 +82,6 @@ trait AuthStub {
           .withHeader("Content-Type", "application/json; charset=utf-8")))
   }
 
-  def agentAuthorised(): StubMapping = {
-    stubFor(post(urlMatching(authoriseUri))
-      .willReturn(
-        aResponse()
-          .withStatus(OK)
-          .withBody(successfulAuthResponse(Some(Agent), None, agentEnrolment).toString())
-          .withHeader("Content-Type", "application/json; charset=utf-8")))
-  }
-
   def unauthorisedOtherEnrolment(): StubMapping = {
     stubFor(post(urlMatching(authoriseUri))
       .willReturn(

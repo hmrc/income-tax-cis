@@ -16,17 +16,20 @@
 
 package actions
 
-import config.AppConfig
 import models.User
 import models.authorisation.DelegatedAuthRules
-import models.authorisation.Enrolment.{Agent, Individual, Nino, SupportingAgent}
+import models.authorisation.Enrolment.{Agent, Individual, Nino}
 import models.requests.AuthorisationRequest
 import play.api.Logger
 import play.api.mvc.Results.{InternalServerError, Unauthorized}
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{affinityGroup, allEnrolments, confidenceLevel}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{
+  affinityGroup,
+  allEnrolments,
+  confidenceLevel
+}
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -35,7 +38,6 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class AuthorisedAction @Inject()(defaultActionBuilder: DefaultActionBuilder,
-                                 appConfig: AppConfig,
                                  val authConnector: AuthConnector,
                                  cc: ControllerComponents) extends AuthorisedFunctions {
 
@@ -111,30 +113,11 @@ class AuthorisedAction @Inject()(defaultActionBuilder: DefaultActionBuilder,
       .withIdentifier(Individual.value, mtdId)
       .withDelegatedAuthRule(DelegatedAuthRules.agentDelegatedAuthRule)
 
-  private def secondaryAgentPredicate(mtdId: String): Predicate =
-    Enrolment(SupportingAgent.key)
-      .withIdentifier(SupportingAgent.value, mtdId)
-      .withDelegatedAuthRule(DelegatedAuthRules.supportingAgentDelegatedAuthRule)
-
-  private def agentRecovery[A](block: AuthorisationRequest[A] => Future[Result], mtdItId: String)
-                              (implicit request: Request[A], hc: HeaderCarrier): PartialFunction[Throwable, Future[Result]] = {
+  private def agentRecovery(): PartialFunction[Throwable, Future[Result]] = {
     case _: NoActiveSession =>
       val logMessage = s"$agentAuthLogString - No active session."
       logger.info(logMessage)
       unauthorized
-    case _: AuthorisationException if appConfig.emaSupportingAgentsEnabled =>
-      authorised(secondaryAgentPredicate(mtdItId))
-        .retrieve(allEnrolments)(
-          enrolments => handleForValidAgent(block, mtdItId, enrolments, isSupportingAgent = true)
-        )
-        .recover {
-          case _: AuthorisationException =>
-            logger.warn(s"$agentAuthLogString - Agent does not have delegated primary or secondary authority for Client.")
-            Unauthorized
-          case e =>
-            logger.error(s"$agentAuthLogString - Unexpected exception of type '${e.getClass.getSimpleName}' was caught.")
-            InternalServerError
-        }
     case _: AuthorisationException =>
       logger.warn(s"$agentAuthLogString - Agent does not have delegated authority for Client.")
       unauthorized
@@ -145,11 +128,10 @@ class AuthorisedAction @Inject()(defaultActionBuilder: DefaultActionBuilder,
 
   private def handleForValidAgent[A](block: AuthorisationRequest[A] => Future[Result],
                                      mtdItId: String,
-                                     enrolments: Enrolments,
-                                     isSupportingAgent: Boolean)
+                                     enrolments: Enrolments)
                                     (implicit request: Request[A]): Future[Result] = {
     enrolmentGetIdentifierValue(Agent.key, Agent.value, enrolments) match {
-      case Some(arn) => block(AuthorisationRequest(User(mtdItId, Some(arn), isSupportingAgent), request))
+      case Some(arn) => block(AuthorisationRequest(User(mtdItId, Some(arn)), request))
       case None =>
         val logMessage = s"$agentAuthLogString - Agent with no HMRC-AS-AGENT enrolment."
         logger.warn(logMessage)
@@ -160,8 +142,8 @@ class AuthorisedAction @Inject()(defaultActionBuilder: DefaultActionBuilder,
   private[actions] def agentAuthentication[A](block: AuthorisationRequest[A] => Future[Result], mtdItId: String)
                                              (implicit request: Request[A], hc: HeaderCarrier): Future[Result] =
     authorised(agentAuthPredicate(mtdItId))
-      .retrieve(allEnrolments)(enrolments => handleForValidAgent(block, mtdItId, enrolments, isSupportingAgent = false))
-      .recoverWith(agentRecovery(block, mtdItId))
+      .retrieve(allEnrolments)(enrolments => handleForValidAgent(block, mtdItId, enrolments))
+      .recoverWith(agentRecovery())
 
   private[actions] def enrolmentGetIdentifierValue(checkedKey: String,
                                                    checkedIdentifier: String,

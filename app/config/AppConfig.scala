@@ -34,7 +34,6 @@ trait AppConfig {
   def desAuthorisationToken: String
   def encryptionKey: String
   def mongoJourneyAnswersTTL: Int
-  def emaSupportingAgentsEnabled: Boolean
   def sectionCompletedQuestionEnabled: Boolean
   def replaceJourneyAnswersIndexes: Boolean
 }
@@ -59,7 +58,6 @@ class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesCon
   def desBaseUrl: String = servicesConfig.baseUrl("des")
   def desEnvironment: String = config.get[String]("microservice.services.des.environment")
   def desAuthorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
-  
-  def emaSupportingAgentsEnabled: Boolean = config.get[Boolean]("feature-switch.ema-supporting-agents-enabled")
+
   def sectionCompletedQuestionEnabled: Boolean = config.get[Boolean]("feature-switch.sectionCompletedQuestionEnabled")
 }
