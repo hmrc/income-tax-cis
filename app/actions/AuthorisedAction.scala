@@ -128,11 +128,10 @@ class AuthorisedAction @Inject()(defaultActionBuilder: DefaultActionBuilder,
 
   private def handleForValidAgent[A](block: AuthorisationRequest[A] => Future[Result],
                                      mtdItId: String,
-                                     enrolments: Enrolments,
-                                     isSupportingAgent: Boolean)
+                                     enrolments: Enrolments)
                                     (implicit request: Request[A]): Future[Result] = {
     enrolmentGetIdentifierValue(Agent.key, Agent.value, enrolments) match {
-      case Some(arn) => block(AuthorisationRequest(User(mtdItId, Some(arn), isSupportingAgent), request))
+      case Some(arn) => block(AuthorisationRequest(User(mtdItId, Some(arn)), request))
       case None =>
         val logMessage = s"$agentAuthLogString - Agent with no HMRC-AS-AGENT enrolment."
         logger.warn(logMessage)
@@ -143,7 +142,7 @@ class AuthorisedAction @Inject()(defaultActionBuilder: DefaultActionBuilder,
   private[actions] def agentAuthentication[A](block: AuthorisationRequest[A] => Future[Result], mtdItId: String)
                                              (implicit request: Request[A], hc: HeaderCarrier): Future[Result] =
     authorised(agentAuthPredicate(mtdItId))
-      .retrieve(allEnrolments)(enrolments => handleForValidAgent(block, mtdItId, enrolments, isSupportingAgent = false))
+      .retrieve(allEnrolments)(enrolments => handleForValidAgent(block, mtdItId, enrolments))
       .recoverWith(agentRecovery())
 
   private[actions] def enrolmentGetIdentifierValue(checkedKey: String,
