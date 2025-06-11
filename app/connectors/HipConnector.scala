@@ -22,10 +22,8 @@ import connectors.errors.ApiError
 import connectors.response.PostCISDeductionsResponse
 import models.requests.HipCISDeductionsRequest
 import models.{CreateCISDeductionsSuccess, PeriodData}
-import models.submission.CISSubmission
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json.Json
-import uk.gov.hmrc.auth.core.Nino
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{StringContextOps, HeaderCarrier, HeaderNames}
 
@@ -42,11 +40,11 @@ class HipConnector @Inject()(
   // HIP API#1789
   def createCISDeductions(
                                         taxYear: Int,
-                                        nino: Nino,
+                                        nino: String,
                                         employerRef: String,
                                         contractorName: String,
-                                        fromDate: LocalDate,
-                                        toDate: LocalDate,
+                                        fromDate: String,
+                                        toDate: String,
                                         periodData: Array[PeriodData]
                                       )(implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
     val hipApiVersion: String = "1789"

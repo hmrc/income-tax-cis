@@ -20,13 +20,11 @@ import models.PeriodData
 import play.api.libs.json.{Writes, OWrites, Json, JsValue}
 import play.api.libs.ws.BodyWritable
 
-import java.time.LocalDate
-
 case class HipCISDeductionsRequest(
   employerRef: String,
   contractorName: String,
-  fromDate: LocalDate,
-  toDate: LocalDate,
+  fromDate: String,
+  toDate: String,
   periodData: Array[PeriodData]
 )
 

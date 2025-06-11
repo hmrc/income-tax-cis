@@ -28,7 +28,7 @@ object PostCISDeductionsResponse {
 
   implicit val postCISDeductions: HttpReads[PostCISDeductionsResponse] = new HttpReads[PostCISDeductionsResponse] with ResponseParser {
 
-    override protected val parserName: String = this.getClass.getSimpleName
+    override val parserName: String = this.getClass.getSimpleName
 
     override def read(method: String, url: String, response: HttpResponse): PostCISDeductionsResponse = response.status match {
       case OK => PostCISDeductionsResponse(response, extractResult(response))
