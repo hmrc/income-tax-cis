@@ -19,10 +19,11 @@ package config
 import org.scalamock.scalatest.MockFactory
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import utils.FeatureSwitchConfig
 
 class AppConfigStub extends MockFactory {
 
-  def config(desHost: String = "localhost", environment: String = "test"): AppConfig = new AppConfigImpl(mock[Configuration], mock[ServicesConfig]) {
+  def config(desHost: String = "localhost", environment: String = "test", featureSwitchConfig: Option[FeatureSwitchConfig] = None): AppConfig = new AppConfigImpl(mock[Configuration], mock[ServicesConfig]) {
     private val wireMockPort = 11111
 
     private lazy val authorisationToken: String = "secret"
@@ -32,7 +33,16 @@ class AppConfigStub extends MockFactory {
 
     override lazy val cisFrontendBaseUrl: String = "http://localhost:9338"
 
+    override lazy val hipBaseUrl: String = s"http://localhost:$wireMockPort"
+    override lazy val hipEnvironment: String = environment
+
     override def authorisationTokenFor(apiVersion: String): String = authorisationToken + s".$apiVersion"
+
+    override def hipAuthTokenFor(apiVersion: String): String = authorisationToken + s".$apiVersion"
+
+    lazy val featureSwitches: FeatureSwitchConfig = featureSwitchConfig.getOrElse(FeatureSwitchConfig())
+
+    override lazy val hipMigration1789Enabled: Boolean = featureSwitches.hipApi1789
 
     override lazy val desBaseUrl: String = s"http://$desHost:$wireMockPort"
     override lazy val desAuthorisationToken: String = "authorisation-token"

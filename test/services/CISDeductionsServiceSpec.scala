@@ -16,26 +16,35 @@
 
 package services
 
-import common.CISSource.{CONTRACTOR, CUSTOMER}
-import connectors.errors.{ApiError, SingleErrorBody}
+import common.CISSource.{CUSTOMER, CONTRACTOR}
+import config.{AppConfig, AppConfigStub}
+import connectors.errors.{SingleErrorBody, ApiError}
 import models._
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import support.UnitTest
 import support.builders.AllCISDeductionsBuilder.anAllCISDeductions
 import support.builders.CISSubmissionBuilder.aCISSubmission
 import support.builders.CreateCISDeductionsBuilder.aCreateCISDeductions
-import support.mocks.{MockCISDeductionsConnector, MockIntegrationFrameworkService}
+import support.mocks.{MockCISDeductionsConnector, MockHipConnector, MockIntegrationFrameworkService}
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.FeatureSwitchConfig
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class CISDeductionsServiceSpec extends UnitTest
   with MockCISDeductionsConnector
   with MockIntegrationFrameworkService
-  with TaxYearProvider {
+  with TaxYearProvider
+  with MockHipConnector
+  with App {
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
+  lazy val appConfigStub: AppConfig = new AppConfigStub().config()
+
+  private val hipApisEnabledFSConfig = FeatureSwitchConfig(hipApi1789 = true)
+  private val appConfigWithHipApisEnabled: AppConfig = new AppConfigStub().config(featureSwitchConfig = Some(hipApisEnabledFSConfig))
+  private val underTestWithHipApisEnabled = new CISDeductionsService(mockCISDeductionsConnector, mockIntegrationFrameworkService, mockHipConnector, appConfigWithHipApisEnabled)
 
   private val nino = "AA66666B"
   private val taxYearBefore2023_24 = 2023
@@ -43,7 +52,9 @@ class CISDeductionsServiceSpec extends UnitTest
 
   private val underTest = new CISDeductionsService(
     mockCISDeductionsConnector,
-    mockIntegrationFrameworkService
+    mockIntegrationFrameworkService,
+    mockHipConnector,
+    appConfigStub
   )
 
   ".submitCISDeductions" should {
@@ -166,6 +177,84 @@ class CISDeductionsServiceSpec extends UnitTest
       mockDelete(nino, "submissionId", Right(()))
 
       await(underTest.deleteCISDeductionsSubmission(taxYearBefore2023_24, nino, "submissionId")) shouldBe Right(())
+    }
+  }
+
+  "create CIS Deductions" when {
+    "feature switch for hip api 1789 is disabled" should {
+      "use the IF API#1500 and return the created BFL loss Id for valid request" in {
+        val createPropertyBFLResult = Right(BroughtForwardLossId(lossId))
+
+        mockCreatePropertyBroughtForwardLoss(whenYouReportedTheLoss, nino, incomeSourceId, lossAmount, createPropertyBFLResult)
+
+        val result = await(
+          underTest.createBroughtForwardLoss(
+            whenYouReportedTheLoss,
+            nino,
+            incomeSourceId,
+            lossAmount
+          ).value
+        )
+        result shouldBe Right(lossId)
+      }
+      "return ApiError for invalid request" in {
+        val apiError = SingleErrorBody("code", "reason")
+        val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
+
+        apiErrorCodes.foreach { apiErrorCode =>
+          val createPropertyBFLResult = Left(ApiError(apiErrorCode, apiError))
+          mockCreatePropertyBroughtForwardLoss(whenYouReportedTheLoss, nino, incomeSourceId, lossAmount, createPropertyBFLResult)
+
+          val result = await(
+            underTest.createBroughtForwardLoss(
+              whenYouReportedTheLoss,
+              nino,
+              incomeSourceId,
+              lossAmount
+            ).value
+          )
+          result shouldBe Left(ApiServiceError(apiErrorCode))
+        }
+      }
+
+    }
+  }
+  "feature switch for hip api 1500 is enabled" should {
+    "use the HIP API#1500 and return the created BFL loss Id for valid request" in {
+      val incomeSourceType: IncomeSourceType = IncomeSourceType.UKPropertyOther
+      val createPropertyBFLResult = Right(BroughtForwardLossId(lossId))
+
+      mockHipCreatePropertyBroughtForwardLossSubmission(nino, incomeSourceId, incomeSourceType, lossAmount, whenYouReportedTheLoss, createPropertyBFLResult)
+
+      val result = await(
+        underTestWithHipApisEnabled.createBroughtForwardLoss(
+          whenYouReportedTheLoss,
+          nino,
+          incomeSourceId,
+          lossAmount
+        ).value
+      )
+      result shouldBe Right(lossId)
+    }
+    "return ApiError for invalid request" in {
+      val incomeSourceType: IncomeSourceType = IncomeSourceType.UKPropertyOther
+      val apiError = SingleErrorBody("code", "reason")
+      val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
+
+      apiErrorCodes.foreach { apiErrorCode =>
+        val createPropertyBFLResult = Left(ApiError(apiErrorCode, apiError))
+        mockHipCreatePropertyBroughtForwardLossSubmission(nino, incomeSourceId, incomeSourceType, lossAmount, whenYouReportedTheLoss, createPropertyBFLResult)
+
+        val result = await(
+          underTestWithHipApisEnabled.createBroughtForwardLoss(
+            whenYouReportedTheLoss,
+            nino,
+            incomeSourceId,
+            lossAmount
+          ).value
+        )
+        result shouldBe Left(ApiServiceError(apiErrorCode))
+      }
     }
   }
 }

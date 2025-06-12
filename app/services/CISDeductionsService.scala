@@ -24,6 +24,7 @@ import models.submission.CISSubmission
 import models.{CreateCISDeductionsSuccess, UpdateCISDeductions, CreateCISDeductions}
 import uk.gov.hmrc.http.HeaderCarrier
 import config.AppConfig
+import models.TaxYearPathBindable.{TaxYear, asTys}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -80,7 +81,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
   private def createCisDeductions(nino: String, taxYear: Int, createCisDeductions: CreateCISDeductions)
                                  (implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
     if (appConfig.hipMigration1789Enabled) {
-      hipConnector.createCISDeductions(taxYear,
+      hipConnector.createCISDeductions(asTys(TaxYear(taxYear)),
         nino, createCisDeductions.employerRef,
         createCisDeductions.contractorName,
         createCisDeductions.periodData.map(_.deductionFromDate).min, createCisDeductions.periodData.map(_.deductionToDate).max, createCisDeductions.periodData.toArray)

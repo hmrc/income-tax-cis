@@ -39,7 +39,7 @@ class HipConnector @Inject()(
 
   // HIP API#1789
   def createCISDeductions(
-                                        taxYear: Int,
+                                        taxYear: String,
                                         nino: String,
                                         employerRef: String,
                                         contractorName: String,
