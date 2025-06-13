@@ -49,7 +49,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
         val httpResponse = HttpResponse(OK, Json.toJson(Responses.hipCreateDeductionsResponse).toString)
 
         stubPostHttpClientCall(
-          s"/income-tax/v1/$taxYear/cis/deductions/$nino",
+          s"/income-tax/v1/${asTys(TaxYear(taxYear))}/cis/deductions/$nino",
           requestBody,
           httpResponse
         )
@@ -76,7 +76,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
         val httpResponse = HttpResponse(NOT_FOUND, Json.toJson(apiError).toString())
 
         stubPostHttpClientCall(
-          s"/income-tax/v1/$taxYear/cis/deductions/$nino",
+          s"/income-tax/v1/${asTys(TaxYear(taxYear))}cis/deductions/$nino",
           requestBody,
           httpResponse
         )
@@ -104,7 +104,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
           val httpResponse = HttpResponse(apiErrorCode, Json.toJson(apiError).toString())
 
           stubPostHttpClientCall(
-            s"/income-tax/v1/$taxYear/cis/deductions/$nino",
+            s"/income-tax/v1/${asTys(TaxYear(taxYear))}/cis/deductions/$nino",
             requestBody,
             httpResponse
           )
@@ -130,7 +130,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
         val httpResponse = HttpResponse(INSUFFICIENT_STORAGE, Json.toJson(apiError).toString())
 
         stubPostHttpClientCall(
-          s"/income-tax/v1/$taxYear/cis/deductions/$nino",
+          s"/income-tax/v1/${asTys(TaxYear(taxYear))}/cis/deductions/$nino",
           requestBody,
           httpResponse
         )

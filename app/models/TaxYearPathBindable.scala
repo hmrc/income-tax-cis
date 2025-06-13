@@ -16,7 +16,6 @@
 
 package models
 
-import models.common.TaxYear
 import play.api.mvc.PathBindable
 
 import java.time.LocalDate

@@ -78,7 +78,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
     }
   }
 
-  private def createCisDeductions(nino: String, taxYear: Int, createCisDeductions: CreateCISDeductions)
+  def createCisDeductions(nino: String, taxYear: Int, createCisDeductions: CreateCISDeductions)
                                  (implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
     if (appConfig.hipMigration1789Enabled) {
       hipConnector.createCISDeductions(asTys(TaxYear(taxYear)),

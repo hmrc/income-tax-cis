@@ -19,8 +19,9 @@ package services
 import common.CISSource.{CUSTOMER, CONTRACTOR}
 import config.{AppConfig, AppConfigStub}
 import connectors.errors.{SingleErrorBody, ApiError}
+import models.TaxYearPathBindable.{asTys, TaxYear}
 import models._
-import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status._
 import support.UnitTest
 import support.builders.AllCISDeductionsBuilder.anAllCISDeductions
 import support.builders.CISSubmissionBuilder.aCISSubmission
@@ -49,6 +50,13 @@ class CISDeductionsServiceSpec extends UnitTest
   private val nino = "AA66666B"
   private val taxYearBefore2023_24 = 2023
   private val taxYear2023_24 = 2024
+  private val taxYear2019_20 = 2020
+  private val employerRef = "exampleRef"
+  private val contractorName = "exampleName"
+  private val fromDate = "2019-08-24"
+  private val toDate = "2019-08-24"
+  private val periodData: Array[PeriodData] = Array(PeriodData("2019-08-24", "2019-08-24", Some(BigDecimal(12.34)), BigDecimal(45.67), Some(BigDecimal(89.01))))
+  private val submissionId = "exampleSubmissionId"
 
   private val underTest = new CISDeductionsService(
     mockCISDeductionsConnector,
@@ -182,78 +190,56 @@ class CISDeductionsServiceSpec extends UnitTest
 
   "create CIS Deductions" when {
     "feature switch for hip api 1789 is disabled" should {
-      "use the IF API#1500 and return the created BFL loss Id for valid request" in {
-        val createPropertyBFLResult = Right(BroughtForwardLossId(lossId))
+      "use the IF API#1569 and return the created CIS Deductions Success for valid request" in {
+        val createCISDeductionsResult = Right(CreateCISDeductionsSuccess(submissionId))
 
-        mockCreatePropertyBroughtForwardLoss(whenYouReportedTheLoss, nino, incomeSourceId, lossAmount, createPropertyBFLResult)
+        mockCreateCisDeductions(taxYear2019_20, nino, CreateCISDeductions(employerRef, contractorName, periodData), createCISDeductionsResult)
 
         val result = await(
-          underTest.createBroughtForwardLoss(
-            whenYouReportedTheLoss,
-            nino,
-            incomeSourceId,
-            lossAmount
-          ).value
+          underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
         )
-        result shouldBe Right(lossId)
+        result shouldBe Right(submissionId)
       }
       "return ApiError for invalid request" in {
         val apiError = SingleErrorBody("code", "reason")
-        val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
+        val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, CONFLICT, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
 
         apiErrorCodes.foreach { apiErrorCode =>
-          val createPropertyBFLResult = Left(ApiError(apiErrorCode, apiError))
-          mockCreatePropertyBroughtForwardLoss(whenYouReportedTheLoss, nino, incomeSourceId, lossAmount, createPropertyBFLResult)
+          val createCISDeductionsResult = Left(ApiError(apiErrorCode, apiError))
+          mockCreateCisDeductions(taxYear2019_20, nino, CreateCISDeductions(employerRef, contractorName, periodData), createCISDeductionsResult)
 
           val result = await(
-            underTest.createBroughtForwardLoss(
-              whenYouReportedTheLoss,
-              nino,
-              incomeSourceId,
-              lossAmount
-            ).value
+            underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
           )
-          result shouldBe Left(ApiServiceError(apiErrorCode))
+          result shouldBe Left(ApiError(apiErrorCode, apiError))
         }
       }
 
     }
   }
-  "feature switch for hip api 1500 is enabled" should {
-    "use the HIP API#1500 and return the created BFL loss Id for valid request" in {
-      val incomeSourceType: IncomeSourceType = IncomeSourceType.UKPropertyOther
-      val createPropertyBFLResult = Right(BroughtForwardLossId(lossId))
+  "feature switch for hip api 1789 is enabled" should {
+    "use the HIP API#1789 and return the created CIS Deductions Success for valid request" in {
+      val createCISDeductionsResult = Right(CreateCISDeductionsSuccess(submissionId))
 
-      mockHipCreatePropertyBroughtForwardLossSubmission(nino, incomeSourceId, incomeSourceType, lossAmount, whenYouReportedTheLoss, createPropertyBFLResult)
+      mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2019_20)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
 
       val result = await(
-        underTestWithHipApisEnabled.createBroughtForwardLoss(
-          whenYouReportedTheLoss,
-          nino,
-          incomeSourceId,
-          lossAmount
-        ).value
+        underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
       )
-      result shouldBe Right(lossId)
+      result shouldBe Right(submissionId)
     }
     "return ApiError for invalid request" in {
-      val incomeSourceType: IncomeSourceType = IncomeSourceType.UKPropertyOther
       val apiError = SingleErrorBody("code", "reason")
-      val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
+      val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, CONFLICT, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
 
       apiErrorCodes.foreach { apiErrorCode =>
-        val createPropertyBFLResult = Left(ApiError(apiErrorCode, apiError))
-        mockHipCreatePropertyBroughtForwardLossSubmission(nino, incomeSourceId, incomeSourceType, lossAmount, whenYouReportedTheLoss, createPropertyBFLResult)
+        val createCISDeductionsResult = Left(ApiError(apiErrorCode, apiError))
+        mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2019_20)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
 
         val result = await(
-          underTestWithHipApisEnabled.createBroughtForwardLoss(
-            whenYouReportedTheLoss,
-            nino,
-            incomeSourceId,
-            lossAmount
-          ).value
+          underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
         )
-        result shouldBe Left(ApiServiceError(apiErrorCode))
+        result shouldBe Left(ApiError(apiErrorCode, apiError))
       }
     }
   }
