@@ -108,5 +108,5 @@ class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesCon
 
   def sectionCompletedQuestionEnabled: Boolean = config.get[Boolean]("feature-switch.sectionCompletedQuestionEnabled")
 
-  override lazy val hipMigration1789Enabled: Boolean = config.get[Boolean]("feature-switch.hip-migration.api-1500-enabled")
+  override lazy val hipMigration1789Enabled: Boolean = config.get[Boolean]("feature-switch.hip-migration.api-1789-enabled")
 }
