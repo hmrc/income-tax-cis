@@ -39,13 +39,13 @@ class HipCISDeductionsRequestSpec extends AnyWordSpec with Matchers {
         periodData = periodData
       )
 
-      val expectedPeriodJson = Json.obj(
+      val expectedPeriodJson = Array(Json.obj(
           "deductionFromDate" -> "2019-08-24",
           "deductionToDate" -> "2019-08-24",
           "grossAmountPaid" -> 12.34,
           "deductionAmount" -> 45.67,
           "costOfMaterials" -> 89.01
-      )
+      ))
 
       val expectedJson = Json.obj(
         "employerRef"      -> "exampleRef",
