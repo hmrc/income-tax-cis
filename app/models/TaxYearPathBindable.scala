@@ -18,21 +18,7 @@ package models
 
 import play.api.mvc.PathBindable
 
-import java.time.LocalDate
-
 object TaxYearPathBindable {
-
-  private val taxYearStartDay = 6
-  private val taxYearEndDay = 5
-  private val taxYearMonth = 4
-
-  def startDate(taxYear: TaxYear): String = LocalDate.of(taxYear.taxYear - 1, taxYearMonth, taxYearStartDay).toString
-
-  def endDate(taxYear: TaxYear): String = LocalDate.of(taxYear.taxYear, taxYearMonth, taxYearEndDay).toString
-
-  def startDate(taxYear: Int): LocalDate = LocalDate.of(taxYear - 1, taxYearMonth, taxYearStartDay)
-
-  def endDate(taxYear: Int): LocalDate = LocalDate.of(taxYear, taxYearMonth, taxYearEndDay)
 
   /* Gets a representation of a taxYear in a YY-YY format (from a YYYY format).
    */
