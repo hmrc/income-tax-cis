@@ -216,30 +216,31 @@ class CISDeductionsServiceSpec extends UnitTest
       }
 
     }
-  }
-  "feature switch for hip api 1789 is enabled" should {
-    "use the HIP API#1789 and return the created CIS Deductions Success for valid request" in {
-      val createCISDeductionsResult = Right(CreateCISDeductionsSuccess(submissionId))
+    "feature switch for hip api 1789 is enabled" should {
+      "use the HIP API#1789 and return the created CIS Deductions Success for valid request" in {
+        val createCISDeductionsResult = Right(CreateCISDeductionsSuccess(submissionId))
 
-      mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2019_20)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
-
-      val result = await(
-        underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
-      )
-      result shouldBe Right(submissionId)
-    }
-    "return ApiError for invalid request" in {
-      val apiError = SingleErrorBody("code", "reason")
-      val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, CONFLICT, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
-
-      apiErrorCodes.foreach { apiErrorCode =>
-        val createCISDeductionsResult = Left(ApiError(apiErrorCode, apiError))
         mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2019_20)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
 
         val result = await(
-          underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
+          underTestWithHipApisEnabled.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
         )
-        result shouldBe Left(ApiError(apiErrorCode, apiError))
+        println(result)
+        result shouldBe Right(submissionId)
+      }
+      "return ApiError for invalid request" in {
+        val apiError = SingleErrorBody("code", "reason")
+        val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, CONFLICT, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
+
+        apiErrorCodes.foreach { apiErrorCode =>
+          val createCISDeductionsResult = Left(ApiError(apiErrorCode, apiError))
+          mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2019_20)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
+
+          val result = await(
+            underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
+          )
+          result shouldBe Left(ApiError(apiErrorCode, apiError))
+        }
       }
     }
   }
