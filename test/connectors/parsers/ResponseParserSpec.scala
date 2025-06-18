@@ -54,8 +54,14 @@ class ResponseParserSpec extends UnitTest {
           |} CorrelationId: 1234645654645""".stripMargin
     }
 
-    "return the the correct error" in {
+    "return the the correct error from DES" in {
       val underTest = FakeParser.badSuccessJsonFromDES
+
+      underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")))
+    }
+
+    "return the correct error" in {
+      val underTest = FakeParser.badSuccessJsonResponse
 
       underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")))
     }
@@ -86,6 +92,13 @@ class ResponseParserSpec extends UnitTest {
       val underTest = FakeParser.handleError(HttpResponse(INTERNAL_SERVER_ERROR, "", Map("CorrelationId" -> Seq("1234645654645"))))
 
       underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")))
+    }
+
+    "handle single HiP errors" in {
+      val underTest = FakeParser.handleErrorHIP(httpResponse(Json.parse(
+        """{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}""".stripMargin)), 500)
+
+      underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")))
     }
   }
 }

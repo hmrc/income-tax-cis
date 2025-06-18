@@ -17,7 +17,6 @@
 package connectors.Response
 
 import connectors.errors.{ApiError, SingleErrorBody}
-import connectors.parsers.CreateCISDeductionsParser.CreateCISDeductionsResponse
 import connectors.response.PostCISDeductionsResponse
 import play.api.http.Status._
 import play.api.libs.json.{Json, JsValue}
@@ -25,8 +24,6 @@ import uk.gov.hmrc.http.HttpResponse
 import utils.UnitTest
 import connectors.response.PostCISDeductionsResponse.postCISDeductions
 import models.CreateCISDeductionsSuccess
-
-import java.time.LocalDate
 
 class PostCISDeductionsResponseSpec extends UnitTest {
   private val anyHeaders: Map[String, Seq[String]] = Map.empty
