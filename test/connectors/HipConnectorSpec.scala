@@ -35,7 +35,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
   private val contractorName = "exampleName"
   private val fromDate = "2019-08-24"
   private val toDate = "2019-08-24"
-  private val periodData: Array[PeriodData] = Array(PeriodData("2019-08-24", "2019-08-24", Some(BigDecimal(12.34)), BigDecimal(45.67), Some(BigDecimal(89.01))))
+  private val periodData: PeriodData = PeriodData("2019-08-24", "2019-08-24", Some(BigDecimal(12.34)), BigDecimal(45.67), Some(BigDecimal(89.01)))
   private val submissionId = "exampleSubmissionId"
 
   private val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
@@ -64,7 +64,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
             contractorName,
             fromDate,
             toDate,
-            periodData
+            Seq(periodData)
           )(hc)
         ) shouldBe expectedResult
       }
@@ -91,7 +91,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
             contractorName,
             fromDate,
             toDate,
-            periodData
+            Seq(periodData)
           )(hc)
         ) shouldBe expectedResult
       }
@@ -119,7 +119,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
               contractorName,
               fromDate,
               toDate,
-              periodData
+              Seq(periodData)
             )(hc)
           ) shouldBe expectedResult
         }
@@ -143,7 +143,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
             contractorName,
             fromDate,
             toDate,
-            periodData
+            Seq(periodData)
           )(hc)
         ) shouldBe expectedResult
 
@@ -157,7 +157,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory {
       contractorName = contractorName,
       fromDate = fromDate,
       toDate = toDate,
-      periodData = periodData
+      periodData = Array(periodData)
     )
   }
 

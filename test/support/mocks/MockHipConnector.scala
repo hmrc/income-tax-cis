@@ -36,9 +36,9 @@ trait MockHipConnector extends MockFactory {
                                       contractorName: String,
                                       fromDate: String,
                                       toDate: String,
-                                      periodData: Array[PeriodData],
+                                      periodData: PeriodData,
                                       result: Either[ApiError, CreateCISDeductionsSuccess]
-                                    ): CallHandler8[String, String, String, String, String, String, Array[PeriodData], HeaderCarrier, Future[
+                                    ): CallHandler8[String, String, String, String, String, String, Seq[PeriodData], HeaderCarrier, Future[
     Either[ApiError, CreateCISDeductionsSuccess]
   ]] = (
     mockHipConnector
@@ -49,10 +49,10 @@ trait MockHipConnector extends MockFactory {
         _: String,
         _: String,
         _: String,
-        _: Array[PeriodData]
+        _: Seq[PeriodData]
       )(
         _: HeaderCarrier
       ))
-    .expects(taxYear, nino, employerRef, contractorName, fromDate, toDate, periodData, *)
+    .expects(taxYear, nino, employerRef, contractorName, fromDate, toDate, Seq(periodData), *)
     .returning(Future.successful(result))
 }

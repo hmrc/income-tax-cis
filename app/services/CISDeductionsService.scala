@@ -84,7 +84,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
       hipConnector.createCISDeductions(asTys(TaxYear(taxYear)),
         nino, createCisDeductions.employerRef,
         createCisDeductions.contractorName,
-        createCisDeductions.periodData.map(_.deductionFromDate).min, createCisDeductions.periodData.map(_.deductionToDate).max, createCisDeductions.periodData.toArray)
+        createCisDeductions.periodData.map(_.deductionFromDate).min, createCisDeductions.periodData.map(_.deductionToDate).max, createCisDeductions.periodData)
     } else if (shouldUseIFApi(taxYear)) {
       integrationFrameworkService.createCisDeductions(taxYear, nino, createCisDeductions)
     } else {

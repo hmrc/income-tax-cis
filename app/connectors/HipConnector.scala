@@ -45,7 +45,7 @@ class HipConnector @Inject()(
                                         contractorName: String,
                                         fromDate: String,
                                         toDate: String,
-                                        periodData: Array[PeriodData]
+                                        periodData: Seq[PeriodData]
                                       )(implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
     val hipApiVersion: String = "1789"
     val url = s"${appConfig.hipBaseUrl}/income-tax/v1/$taxYear/cis/deductions/$nino"
@@ -55,7 +55,7 @@ class HipConnector @Inject()(
       contractorName = contractorName,
       fromDate = fromDate,
       toDate = toDate,
-      periodData = periodData
+      periodData = periodData.toArray
     )
 
     logger.debug(s"[HipConnector] Calling createCISDeductions with url: $url, body: ${Json.toJson(requestBody)}")
