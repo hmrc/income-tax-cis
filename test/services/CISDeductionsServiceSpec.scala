@@ -37,8 +37,7 @@ class CISDeductionsServiceSpec extends UnitTest
   with MockCISDeductionsConnector
   with MockIntegrationFrameworkService
   with TaxYearProvider
-  with MockHipConnector
-  with App {
+  with MockHipConnector {
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
   lazy val appConfigStub: AppConfig = new AppConfigStub().config()
@@ -198,7 +197,7 @@ class CISDeductionsServiceSpec extends UnitTest
         val result = await(
           underTest.createCisDeductions(nino, taxYear2023_24, CreateCISDeductions(employerRef, contractorName, periodData))
         )
-        result shouldBe Right(submissionId)
+        result shouldBe Right(CreateCISDeductionsSuccess(submissionId))
       }
       "return ApiError for invalid request" in {
         val apiError = SingleErrorBody("code", "reason")
