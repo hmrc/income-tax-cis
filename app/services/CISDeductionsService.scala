@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
     }
   }
 
-  private def updateCisDeductions(nino: String, taxYear: Int, updateCisDeductions: UpdateCISDeductions, submissionId: String)
+  def updateCisDeductions(nino: String, taxYear: Int, updateCisDeductions: UpdateCISDeductions, submissionId: String)
                                  (implicit hc: HeaderCarrier): Future[Either[ApiError, None.type]] = {
     if (shouldUseIFApi(taxYear)) {
       integrationFrameworkService.updateCisDeductions(taxYear, nino, submissionId, updateCisDeductions)

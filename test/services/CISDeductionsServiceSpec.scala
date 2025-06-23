@@ -188,15 +188,15 @@ class CISDeductionsServiceSpec extends UnitTest
     }
   }
 
-  "create CIS Deductions" when {
-    "feature switch for hip api 1789 is disabled" should {
+  "createCISDeductions" should {
+    "feature switch for hip api 1789 is disabled" when {
       "use the IF API#1569 and return the created CIS Deductions Success for valid request" in {
         val createCISDeductionsResult = Right(CreateCISDeductionsSuccess(submissionId))
 
-        mockCreateCisDeductions(taxYear2019_20, nino, CreateCISDeductions(employerRef, contractorName, periodData), createCISDeductionsResult)
+        mockCreateCisDeductions(taxYear2023_24, nino, CreateCISDeductions(employerRef, contractorName, periodData), createCISDeductionsResult)
 
         val result = await(
-          underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
+          underTest.createCisDeductions(nino, taxYear2023_24, CreateCISDeductions(employerRef, contractorName, periodData))
         )
         result shouldBe Right(submissionId)
       }
@@ -206,26 +206,25 @@ class CISDeductionsServiceSpec extends UnitTest
 
         apiErrorCodes.foreach { apiErrorCode =>
           val createCISDeductionsResult = Left(ApiError(apiErrorCode, apiError))
-          mockCreateCisDeductions(taxYear2019_20, nino, CreateCISDeductions(employerRef, contractorName, periodData), createCISDeductionsResult)
+          mockCreateCisDeductions(taxYear2023_24, nino, CreateCISDeductions(employerRef, contractorName, periodData), createCISDeductionsResult)
 
           val result = await(
-            underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
+            underTest.createCisDeductions(nino, taxYear2023_24, CreateCISDeductions(employerRef, contractorName, periodData))
           )
           result shouldBe Left(ApiError(apiErrorCode, apiError))
         }
       }
 
     }
-    "feature switch for hip api 1789 is enabled" should {
+    "feature switch for hip api 1789 is enabled" when {
       "use the HIP API#1789 and return the created CIS Deductions Success for valid request" in {
         val createCISDeductionsResult = Right(CreateCISDeductionsSuccess(submissionId))
 
-        mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2019_20)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
+        mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2023_24)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
 
         val result = await(
-          underTestWithHipApisEnabled.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
+          underTestWithHipApisEnabled.createCisDeductions(nino, taxYear2023_24, CreateCISDeductions(employerRef, contractorName, periodData))
         )
-        println(result)
         result shouldBe Right(submissionId)
       }
       "return ApiError for invalid request" in {
@@ -234,10 +233,10 @@ class CISDeductionsServiceSpec extends UnitTest
 
         apiErrorCodes.foreach { apiErrorCode =>
           val createCISDeductionsResult = Left(ApiError(apiErrorCode, apiError))
-          mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2019_20)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
+          mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2023_24)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
 
           val result = await(
-            underTest.createCisDeductions(nino, taxYear2019_20, CreateCISDeductions(employerRef, contractorName, periodData))
+            underTestWithHipApisEnabled.createCisDeductions(nino, taxYear2023_24, CreateCISDeductions(employerRef, contractorName, periodData))
           )
           result shouldBe Left(ApiError(apiErrorCode, apiError))
         }
