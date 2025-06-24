@@ -21,8 +21,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-import scala.language.postfixOps
-
 class HipCISDeductionsRequestSpec extends AnyWordSpec with Matchers {
   private val employerRef = "exampleRef"
   private val contractorName = "exampleName"

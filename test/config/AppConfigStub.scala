@@ -42,7 +42,7 @@ class AppConfigStub extends MockFactory {
 
     lazy val featureSwitches: FeatureSwitchConfig = featureSwitchConfig.getOrElse(FeatureSwitchConfig())
 
-    override lazy val hipMigration1789Enabled: Boolean = featureSwitches.hipApi1789
+    override lazy val enableHipApis: Boolean = featureSwitches.enableHipApis
 
     override lazy val desBaseUrl: String = s"http://$desHost:$wireMockPort"
     override lazy val desAuthorisationToken: String = "authorisation-token"

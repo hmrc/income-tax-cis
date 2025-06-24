@@ -42,14 +42,13 @@ class CISDeductionsServiceSpec extends UnitTest
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
   lazy val appConfigStub: AppConfig = new AppConfigStub().config()
 
-  private val hipApisEnabledFSConfig = FeatureSwitchConfig(hipApi1789 = true)
+  private val hipApisEnabledFSConfig = FeatureSwitchConfig(enableHipApis = true)
   private val appConfigWithHipApisEnabled: AppConfig = new AppConfigStub().config(featureSwitchConfig = Some(hipApisEnabledFSConfig))
   private val underTestWithHipApisEnabled = new CISDeductionsService(mockCISDeductionsConnector, mockIntegrationFrameworkService, mockHipConnector, appConfigWithHipApisEnabled)
 
   private val nino = "AA66666B"
   private val taxYearBefore2023_24 = 2023
   private val taxYear2023_24 = 2024
-  private val taxYear2019_20 = 2020
   private val employerRef = "exampleRef"
   private val contractorName = "exampleName"
   private val fromDate = "2019-08-24"
