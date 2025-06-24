@@ -32,12 +32,6 @@ trait AppConfig {
   def hipAuthTokenFor(apiVersion: String): String
   def hipBaseUrl: String
   def hipEnvironment: String
-  def baseUrl(serviceName: String): String
-  protected def rootServices: String
-  protected def defaultProtocol: String
-  def getConfString(confKey: String, defString: => String): String
-  def getConfInt(confKey: String, defInt: => Int): Int
-  def throwConfigNotFoundError(key: String): RuntimeException
   def cisFrontendBaseUrl: String
   def desBaseUrl: String
   def desEnvironment: String
@@ -46,7 +40,7 @@ trait AppConfig {
   def mongoJourneyAnswersTTL: Int
   def sectionCompletedQuestionEnabled: Boolean
   def replaceJourneyAnswersIndexes: Boolean
-  def hipMigration1789Enabled: Boolean
+  def enableHipApis: Boolean
 }
 
 @Singleton
@@ -64,41 +58,14 @@ class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesCon
 
   def authorisationTokenFor(apiVersion: String): String = servicesConfig.getString(ifAuthorisationTokenKey + s".$apiVersion")
 
-  override lazy val hipBaseUrl: String = baseUrl(serviceName = "hip-integration-framework")
+  override lazy val hipBaseUrl: String = servicesConfig.baseUrl(serviceName = "hybrid-integration-platform")
 
-  override def hipEnvironment: String = config.get[String]("microservice.services.hip-integration-framework.environment")
+  override def hipEnvironment: String = servicesConfig.getString("microservice.services.hybrid-integration-platform.environment")
 
-  override lazy val hipAuthTokenKey: String = "microservice.services.hip-integration-framework.authorisation-token"
+  override lazy val hipAuthTokenKey: String = "microservice.services.hybrid-integration-platform.authorisation-token"
 
   override def hipAuthTokenFor(apiVersion: String): String =
-    config.get[String](hipAuthTokenKey + s".$apiVersion")
-
-  override def baseUrl(serviceName: String): String = {
-    val protocol = getConfString(s"$serviceName.protocol", defaultProtocol)
-    val host = getConfString(s"$serviceName.host", throwConfigNotFoundError(s"$serviceName.host"))
-    val port = getConfInt(s"$serviceName.port", throwConfigNotFoundError(s"$serviceName.port"))
-    s"$protocol://$host:$port"
-  }
-
-  override protected lazy val rootServices = "microservice.services"
-
-  override protected lazy val defaultProtocol: String =
-    config
-      .getOptional[String](s"$rootServices.protocol")
-      .getOrElse("http")
-
-  override def getConfString(confKey: String, defString: => String): String =
-    config
-      .getOptional[String](s"$rootServices.$confKey")
-      .getOrElse(defString)
-
-  override def getConfInt(confKey: String, defInt: => Int): Int =
-    config
-      .getOptional[Int](s"$rootServices.$confKey")
-      .getOrElse(defInt)
-
-  override def throwConfigNotFoundError(key: String) =
-    throw new RuntimeException(s"Could not find config key '$key'")
+    servicesConfig.getString(hipAuthTokenKey + s".$apiVersion")
 
   def cisFrontendBaseUrl: String = config.get[String]("microservice.services.income-tax-cis-frontend.url")
 
@@ -108,5 +75,5 @@ class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesCon
 
   def sectionCompletedQuestionEnabled: Boolean = config.get[Boolean]("feature-switch.sectionCompletedQuestionEnabled")
 
-  override lazy val hipMigration1789Enabled: Boolean = config.get[Boolean]("feature-switch.hip-migration.api-1789-enabled")
+  override def enableHipApis: Boolean = servicesConfig.getBoolean("feature-switch.enableHipApis")
 }
