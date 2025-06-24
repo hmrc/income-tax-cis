@@ -21,8 +21,9 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.HttpResponse
 import utils.PagerDutyHelper.PagerDutyKeys.{BAD_SUCCESS_JSON_FROM_DES, UNEXPECTED_RESPONSE_FROM_DES}
 import utils.PagerDutyHelper.{getCorrelationId, pagerDutyLog}
+import play.api.Logging
 
-trait ResponseParser {
+trait ResponseParser extends Logging {
 
   val parserName : String
 
@@ -32,6 +33,10 @@ trait ResponseParser {
 
   def badSuccessJsonFromDES[Response]: Either[ApiError, Response] = {
     pagerDutyLog(BAD_SUCCESS_JSON_FROM_DES, s"[$parserName][read] Invalid Json from DES/IF.")
+    Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
+  }
+
+  def badSuccessJsonResponse[Response]: Either[ApiError, Response] = {
     Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
   }
 
@@ -54,6 +59,26 @@ trait ResponseParser {
       }
     } catch {
       case _: Exception => Left(ApiError(status, SingleErrorBody.parsingError))
+    }
+  }
+
+  def handleErrorHIP[Response](response: HttpResponse, status: Int): Either[ApiError, Response] = {
+    try {
+      val json = response.json
+      lazy val singleErrorBody = json.asOpt[SingleErrorBody]
+      lazy val multiErrorsBody = json.asOpt[MultiErrorsBody]
+
+      (singleErrorBody, multiErrorsBody) match {
+        case (Some(error), _) => Left(ApiError(status, error))
+        case (_, Some(error)) => Left(ApiError(status, error))
+        case _ =>
+          logger.error(s"[Parser][handleError]: failed to parse error response as JSON: ${response.toString}")
+          Left(ApiError(status, SingleErrorBody.parsingError))
+      }
+    } catch {
+      case _: Exception =>
+        logger.error(s"[Parser][handleError]: failed to parse error response: ${response.toString}")
+        Left(ApiError(status, SingleErrorBody.parsingError))
     }
   }
 }

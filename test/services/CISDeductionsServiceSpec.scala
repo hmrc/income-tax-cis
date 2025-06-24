@@ -16,34 +16,51 @@
 
 package services
 
-import common.CISSource.{CONTRACTOR, CUSTOMER}
-import connectors.errors.{ApiError, SingleErrorBody}
+import common.CISSource.{CUSTOMER, CONTRACTOR}
+import config.{AppConfig, AppConfigStub}
+import connectors.errors.{SingleErrorBody, ApiError}
+import models.TaxYearPathBindable.{asTys, TaxYear}
 import models._
-import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status._
 import support.UnitTest
 import support.builders.AllCISDeductionsBuilder.anAllCISDeductions
 import support.builders.CISSubmissionBuilder.aCISSubmission
 import support.builders.CreateCISDeductionsBuilder.aCreateCISDeductions
-import support.mocks.{MockCISDeductionsConnector, MockIntegrationFrameworkService}
+import support.mocks.{MockCISDeductionsConnector, MockHipConnector, MockIntegrationFrameworkService}
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.FeatureSwitchConfig
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class CISDeductionsServiceSpec extends UnitTest
   with MockCISDeductionsConnector
   with MockIntegrationFrameworkService
-  with TaxYearProvider {
+  with TaxYearProvider
+  with MockHipConnector {
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
+  lazy val appConfigStub: AppConfig = new AppConfigStub().config()
+
+  private val hipApisEnabledFSConfig = FeatureSwitchConfig(enableHipApis = true)
+  private val appConfigWithHipApisEnabled: AppConfig = new AppConfigStub().config(featureSwitchConfig = Some(hipApisEnabledFSConfig))
+  private val underTestWithHipApisEnabled = new CISDeductionsService(mockCISDeductionsConnector, mockIntegrationFrameworkService, mockHipConnector, appConfigWithHipApisEnabled)
 
   private val nino = "AA66666B"
   private val taxYearBefore2023_24 = 2023
   private val taxYear2023_24 = 2024
+  private val employerRef = "exampleRef"
+  private val contractorName = "exampleName"
+  private val fromDate = "2019-08-24"
+  private val toDate = "2019-08-24"
+  private val periodData: PeriodData = PeriodData("2019-08-24", "2019-08-24", Some(BigDecimal(12.34)), BigDecimal(45.67), Some(BigDecimal(89.01)))
+  private val submissionId = "exampleSubmissionId"
 
   private val underTest = new CISDeductionsService(
     mockCISDeductionsConnector,
-    mockIntegrationFrameworkService
+    mockIntegrationFrameworkService,
+    mockHipConnector,
+    appConfigStub
   )
 
   ".submitCISDeductions" should {
@@ -166,6 +183,62 @@ class CISDeductionsServiceSpec extends UnitTest
       mockDelete(nino, "submissionId", Right(()))
 
       await(underTest.deleteCISDeductionsSubmission(taxYearBefore2023_24, nino, "submissionId")) shouldBe Right(())
+    }
+  }
+
+  "createCISDeductions" should {
+    "feature switch for hip api 1789 is disabled" when {
+      "use the IF API#1569 and return the created CIS Deductions Success for valid request" in {
+        val createCISDeductionsResult = Right(CreateCISDeductionsSuccess(submissionId))
+
+        mockCreateCisDeductions(taxYear2023_24, nino, CreateCISDeductions(employerRef, contractorName, Seq(periodData)), createCISDeductionsResult)
+
+        val result = await(
+          underTest.createCisDeductions(nino, taxYear2023_24, CreateCISDeductions(employerRef, contractorName, Seq(periodData)))
+        )
+        result shouldBe Right(CreateCISDeductionsSuccess(submissionId))
+      }
+      "return ApiError for invalid request" in {
+        val apiError = SingleErrorBody("code", "reason")
+        val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, CONFLICT, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
+
+        apiErrorCodes.foreach { apiErrorCode =>
+          val createCISDeductionsResult = Left(ApiError(apiErrorCode, apiError))
+          mockCreateCisDeductions(taxYear2023_24, nino, CreateCISDeductions(employerRef, contractorName, Seq(periodData)), createCISDeductionsResult)
+
+          val result = await(
+            underTest.createCisDeductions(nino, taxYear2023_24, CreateCISDeductions(employerRef, contractorName, Seq(periodData)))
+          )
+          result shouldBe Left(ApiError(apiErrorCode, apiError))
+        }
+      }
+
+    }
+    "feature switch for hip api 1789 is enabled" when {
+      "use the HIP API#1789 and return the created CIS Deductions Success for valid request" in {
+        val createCISDeductionsResult = Right(CreateCISDeductionsSuccess(submissionId))
+
+        mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2023_24)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
+
+        val result = await(
+          underTestWithHipApisEnabled.createCisDeductions(nino, taxYear2023_24, CreateCISDeductions(employerRef, contractorName, Seq(periodData)))
+        )
+        result shouldBe Right(CreateCISDeductionsSuccess(submissionId))
+      }
+      "return ApiError for invalid request" in {
+        val apiError = SingleErrorBody("code", "reason")
+        val apiErrorCodes = Seq(NOT_FOUND, BAD_REQUEST, CONFLICT, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
+
+        apiErrorCodes.foreach { apiErrorCode =>
+          val createCISDeductionsResult = Left(ApiError(apiErrorCode, apiError))
+          mockHipCISDeductionsSubmission(asTys(TaxYear(taxYear2023_24)), nino, employerRef, contractorName, fromDate, toDate, periodData, createCISDeductionsResult)
+
+          val result = await(
+            underTestWithHipApisEnabled.createCisDeductions(nino, taxYear2023_24, CreateCISDeductions(employerRef, contractorName, Seq(periodData)))
+          )
+          result shouldBe Left(ApiError(apiErrorCode, apiError))
+        }
+      }
     }
   }
 }

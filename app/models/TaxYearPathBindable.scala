@@ -20,6 +20,14 @@ import play.api.mvc.PathBindable
 
 object TaxYearPathBindable {
 
+  /* Gets a representation of a taxYear in a YY-YY format (from a YYYY format).
+   */
+  def asTys(taxYear: TaxYear): String = {
+    val end = taxYear.taxYear - 2000
+    val start = end - 1
+    s"$start-$end"
+  }
+
   implicit def pathBindable: PathBindable[TaxYear] = new PathBindable[TaxYear] {
 
     override def bind(key: String, value: String): Either[String, TaxYear] =

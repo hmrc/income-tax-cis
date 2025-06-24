@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,24 @@
 
 package services
 
-import common.CISSource.{CONTRACTOR, CUSTOMER}
-import connectors.CISDeductionsConnector
+import common.CISSource.{CUSTOMER, CONTRACTOR}
+import connectors.{CISDeductionsConnector, HipConnector}
 import connectors.errors.ApiError
-import models.get.{AllCISDeductions, CISSource}
+import models.get.{CISSource, AllCISDeductions}
 import models.submission.CISSubmission
-import models.{CreateCISDeductions, CreateCISDeductionsSuccess, UpdateCISDeductions}
+import models.{CreateCISDeductionsSuccess, UpdateCISDeductions, CreateCISDeductions}
 import uk.gov.hmrc.http.HeaderCarrier
+import config.AppConfig
+import models.TaxYearPathBindable.{TaxYear, asTys}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 // TODO: Refactor to use services instead of connector
 class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnector,
-                                     integrationFrameworkService: IntegrationFrameworkService)
+                                     integrationFrameworkService: IntegrationFrameworkService,
+                                     hipConnector: HipConnector,
+                                     appConfig: AppConfig)
                                     (implicit ec: ExecutionContext) {
 
   def submitCISDeductions(nino: String, taxYear: Int, cisSubmission: CISSubmission)
@@ -74,16 +78,21 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
     }
   }
 
-  private def createCisDeductions(nino: String, taxYear: Int, createCisDeductions: CreateCISDeductions)
+  def createCisDeductions(nino: String, taxYear: Int, createCisDeductions: CreateCISDeductions)
                                  (implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
-    if (shouldUseIFApi(taxYear)) {
+    if (appConfig.enableHipApis) {
+      hipConnector.createCISDeductions(asTys(TaxYear(taxYear)),
+        nino, createCisDeductions.employerRef,
+        createCisDeductions.contractorName,
+        createCisDeductions.periodData.map(_.deductionFromDate).min, createCisDeductions.periodData.map(_.deductionToDate).max, createCisDeductions.periodData)
+    } else if (shouldUseIFApi(taxYear)) {
       integrationFrameworkService.createCisDeductions(taxYear, nino, createCisDeductions)
     } else {
       cisDeductionsConnector.create(nino, taxYear, createCisDeductions)
     }
   }
 
-  private def updateCisDeductions(nino: String, taxYear: Int, updateCisDeductions: UpdateCISDeductions, submissionId: String)
+  def updateCisDeductions(nino: String, taxYear: Int, updateCisDeductions: UpdateCISDeductions, submissionId: String)
                                  (implicit hc: HeaderCarrier): Future[Either[ApiError, None.type]] = {
     if (shouldUseIFApi(taxYear)) {
       integrationFrameworkService.updateCisDeductions(taxYear, nino, submissionId, updateCisDeductions)

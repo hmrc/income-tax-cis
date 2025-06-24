@@ -28,6 +28,10 @@ trait AppConfig {
   def ifBaseUrl: String
   def ifEnvironment: String
   def authorisationTokenFor(apiVersion: String): String
+  def hipAuthTokenKey: String
+  def hipAuthTokenFor(apiVersion: String): String
+  def hipBaseUrl: String
+  def hipEnvironment: String
   def cisFrontendBaseUrl: String
   def desBaseUrl: String
   def desEnvironment: String
@@ -36,6 +40,7 @@ trait AppConfig {
   def mongoJourneyAnswersTTL: Int
   def sectionCompletedQuestionEnabled: Boolean
   def replaceJourneyAnswersIndexes: Boolean
+  def enableHipApis: Boolean
 }
 
 @Singleton
@@ -53,6 +58,15 @@ class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesCon
 
   def authorisationTokenFor(apiVersion: String): String = servicesConfig.getString(ifAuthorisationTokenKey + s".$apiVersion")
 
+  override lazy val hipBaseUrl: String = servicesConfig.baseUrl(serviceName = "hybrid-integration-platform")
+
+  override def hipEnvironment: String = servicesConfig.getString("microservice.services.hybrid-integration-platform.environment")
+
+  override lazy val hipAuthTokenKey: String = "microservice.services.hybrid-integration-platform.authorisation-token"
+
+  override def hipAuthTokenFor(apiVersion: String): String =
+    servicesConfig.getString(hipAuthTokenKey + s".$apiVersion")
+
   def cisFrontendBaseUrl: String = config.get[String]("microservice.services.income-tax-cis-frontend.url")
 
   def desBaseUrl: String = servicesConfig.baseUrl("des")
@@ -60,4 +74,6 @@ class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesCon
   def desAuthorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
 
   def sectionCompletedQuestionEnabled: Boolean = config.get[Boolean]("feature-switch.sectionCompletedQuestionEnabled")
+
+  override def enableHipApis: Boolean = servicesConfig.getBoolean("feature-switch.enableHipApis")
 }
