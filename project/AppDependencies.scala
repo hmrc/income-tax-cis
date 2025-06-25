@@ -31,11 +31,11 @@ object AppDependencies {
   val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"                   %% "bootstrap-backend-play-30"  % bootstrapPlay30Version,
     "uk.gov.hmrc.mongo"             %% "hmrc-mongo-play-30"         % hmrcMongoPlay30Version,
-    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.18.0",
-    "com.beachape"                  %% "enumeratum"                 % "1.7.5",
-    "com.beachape"                  %% "enumeratum-play-json"       % "1.8.1" excludeAll (jacksonAndPlayExclusions *),
+    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.19.1",
+    "com.beachape"                  %% "enumeratum"                 % "1.9.0",
+    "com.beachape"                  %% "enumeratum-play-json"       % "1.9.0" excludeAll (jacksonAndPlayExclusions *),
     "uk.gov.hmrc"                   %% "crypto-json-play-30"        % "8.2.0",
-    "org.typelevel"                 %% "cats-core"                  % "2.12.0"
+    "org.typelevel"                 %% "cats-core"                  % "2.13.0"
   )
 
   val test: Seq[ModuleID] = Seq(
@@ -43,6 +43,6 @@ object AppDependencies {
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-30"  % hmrcMongoPlay30Version    % Test,
     "com.github.tomakehurst"  %  "wiremock-jre8-standalone" % "3.0.1"                   % Test,
     "org.scalamock"           %% "scalamock"                % "5.2.0"                   % Test,
-    "org.mockito"             %% "mockito-scala"            % "1.17.37"                 % Test
+    "org.mockito"             %% "mockito-scala"            % "2.0.0"                   % Test
   )
 }
