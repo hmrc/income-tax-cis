@@ -25,11 +25,12 @@ import connectors.parsers.UpdateCISDeductionsHttpParser.UpdateCISDeductionsRespo
 import models.{CreateCISDeductions, CreateCISDeductionsSuccess, UpdateCISDeductions}
 import org.scalamock.handlers.{CallHandler3, CallHandler4}
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-trait MockCISDeductionsConnector extends MockFactory {
+trait MockCISDeductionsConnector extends MockFactory { _: TestSuite =>
 
   protected val mockCISDeductionsConnector: CISDeductionsConnector = mock[CISDeductionsConnector]
 

@@ -21,12 +21,13 @@ import models.get.AllCISDeductions
 import models.submission.CISSubmission
 import org.scalamock.handlers.{CallHandler3, CallHandler4}
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 import services.CISDeductionsService
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-trait MockCISDeductionsService extends MockFactory {
+trait MockCISDeductionsService extends MockFactory { _: TestSuite =>
 
   protected val mockCISDeductionsService: CISDeductionsService = mock[CISDeductionsService]
 
