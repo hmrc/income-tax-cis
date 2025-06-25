@@ -42,7 +42,7 @@ object AppDependencies {
     "uk.gov.hmrc"             %% "bootstrap-test-play-30"   % bootstrapPlay30Version    % Test,
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-30"  % hmrcMongoPlay30Version    % Test,
     "com.github.tomakehurst"  %  "wiremock-jre8-standalone" % "3.0.1"                   % Test,
-    "org.scalamock"           %% "scalamock"                % "5.2.0"                   % Test,
+    "org.scalamock"           %% "scalamock"                % "7.3.3"                   % Test,
     "org.mockito"             %% "mockito-scala"            % "2.0.0"                   % Test
   )
 }

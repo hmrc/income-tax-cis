@@ -16,11 +16,11 @@
 
 package config
 
-import org.scalamock.scalatest.MockFactory
 import play.api.Configuration
+import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class AppConfigStub extends MockFactory {
+class AppConfigStub {
 
   def config(desHost: String = "localhost", environment: String = "test"): AppConfig = new AppConfigImpl(mock[Configuration], mock[ServicesConfig]) {
     private val wireMockPort = 11111
