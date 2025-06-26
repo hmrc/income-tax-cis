@@ -18,7 +18,7 @@ package connectors
 
 import connectors.errors.{ApiError, SingleErrorBody}
 import models.CreateCISDeductionsSuccess
-import play.api.http.Status.{BAD_GATEWAY, CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
+import play.api.http.Status._
 import play.api.libs.json.Json
 import support.ConnectorIntegrationTest
 import support.builders.CISSourceBuilder.aCISSource
@@ -45,7 +45,7 @@ class IntegrationFrameworkConnectorISpec extends ConnectorIntegrationTest
     s"${(taxYear - 1).toString takeRight 2}-${taxYear.toString takeRight 2}"
   }
 
-  private val underTest = new IntegrationFrameworkConnector(httpClient, appConfigStub)
+  private val underTest = new IntegrationFrameworkConnector(httpClientV2, appConfigStub)
 
   ".getCisDeductions" should {
     "return correct IF response when correct parameters are passed" in {

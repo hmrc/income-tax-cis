@@ -22,15 +22,17 @@ import connectors.parsers.CreateCISDeductionsParser.{CreateCISDeductionsResponse
 import connectors.parsers.DeleteCISDeductionsHttpParser.{DeleteCISDeductionsHttpReads, DeleteCISDeductionsResponse}
 import connectors.parsers.GetCISDeductionsHttpParser.{GetCISDeductionsResponse, GetCISDeductionsResponseHttpReads}
 import connectors.parsers.UpdateCISDeductionsHttpParser.{UpdateCISDeductionsResponse, UpdateCISDeductionsResponseHttpReads}
-import models.{CreateCISDeductions, CreateCISDeductionsApi, UpdateCISDeductions}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import models.{CreateCISDeductions, UpdateCISDeductions}
+import play.api.libs.json.Json
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import utils.CISTaxYearHelper
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
+class IntegrationFrameworkConnector @Inject()(httpClient: HttpClientV2,
                                               appConf: AppConfig)
                                              (implicit ec: ExecutionContext) extends IFConnector {
 
@@ -50,7 +52,7 @@ class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
       s"/$nino?startDate=${cisTaxYear.fromDate}&endDate=${cisTaxYear.toDate}&source=$source"
 
     def ifCall(implicit hc: HeaderCarrier): Future[GetCISDeductionsResponse] = {
-      httpClient.GET[GetCISDeductionsResponse](url)(GetCISDeductionsResponseHttpReads, hc, ec)
+      httpClient.get(url"$url").execute[GetCISDeductionsResponse]
     }
 
     ifCall(ifHeaderCarrier(url, GET_API_VERSION))
@@ -61,7 +63,9 @@ class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
     val url = s"$baseUrl/income-tax/${taxYearParam(taxYear, CREATE_API_VERSION)}/cis/deductions/$nino"
 
     def ifCall(implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
-      httpClient.POST[CreateCISDeductionsApi, CreateCISDeductionsResponse](url, model.toApiModel(taxYear))(CreateCISDeductionsApi.format, CreateCISDeductionsResponseHttpReads, hc, ec)
+      httpClient.post(url"$url")
+        .withBody(Json.toJson(model.toApiModel(taxYear)))
+        .execute[CreateCISDeductionsResponse]
     }
 
     ifCall(ifHeaderCarrier(url, CREATE_API_VERSION))
@@ -72,7 +76,9 @@ class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
     val url = s"$baseUrl/income-tax/${taxYearParam(taxYear, UPDATE_API_VERSION)}/cis/deductions/$nino/$submissionId"
 
     def ifCall(implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] = {
-      httpClient.PUT[UpdateCISDeductions, UpdateCISDeductionsResponse](url, model)(UpdateCISDeductions.format, UpdateCISDeductionsResponseHttpReads, hc, ec)
+      httpClient.put(url"$url")
+        .withBody(Json.toJson(model))
+        .execute[UpdateCISDeductionsResponse](UpdateCISDeductionsResponseHttpReads, ec)
     }
 
     ifCall(ifHeaderCarrier(url, UPDATE_API_VERSION))
@@ -85,7 +91,7 @@ class IntegrationFrameworkConnector @Inject()(httpClient: HttpClient,
     val url = baseUrl + s"/income-tax/cis/deductions/${taxYearParam(taxYear, DELETE_API_VERSION)}/$nino/submissionId/$submissionId"
 
     def ifCall(implicit hc: HeaderCarrier): Future[DeleteCISDeductionsResponse] = {
-      httpClient.DELETE[DeleteCISDeductionsResponse](url)(DeleteCISDeductionsHttpReads, hc, ec)
+      httpClient.delete(url"$url").execute[DeleteCISDeductionsResponse](DeleteCISDeductionsHttpReads, ec)
     }
 
     ifCall(ifHeaderCarrier(url, DELETE_API_VERSION))

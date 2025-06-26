@@ -7,15 +7,39 @@ This is where we make API calls from users viewing and making changes to the con
 You will need to have the following:
 - Installed/configured [service manager](https://github.com/hmrc/service-manager).
 
+This can be found in the [developer handbook](https://docs.tax.service.gov.uk/mdtp-handbook/documentation/developer-set-up/)
+
 The service manager profile for this service is:
 
     sm --start INCOME_TAX_CIS
 Run the following command to start the remaining services locally:
 
     sudo mongod (If not already running)
-    sm --start INCOME_TAX_SUBMISSION_ALL -r
+    sm --start INCOME_TAX_SUBMISSION_ALL
+
+To run the service locally:
+
+    sudo mongod (If not already running)
+    sm2 --start INCOME_TAX_SUBMISSION_ALL
+    sm2 --stop INCOME_TAX_CIS
+    ./run.sh **OR** sbt run
 
 This service runs on port: `localhost:9328`
+
+### Running Tests
+
+- Run Unit Tests:  `sbt test`
+- Run Integration Tests: `sbt it/test`
+- Run Unit and Integration Tests: `sbt test it/test`
+- Run Unit and Integration Tests with coverage report: `./check.sh`<br/>
+  which runs `sbt clean coverage test it/test coverageReport dependencyUpdates`
+
+### Feature Switches
+
+| Feature                         | Description                                                                     |
+|---------------------------------|---------------------------------------------------------------------------------|
+| enableHipApis                   | Uses the new HIP API's instead of IF/DES                                        |
+| sectionCompletedQuestionEnabled | Sets task list item status to In Progress when enabled and section not finished |
 
 ### CIS endpoints:
 
@@ -458,14 +482,14 @@ Customer data is provided by the user. At the end of the tax year, users can vie
 ## Ninos with stub data for CIS
 
 ### In-Year
-| Nino | CIS data | Source |
-| --- | --- | --- |
+| Nino      | CIS data                              | Source     |
+|-----------|---------------------------------------|------------|
 | AC150000B | CIS User with multiple CIS deductions | Contractor |
 | AA123459A | CIS User with multiple CIS deductions | Contractor |
 
 ### End of Year
-| Nino | CIS data | Source |
-| --- | --- | --- |
+| Nino      | CIS data                              | Source               |
+|-----------|---------------------------------------|----------------------|
 | AC150000B | CIS User with multiple CIS deductions | Contractor, Customer |
 
 

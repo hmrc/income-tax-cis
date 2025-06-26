@@ -65,7 +65,7 @@ class CISDeductionsConnectorISpec extends ConnectorIntegrationTest
   private val connectorWithInternalHost: CISDeductionsConnector = connector()
   private val connectorWithExternalHost: CISDeductionsConnector = connector("127.0.0.1")
 
-  private def connector(desHost: String = "localhost"): CISDeductionsConnector = new CISDeductionsConnector(httpClient, new AppConfigStub().config(desHost))
+  private def connector(desHost: String = "localhost"): CISDeductionsConnector = new CISDeductionsConnector(httpClientV2, new AppConfigStub().config(desHost))
 
   private val createResponse: CreateCISDeductionsSuccess = CreateCISDeductionsSuccess("12345678")
 

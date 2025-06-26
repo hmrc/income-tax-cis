@@ -21,11 +21,12 @@ import connectors.errors.ApiError
 import models.{CreateCISDeductionsSuccess, PeriodData}
 import org.scalamock.handlers.CallHandler8
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.TestSuite
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-trait MockHipConnector extends MockFactory {
+trait MockHipConnector extends MockFactory { _: TestSuite =>
 
   protected val mockHipConnector: HipConnector = mock[HipConnector]
 
