@@ -32,8 +32,8 @@ object AppDependencies {
     "uk.gov.hmrc"                   %% "bootstrap-backend-play-30"  % bootstrapPlay30Version,
     "uk.gov.hmrc.mongo"             %% "hmrc-mongo-play-30"         % hmrcMongoPlay30Version,
     "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.20.1",
-    "com.beachape"                  %% "enumeratum"                 % "1.9.0",
-    "com.beachape"                  %% "enumeratum-play-json"       % "1.9.0" excludeAll (jacksonAndPlayExclusions *),
+    "com.beachape"                  %% "enumeratum"                 % "1.9.4",
+    "com.beachape"                  %% "enumeratum-play-json"       % "1.9.4" excludeAll (jacksonAndPlayExclusions *),
     "uk.gov.hmrc"                   %% "crypto-json-play-30"        % "8.4.0",
     "org.typelevel"                 %% "cats-core"                  % "2.13.0"
   )
