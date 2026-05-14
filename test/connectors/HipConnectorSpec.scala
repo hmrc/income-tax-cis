@@ -20,17 +20,15 @@ import connectors.errors.{ApiError, SingleErrorBody}
 import models.TaxYearPathBindable.{TaxYear, asTys}
 import models.{CreateCISDeductionsSuccess, PeriodData}
 import models.requests.HipCISDeductionsRequest
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.TestSuite
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, SessionId}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory { _: TestSuite =>
+class HipConnectorSpec extends ConnectorIntegrationSpec {
 
-  private val nino = "test-nino"
+  private val nino: String = "AA123456A"
   private val taxYear = 2020
   private val employerRef = "exampleRef"
   private val contractorName = "exampleName"

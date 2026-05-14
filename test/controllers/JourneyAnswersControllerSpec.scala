@@ -20,9 +20,8 @@ import config.AppConfig
 import models.Done
 import models.TaxYearPathBindable.TaxYear
 import models.mongo.JourneyAnswers
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.eqTo
-import org.mockito.MockitoSugar
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{mock, times, verify, when}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -44,7 +43,6 @@ import scala.concurrent.Future
 class JourneyAnswersControllerSpec
   extends AnyWordSpec
     with Matchers
-    with MockitoSugar
     with OptionValues
     with ScalaFutures
     with BeforeAndAfterEach {
@@ -71,8 +69,8 @@ class JourneyAnswersControllerSpec
       ConfidenceLevel.L250
     )
 
-  private val mockRepo = mock[JourneyAnswersRepository]
-  private val mockAuthConnector = mock[AuthConnector]
+  private val mockRepo = mock(classOf[JourneyAnswersRepository])
+  private val mockAuthConnector = mock(classOf[AuthConnector])
 
   private val journey: String = "journey"
   private val validTaxYear: Int = 2023
@@ -89,7 +87,7 @@ class JourneyAnswersControllerSpec
   }
 
   private val app = new GuiceApplicationBuilder().overrides(
-    bind[AppConfig].toInstance(mock[AppConfig]),
+    bind[AppConfig].toInstance(mock(classOf[AppConfig])),
     bind[JourneyAnswersRepository].toInstance(mockRepo),
     bind[AuthConnector].toInstance(mockAuthConnector)
   ).build()
@@ -118,7 +116,7 @@ class JourneyAnswersControllerSpec
 
     "return NOT_FOUND when user data cannot be found for this mtditid and taxYear" in {
 
-      when(mockRepo.get(any(), any(), any())) thenReturn Future.successful(None)
+       when(mockRepo.get(any(), any(), any())).thenReturn(Future.successful(None))
 
       val request =
         FakeRequest(GET, routes.JourneyAnswersController.get(journey, taxYear).url)
@@ -166,25 +164,25 @@ class JourneyAnswersControllerSpec
 
     "return No Content when the data is successfully saved" in {
 
-      when(mockRepo.set(any())) thenReturn Future.successful(Done)
+       when(mockRepo.set(any())).thenReturn(Future.successful(Done))
 
-      val request =
-        FakeRequest(POST, routes.JourneyAnswersController.set.url)
-          .withHeaders(
-            "mtditid" -> userData.mtdItId,
-            "Content-Type" -> "application/json"
-          )
-          .withBody(Json.toJson(userData).toString)
+       val request =
+         FakeRequest(POST, routes.JourneyAnswersController.set.url)
+           .withHeaders(
+             "mtditid" -> userData.mtdItId,
+             "Content-Type" -> "application/json"
+           )
+           .withBody(Json.toJson(userData).toString)
 
-      val result = route(app, request).value
+       val result = route(app, request).value
 
-      status(result) shouldBe NO_CONTENT
-      verify(mockRepo, times(1)).set(eqTo(userData))
-    }
+       status(result) shouldBe NO_CONTENT
+       verify(mockRepo, times(1)).set(eqTo(userData))
+     }
 
-    "return Bad Request when the taxYear is invalid" in {
+     "return Bad Request when the taxYear is invalid" in {
 
-      when(mockRepo.set(any())) thenReturn Future.successful(Done)
+       when(mockRepo.set(any())).thenReturn(Future.successful(Done))
 
       val request =
         FakeRequest(POST, routes.JourneyAnswersController.set.url)

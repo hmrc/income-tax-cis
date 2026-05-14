@@ -19,49 +19,59 @@ package support.mocks
 import connectors.errors.ApiError
 import models.get.AllCISDeductions
 import models.submission.CISSubmission
-import org.scalamock.handlers.{CallHandler3, CallHandler4}
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.TestSuite
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{mock, when}
 import services.CISDeductionsService
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-trait MockCISDeductionsService extends MockFactory { _: TestSuite =>
+trait MockCISDeductionsService {
 
-  protected val mockCISDeductionsService: CISDeductionsService = mock[CISDeductionsService]
+  protected val mockCISDeductionsService: CISDeductionsService =
+    mock(classOf[CISDeductionsService])
 
   def mockGetCISDeductions(nino: String,
                            taxYear: Int,
-                           result: Either[ApiError, AllCISDeductions]): CallHandler3[String, Int, HeaderCarrier, Future[Either[ApiError, AllCISDeductions]]] = {
-    (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
-      .expects(nino, taxYear, *)
-      .returning(Future.successful(result))
-  }
+                           result: Either[ApiError, AllCISDeductions]): Unit =
+    when(
+      mockCISDeductionsService.getCISDeductions(
+        eqTo(nino),
+        eqTo(taxYear)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(result))
 
   def mockGetCISDeductionsException(nino: String,
                                     taxYear: Int,
-                                    result: Throwable): CallHandler3[String, Int, HeaderCarrier, Future[Either[ApiError, AllCISDeductions]]] = {
-    (mockCISDeductionsService.getCISDeductions(_: String, _: Int)(_: HeaderCarrier))
-      .expects(nino, taxYear, *)
-      .returning(Future.failed(result))
-  }
+                                    result: Throwable): Unit =
+    when(
+      mockCISDeductionsService.getCISDeductions(
+        eqTo(nino),
+        eqTo(taxYear)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.failed(result))
 
   def mockDeleteCISDeductionsSubmission(taxYear: Int,
                                         nino: String,
                                         submissionId: String,
-                                        response: Either[ApiError, Unit]): CallHandler4[Int, String, String, HeaderCarrier, Future[Either[ApiError, Unit]]] = {
-    (mockCISDeductionsService.deleteCISDeductionsSubmission(_: Int, _: String, _: String)(_: HeaderCarrier))
-      .expects(taxYear, nino, submissionId, *)
-      .returning(Future.successful(response))
-  }
+                                        response: Either[ApiError, Unit]): Unit =
+    when(
+      mockCISDeductionsService.deleteCISDeductionsSubmission(
+        eqTo(taxYear),
+        eqTo(nino),
+        eqTo(submissionId)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(response))
 
   def mockSubmitCISDeductions(nino: String,
                               taxYear: Int,
                               data: CISSubmission,
-                              response: Either[ApiError, Option[String]]): CallHandler4[String, Int, CISSubmission, HeaderCarrier, Future[Either[ApiError, Option[String]]]] = {
-    (mockCISDeductionsService.submitCISDeductions(_: String, _: Int, _: CISSubmission)(_: HeaderCarrier))
-      .expects(nino, taxYear, data, *)
-      .returning(Future.successful(response))
-  }
+                              response: Either[ApiError, Option[String]]): Unit =
+    when(
+      mockCISDeductionsService.submitCISDeductions(
+        eqTo(nino),
+        eqTo(taxYear),
+        eqTo(data)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(response))
 }

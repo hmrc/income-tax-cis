@@ -18,8 +18,9 @@ package controllers
 
 import models.taskList.SectionTitle.SelfEmploymentTitle
 import models.taskList.TaskListSection
-import org.scalamock.handlers.CallHandler5
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{mock, when}
+import org.scalatest.matchers.must.Matchers.mustBe
 import play.api.http.Status.OK
 import play.api.test.Helpers.status
 import services.CommonTaskListService
@@ -37,19 +38,26 @@ with MockCISDeductionsService
 with MockAuthorisedAction
 with FakeRequestProvider {
 
-  val nino :String = "123456789"
-  val mtdItId :String = "1234567890"
+  val nino: String = "123456789"
+  val mtdItId: String = "1234567890"
   val specificTaxYear: Int = TaxYearUtils.taxYear
 
-  val commonTaskListService: CommonTaskListService = mock[CommonTaskListService]
+  val commonTaskListService: CommonTaskListService =
+    mock(classOf[CommonTaskListService])
 
   val controller = new CommonTaskListController(commonTaskListService, auth = mockAuthorisedAction, cc = cc)
 
-  def mockCISService(): CallHandler5[Int, String, String, ExecutionContext, HeaderCarrier, Future[TaskListSection]] = {
-    (commonTaskListService.get(_: Int, _: String, _: String)(_: ExecutionContext, _: HeaderCarrier))
-      .expects(*, *, *, *, *)
-      .returning(Future.successful(TaskListSection(SelfEmploymentTitle, None)))
-  }
+  def mockCISService(): Unit =
+    when(
+      commonTaskListService.get(
+        any[Int](),
+        any[String](),
+        any[String]()
+      )(
+        any[ExecutionContext](),
+        any[HeaderCarrier]()
+      )
+    ).thenReturn(Future.successful(TaskListSection(SelfEmploymentTitle, None)))
 
   ".getCommonTaskList" should {
 
@@ -65,4 +73,3 @@ with FakeRequestProvider {
     }
   }
 }
-

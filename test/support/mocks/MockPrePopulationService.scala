@@ -19,22 +19,27 @@ package support.mocks
 import cats.data.EitherT
 import connectors.errors.ApiError
 import models.prePopulation.PrePopulationResponse
-import org.scalamock.handlers._
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.TestSuite
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{mock, when}
 import services.PrePopulationService
 import uk.gov.hmrc.http.HeaderCarrier
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
-trait MockPrePopulationService extends MockFactory { _: TestSuite =>
+trait MockPrePopulationService {
 
-  protected val mockPrePopService: PrePopulationService = mock[PrePopulationService]
+  protected val mockPrePopService: PrePopulationService =
+    mock(classOf[PrePopulationService])
 
-  def mockGetPrePop(taxYear: Int, nino: String, result: Either[ApiError, PrePopulationResponse]):
-  CallHandler4[Int, String, ExecutionContext, HeaderCarrier, EitherT[Future, ApiError, PrePopulationResponse]] =
-    (mockPrePopService
-      .get(_: Int, _: String)(_: ExecutionContext, _: HeaderCarrier))
-      .expects(taxYear, nino, *, *)
-      .returning(EitherT(Future.successful(result)))
+  def mockGetPrePop(taxYear: Int, nino: String, result: Either[ApiError, PrePopulationResponse]): Unit =
+    when(
+      mockPrePopService.get(
+        eqTo(taxYear),
+        eqTo(nino)
+      )(
+        any[ExecutionContext](),
+        any[HeaderCarrier]()
+      )
+    ).thenReturn(EitherT.fromEither[Future](result))
 }

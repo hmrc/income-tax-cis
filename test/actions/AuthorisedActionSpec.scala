@@ -21,7 +21,7 @@ import models.authorisation.Enrolment.{Agent, Individual, Nino}
 import models.requests.AuthorisationRequest
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.SystemMaterializer
-import org.scalamock.handlers.CallHandler4
+import org.mockito.Mockito.mock
 import play.api.http.{HeaderNames, Status => TestStatus}
 import play.api.mvc.Results._
 import play.api.mvc._
@@ -31,13 +31,12 @@ import support.mocks.MockAuthConnector
 import support.providers.FakeRequestProvider
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.syntax.retrieved.authSyntaxForRetrieved
 import uk.gov.hmrc.http.{HeaderCarrier, SessionId}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class AuthorisedActionSpec extends UnitTest
   with MockAuthConnector
@@ -51,7 +50,8 @@ class AuthorisedActionSpec extends UnitTest
   private implicit val mockControllerComponents: ControllerComponents = Helpers.stubControllerComponents()
   private val defaultActionBuilder: DefaultActionBuilder = DefaultActionBuilder(mockControllerComponents.parsers.default)
   implicit val materializer: SystemMaterializer = SystemMaterializer(actorSystem)
-  val mockAppConfig: AppConfig = mock[AppConfig]
+  val mockAppConfig: AppConfig =
+    mock(classOf[AppConfig])
 
   private val underTest: AuthorisedAction = new AuthorisedAction(
     defaultActionBuilder = defaultActionBuilder,
@@ -68,7 +68,8 @@ class AuthorisedActionSpec extends UnitTest
 
     val testBlock: AuthorisationRequest[AnyContent] => Future[Result] = user => Future.successful(Ok(s"${user.user.mtditid} ${user.user.arn.get}"))
 
-    val mockAppConfig: AppConfig = mock[AppConfig]
+    val mockAppConfig: AppConfig =
+      mock(classOf[AppConfig])
 
     def primaryAgentPredicate(mtdId: String): Predicate =
       Enrolment("HMRC-MTD-IT")
@@ -79,17 +80,6 @@ class AuthorisedActionSpec extends UnitTest
       Enrolment(Individual.key, Seq(EnrolmentIdentifier(Individual.value, mtdItId)), "Activated"),
       Enrolment(Agent.key, Seq(EnrolmentIdentifier(Agent.value, arn)), "Activated")
     ))
-
-    def mockAuthReturnException(exception: Exception,
-                                predicate: Predicate): CallHandler4[Predicate, Retrieval[_], HeaderCarrier, ExecutionContext, Future[Any]] =
-      (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-        .expects(predicate, *, *, *)
-        .returning(Future.failed(exception))
-
-    def mockAuthReturn(enrolments: Enrolments, predicate: Predicate): CallHandler4[Predicate, Retrieval[_], HeaderCarrier, ExecutionContext, Future[Any]] =
-      (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-        .expects(predicate, *, *, *)
-        .returning(Future.successful(enrolments))
 
     def testAuth: AuthorisedAction = new AuthorisedAction(
       defaultActionBuilder = defaultActionBuilder,
@@ -172,9 +162,8 @@ class AuthorisedActionSpec extends UnitTest
           Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, mtditid)), "Activated")
         ))
         lazy val result: Result = {
-          (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-            .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-            .returning(Future.successful(enrolments and ConfidenceLevel.L250))
+          val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L250
+          mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
           await(underTest.individualAuthentication(block, mtditid)(requestWithMtditid, emptyHeaderCarrier))
         }
@@ -196,9 +185,8 @@ class AuthorisedActionSpec extends UnitTest
           Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, mtditid)), "Activated")
         ))
         lazy val result: Result = {
-          (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-            .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-            .returning(Future.successful(enrolments and ConfidenceLevel.L250))
+          val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L250
+          mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
           await(underTest.individualAuthentication(block, mtditid)(requestWithMtditid, emptyHeaderCarrier))
         }
@@ -216,9 +204,8 @@ class AuthorisedActionSpec extends UnitTest
           Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, mtditid)), "Activated")
         ))
         lazy val result: Result = {
-          (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-            .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-            .returning(Future.successful(enrolments and ConfidenceLevel.L50))
+          val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L50
+          mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
           await(underTest.individualAuthentication(block, mtditid)(requestWithMtditid, emptyHeaderCarrier))
         }
@@ -233,9 +220,8 @@ class AuthorisedActionSpec extends UnitTest
         val mtditid = "AAAAAA"
         val enrolments = Enrolments(Set(Enrolment(Individual.key, Seq(EnrolmentIdentifier(Individual.value, mtditid)), "Activated")))
         lazy val result = {
-          (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-            .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-            .returning(Future.successful(enrolments and ConfidenceLevel.L250))
+          val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L250
+          mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
           await(underTest.individualAuthentication(block, mtditid)(requestWithMtditid, emptyHeaderCarrier))
         }
@@ -250,9 +236,8 @@ class AuthorisedActionSpec extends UnitTest
         val id = "AAAAAA"
         val enrolments = Enrolments(Set(Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, id)), "Activated")))
         lazy val result: Result = {
-          (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-            .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-            .returning(Future.successful(enrolments and ConfidenceLevel.L250))
+          val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L250
+          mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
           await(underTest.individualAuthentication(block, id)(requestWithMtditid, emptyHeaderCarrier))
         }
@@ -269,9 +254,8 @@ class AuthorisedActionSpec extends UnitTest
         val mtditid = "AAAAAA"
         val enrolments = Enrolments(Set(Enrolment("notAnIndividualOops", Seq(EnrolmentIdentifier(Individual.value, mtditid)), "Activated")))
         lazy val result: Result = {
-          (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-            .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-            .returning(Future.successful(enrolments and ConfidenceLevel.L250))
+          val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L250
+          mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
           await(underTest.individualAuthentication(block, mtditid)(requestWithMtditid, emptyHeaderCarrier))
         }
@@ -290,9 +274,8 @@ class AuthorisedActionSpec extends UnitTest
         Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, mtditid)), "Activated")
       ))
       lazy val result: Result = {
-        (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-          .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-          .returning(Future.successful(enrolments and ConfidenceLevel.L250))
+        val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L250
+        mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
         await(underTest.individualAuthentication(block, mtditid)(requestWithMtditid, emptyHeaderCarrier))
       }
@@ -310,9 +293,8 @@ class AuthorisedActionSpec extends UnitTest
         Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, mtditid)), "Activated")
       ))
       lazy val result: Result = {
-        (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-          .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-          .returning(Future.successful(enrolments and ConfidenceLevel.L50))
+        val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L50
+        mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
         await(underTest.individualAuthentication(block, mtditid)(requestWithMtditid, emptyHeaderCarrier))
       }
@@ -327,9 +309,8 @@ class AuthorisedActionSpec extends UnitTest
       val mtditid = "AAAAAA"
       val enrolments = Enrolments(Set(Enrolment(Individual.key, Seq(EnrolmentIdentifier(Individual.value, mtditid)), "Activated")))
       lazy val result: Result = {
-        (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-          .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-          .returning(Future.successful(enrolments and ConfidenceLevel.L250))
+        val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L250
+        mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
         await(underTest.individualAuthentication(block, mtditid)(requestWithMtditid, emptyHeaderCarrier))
       }
@@ -344,9 +325,8 @@ class AuthorisedActionSpec extends UnitTest
       val id = "AAAAAA"
       val enrolments = Enrolments(Set(Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, id)), "Activated")))
       lazy val result: Result = {
-        (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-          .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-          .returning(Future.successful(enrolments and ConfidenceLevel.L250))
+        val authResult: Enrolments ~ ConfidenceLevel = enrolments and ConfidenceLevel.L250
+        mockAuthoriseSuccess[Enrolments ~ ConfidenceLevel](authResult)
 
         await(underTest.individualAuthentication(block, id)(requestWithMtditid, emptyHeaderCarrier))
       }
@@ -362,7 +342,7 @@ class AuthorisedActionSpec extends UnitTest
       "results in a NoActiveSession error to be returned from Auth" should {
         "return an Unauthorised response" in new AgentTest {
           object AuthException extends NoActiveSession("Some reason")
-          mockAuthReturnException(AuthException, primaryAgentPredicate(mtdItId))
+          mockAuthReturnException(AuthException)
 
           val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
             request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
@@ -377,7 +357,7 @@ class AuthorisedActionSpec extends UnitTest
       "results in an Exception error being returned from Auth that is not an AuthException (Primary Agent)" should {
         "return an InternalServerError response" in new AgentTest {
 
-          mockAuthReturnException(new Exception("bang"), primaryAgentPredicate(mtdItId))
+          mockAuthReturnException(new Exception("bang"))
 
           val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
             request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
@@ -392,7 +372,7 @@ class AuthorisedActionSpec extends UnitTest
       "results in an AuthorisationException error being returned from Auth" should {
         "return an Unauthorised response" in new AgentTest {
 
-          mockAuthReturnException(InsufficientEnrolments(), primaryAgentPredicate(mtdItId))
+          mockAuthReturnException(InsufficientEnrolments())
 
           val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
             request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
@@ -411,7 +391,7 @@ class AuthorisedActionSpec extends UnitTest
             Enrolment(Agent.key, Seq.empty, "Activated")
           ))
 
-          mockAuthReturn(primaryAgentEnrolmentNoArn, primaryAgentPredicate(mtdItId))
+          mockAuthoriseSuccess[Enrolments](primaryAgentEnrolmentNoArn)
 
           lazy val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
             request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),
@@ -423,7 +403,7 @@ class AuthorisedActionSpec extends UnitTest
         }
 
         "invoke block when the user is properly authenticated" in new AgentTest {
-          mockAuthReturn(primaryAgentEnrolment, primaryAgentPredicate(mtdItId))
+          mockAuthoriseSuccess[Enrolments](primaryAgentEnrolment)
 
           lazy val result: Future[Result] = testAuth.agentAuthentication(testBlock, mtdItId)(
             request = FakeRequest().withSession(fakeRequestWithMtditidAndNino.session.data.toSeq :_*),

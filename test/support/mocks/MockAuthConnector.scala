@@ -16,45 +16,80 @@
 
 package support.mocks
 
-import org.scalamock.handlers.CallHandler4
-import org.scalamock.scalatest.MockFactory
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{mock, when}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 import uk.gov.hmrc.auth.core.syntax.retrieved.authSyntaxForRetrieved
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, ConfidenceLevel, Enrolments}
 import uk.gov.hmrc.http.HeaderCarrier
-import org.scalatest.TestSuite
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait MockAuthConnector extends MockFactory { _: TestSuite =>
+trait MockAuthConnector {
 
-  protected val mockAuthConnector: AuthConnector = mock[AuthConnector]
+  val mockAuthConnector: AuthConnector =
+    mock(classOf[AuthConnector])
 
-  def mockAuthReturnException(exception: Exception): CallHandler4[Predicate, Retrieval[_], HeaderCarrier, ExecutionContext, Future[Any]] = {
-    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(*, *, *, *)
-      .returning(Future.failed(exception))
+  protected def mockAuthoriseSuccess[A](result: A): Unit =
+    when(
+      mockAuthConnector.authorise[A](
+        any[Predicate](),
+        any[Retrieval[A]]()
+      )(
+        any[HeaderCarrier](),
+        any[ExecutionContext]()
+      )
+    ).thenReturn(Future.successful(result))
+
+  protected def mockAuthoriseFailure[A](exception: Throwable): Unit =
+    when(
+      mockAuthConnector.authorise[A](
+        any[Predicate](),
+        any[Retrieval[A]]()
+      )(
+        any[HeaderCarrier](),
+        any[ExecutionContext]()
+      )
+    ).thenReturn(Future.failed[A](exception))
+
+  def mockAuth(enrolments: Enrolments): Unit = {
+    val authResult: Enrolments ~ ConfidenceLevel =
+      enrolments and ConfidenceLevel.L250
+
+    when(
+      mockAuthConnector.authorise[Any](
+        any[Predicate](),
+        any[Retrieval[Any]]()
+      )(
+        any[HeaderCarrier](),
+        any[ExecutionContext]()
+      )
+    ).thenReturn(
+      Future.successful(Option.empty[AffinityGroup]),
+      Future.successful(authResult)
+    )
   }
 
-  def mockAuthAsAgent(enrolments: Enrolments): CallHandler4[Predicate, Retrieval[_], HeaderCarrier, ExecutionContext, Future[Any]] = {
-    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(*, Retrievals.affinityGroup, *, *)
-      .returning(Future.successful(Some(AffinityGroup.Agent)))
-
-    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(*, Retrievals.allEnrolments, *, *)
-      .returning(Future.successful(enrolments))
+  def mockAuthAsAgent(enrolments: Enrolments): Unit = {
+    when(
+      mockAuthConnector.authorise[Any](
+        any[Predicate](),
+        any[Retrieval[Any]]()
+      )(
+        any[HeaderCarrier](),
+        any[ExecutionContext]()
+      )
+    ).thenReturn(
+      Future.successful(Some(AffinityGroup.Agent)),
+      Future.successful(enrolments)
+    )
   }
 
-  def mockAuth(enrolments: Enrolments): CallHandler4[Predicate, Retrieval[_], HeaderCarrier, ExecutionContext, Future[Any]] = {
-    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(*, Retrievals.affinityGroup, *, *)
-      .returning(Future.successful(Some(AffinityGroup.Individual)))
-
-    (mockAuthConnector.authorise(_: Predicate, _: Retrieval[_])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(*, Retrievals.allEnrolments and Retrievals.confidenceLevel, *, *)
-      .returning(Future.successful(enrolments and ConfidenceLevel.L250))
-  }
+  def mockAuthReturnException(exception: Throwable): Unit =
+    mockAuthoriseFailure[Any](exception)
 }
+
+
+
+
