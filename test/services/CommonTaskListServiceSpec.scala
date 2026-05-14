@@ -40,18 +40,19 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class CommonTaskListServiceSpec extends ControllerUnitTest
-  with MockCISDeductionsService
-  with MockAuthorisedAction
-  with FakeRequestProvider
-  with AppConfigStubProvider
-  with MockJourneyAnswersRepository {
+class CommonTaskListServiceSpec
+    extends ControllerUnitTest
+    with MockCISDeductionsService
+    with MockAuthorisedAction
+    with FakeRequestProvider
+    with AppConfigStubProvider
+    with MockJourneyAnswersRepository {
 
   trait Test {
     implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
 
-    val nino: String = "12345678"
-    val taxYear: Int = 1234
+    val nino: String    = "12345678"
+    val taxYear: Int    = 1234
     val mtditid: String = "dummyMtditid"
 
     val appConfig: AppConfig = appConfigStub
@@ -62,7 +63,7 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
       journeyAnswersRepository = mockJourneyAnswersRepo
     )
 
-    val baseUrl = "http://localhost:9338/update-and-submit-income-tax-return"
+    val baseUrl        = "http://localhost:9338/update-and-submit-income-tax-return"
     val cisCustomerUrl = s"$baseUrl/construction-industry-scheme-deductions/$taxYear/summary"
 
     def cisTask(status: TaskStatus): TaskListSection = TaskListSection(
@@ -180,7 +181,7 @@ class CommonTaskListServiceSpec extends ControllerUnitTest
       "return expected task list with 'InProgress' status if section completed feature switch is enabled" in new Test {
         override val service: CommonTaskListService = new CommonTaskListService(
           appConfig = new AppConfigImpl(mock(classOf[Configuration]), mock(classOf[ServicesConfig])) {
-            override lazy val cisFrontendBaseUrl: String = "http://localhost:9338"
+            override lazy val cisFrontendBaseUrl: String               = "http://localhost:9338"
             override lazy val sectionCompletedQuestionEnabled: Boolean = true
           },
           cisDeductionsService = mockCISDeductionsService,

@@ -25,10 +25,10 @@ import uk.gov.hmrc.http.HttpResponse
 class DeleteCISDeductionsHttpParserSpec extends UnitTest {
 
   private val anyHeaders: Map[String, Seq[String]] = Map.empty
-  private val anyMethod: String = "DELETE"
-  private val anyUrl = "/any-url"
-  private val singleErrorBody: SingleErrorBody = SingleErrorBody("some-code", "some-reason")
-  private val singleErrorBodyJson: JsValue = Json.toJson(singleErrorBody)
+  private val anyMethod: String                    = "DELETE"
+  private val anyUrl                               = "/any-url"
+  private val singleErrorBody: SingleErrorBody     = SingleErrorBody("some-code", "some-reason")
+  private val singleErrorBodyJson: JsValue         = Json.toJson(singleErrorBody)
 
   private val underTest = DeleteCISDeductionsHttpParser.DeleteCISDeductionsHttpReads
 

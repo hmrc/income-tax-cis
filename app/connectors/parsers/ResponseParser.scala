@@ -25,20 +25,18 @@ import play.api.Logging
 
 trait ResponseParser extends Logging {
 
-  val parserName : String
+  val parserName: String
 
-  def logMessage(response:HttpResponse): String ={
+  def logMessage(response: HttpResponse): String =
     s"[$parserName][read] Received ${response.status} from DES/IF. Body:${response.body}" + getCorrelationId(response)
-  }
 
   def badSuccessJsonFromDES[Response]: Either[ApiError, Response] = {
     pagerDutyLog(BAD_SUCCESS_JSON_FROM_DES, s"[$parserName][read] Invalid Json from DES/IF.")
     Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
   }
 
-  def badSuccessJsonResponse[Response]: Either[ApiError, Response] = {
+  def badSuccessJsonResponse[Response]: Either[ApiError, Response] =
     Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError))
-  }
 
   def handleError[Response](response: HttpResponse, statusOverride: Option[Int] = None): Either[ApiError, Response] = {
 
@@ -47,11 +45,11 @@ trait ResponseParser extends Logging {
     try {
       val json = response.json
 
-      lazy val desError = json.asOpt[SingleErrorBody]
+      lazy val desError  = json.asOpt[SingleErrorBody]
       lazy val desErrors = json.asOpt[MultiErrorsBody]
 
       (desError, desErrors) match {
-        case (Some(desError), _) => Left(ApiError(status, desError))
+        case (Some(desError), _)  => Left(ApiError(status, desError))
         case (_, Some(desErrors)) => Left(ApiError(status, desErrors))
         case _ =>
           pagerDutyLog(UNEXPECTED_RESPONSE_FROM_DES, s"[$parserName][read] Unexpected Json from DES/IF.")
@@ -62,9 +60,9 @@ trait ResponseParser extends Logging {
     }
   }
 
-  def handleErrorHIP[Response](response: HttpResponse, status: Int): Either[ApiError, Response] = {
+  def handleErrorHIP[Response](response: HttpResponse, status: Int): Either[ApiError, Response] =
     try {
-      val json = response.json
+      val json                 = response.json
       lazy val singleErrorBody = json.asOpt[SingleErrorBody]
       lazy val multiErrorsBody = json.asOpt[MultiErrorsBody]
 
@@ -80,5 +78,4 @@ trait ResponseParser extends Logging {
         logger.error(s"[Parser][handleError]: failed to parse error response: ${response.toString}")
         Left(ApiError(status, SingleErrorBody.parsingError))
     }
-  }
 }

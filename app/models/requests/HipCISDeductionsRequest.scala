@@ -21,11 +21,11 @@ import play.api.libs.json.{Writes, OWrites, Json, JsValue}
 import play.api.libs.ws.BodyWritable
 
 case class HipCISDeductionsRequest(
-  employerRef: String,
-  contractorName: String,
-  fromDate: String,
-  toDate: String,
-  periodData: Array[PeriodData]
+    employerRef: String,
+    contractorName: String,
+    fromDate: String,
+    toDate: String,
+    periodData: Array[PeriodData]
 )
 
 object HipCISDeductionsRequest {
@@ -33,7 +33,7 @@ object HipCISDeductionsRequest {
     Json.writes[HipCISDeductionsRequest]
 
   implicit def jsonBodyWritable[T](implicit
-    writes: Writes[T],
-    jsValueBodyWritable: BodyWritable[JsValue]
+      writes: Writes[T],
+      jsValueBodyWritable: BodyWritable[JsValue]
   ): BodyWritable[T] = jsValueBodyWritable.map(writes.writes)
 }

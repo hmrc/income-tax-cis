@@ -28,15 +28,14 @@ class ResponseParserSpec extends UnitTest {
     override val parserName: String = "TestParser"
   }
 
-  private def httpResponse(json: JsValue =
-                           Json.parse(
-                             """{"failures":[
+  private def httpResponse(json: JsValue = Json.parse("""{"failures":[
                                |{"code":"SERVICE_UNAVAILABLE","reason":"The service is currently unavailable"},
-                               |{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}]}""".stripMargin)): HttpResponse = HttpResponse(
-    INTERNAL_SERVER_ERROR,
-    json,
-    Map("CorrelationId" -> Seq("1234645654645"))
-  )
+                               |{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}]}""".stripMargin)): HttpResponse =
+    HttpResponse(
+      INTERNAL_SERVER_ERROR,
+      json,
+      Map("CorrelationId" -> Seq("1234645654645"))
+    )
 
   "FakeParser" should {
     "log the correct message" in {
@@ -69,15 +68,19 @@ class ResponseParserSpec extends UnitTest {
     "handle multiple errors" in {
       val underTest = FakeParser.handleError(httpResponse())
 
-      underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, MultiErrorsBody(Seq(
-        SingleErrorBody("SERVICE_UNAVAILABLE", "The service is currently unavailable"),
-        SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")
-      ))))
+      underTest shouldBe Left(
+        ApiError(
+          INTERNAL_SERVER_ERROR,
+          MultiErrorsBody(Seq(
+            SingleErrorBody("SERVICE_UNAVAILABLE", "The service is currently unavailable"),
+            SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")
+          ))
+        ))
     }
 
     "handle single errors" in {
-      val underTest = FakeParser.handleError(httpResponse(Json.parse(
-        """{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}""".stripMargin)))
+      val underTest = FakeParser.handleError(
+        httpResponse(Json.parse("""{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}""".stripMargin)))
 
       underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")))
     }
@@ -95,8 +98,9 @@ class ResponseParserSpec extends UnitTest {
     }
 
     "handle single HiP errors" in {
-      val underTest = FakeParser.handleErrorHIP(httpResponse(Json.parse(
-        """{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}""".stripMargin)), 500)
+      val underTest = FakeParser.handleErrorHIP(
+        httpResponse(Json.parse("""{"code":"INTERNAL_SERVER_ERROR","reason":"The service is currently facing issues."}""".stripMargin)),
+        500)
 
       underTest shouldBe Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")))
     }

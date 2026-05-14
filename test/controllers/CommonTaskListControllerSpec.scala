@@ -33,13 +33,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
-class CommonTaskListControllerSpec extends ControllerUnitTest
-with MockCISDeductionsService
-with MockAuthorisedAction
-with FakeRequestProvider {
+class CommonTaskListControllerSpec extends ControllerUnitTest with MockCISDeductionsService with MockAuthorisedAction with FakeRequestProvider {
 
-  val nino: String = "123456789"
-  val mtdItId: String = "1234567890"
+  val nino: String         = "123456789"
+  val mtdItId: String      = "1234567890"
   val specificTaxYear: Int = TaxYearUtils.taxYear
 
   val commonTaskListService: CommonTaskListService =

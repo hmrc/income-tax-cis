@@ -30,8 +30,8 @@ case class GetPeriodData(deductionFromDate: String,
 
   val isEmpty: Boolean = this match {
     case GetPeriodData(_, _, `zero`, `zero`, `zero`, _, _, _) => true
-    case GetPeriodData(_, _, None, None, None, _, _, _) => true
-    case _ => false
+    case GetPeriodData(_, _, None, None, None, _, _, _)       => true
+    case _                                                    => false
   }
 }
 

@@ -28,18 +28,12 @@ import support.providers.FakeRequestProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class GetCISDeductionsControllerSpec extends ControllerUnitTest
-  with MockCISDeductionsService
-  with MockAuthorisedAction
-  with FakeRequestProvider {
+class GetCISDeductionsControllerSpec extends ControllerUnitTest with MockCISDeductionsService with MockAuthorisedAction with FakeRequestProvider {
 
-  private val nino: String = "123456789"
+  private val nino: String    = "123456789"
   private val anyTaxYear: Int = 2022
 
-  private val underTest = new GetCISDeductionsController(
-    mockCISDeductionsService,
-    mockAuthorisedAction,
-    cc)
+  private val underTest = new GetCISDeductionsController(mockCISDeductionsService, mockAuthorisedAction, cc)
 
   "calling .getCISDeductions" should {
     "with existing customer and contractor data" should {

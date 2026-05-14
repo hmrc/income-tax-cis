@@ -18,8 +18,7 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class CISDates(fromDate: String,
-                    toDate: String)
+case class CISDates(fromDate: String, toDate: String)
 
 object CISDates {
   implicit val format: OFormat[CISDates] = Json.format[CISDates]

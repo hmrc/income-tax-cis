@@ -17,5 +17,5 @@
 package utils
 
 case class FeatureSwitchConfig(
-  enableHipApis: Boolean = false
+    enableHipApis: Boolean = false
 )

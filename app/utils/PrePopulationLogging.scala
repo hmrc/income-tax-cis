@@ -20,10 +20,10 @@ import play.api.Logger
 
 trait PrePopulationLogging {
   lazy val logger: Logger = Logger(this.getClass)
-  val classLoggingContext : String
+  val classLoggingContext: String
 
   def infoLog(methodLoggingContext: String, dataLog: String = ""): String => Unit = (message: String) =>
-      logger.info(s"[$classLoggingContext]" + s"[$methodLoggingContext]" + " - " + message + dataLog)
+    logger.info(s"[$classLoggingContext]" + s"[$methodLoggingContext]" + " - " + message + dataLog)
 
   def warnLog(methodLoggingContext: String, dataLog: String = ""): String => Unit = (message: String) =>
     logger.warn(s"[$classLoggingContext]" + s"[$methodLoggingContext]" + " - " + message + dataLog)

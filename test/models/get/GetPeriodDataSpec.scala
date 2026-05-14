@@ -23,7 +23,7 @@ class GetPeriodDataSpec extends UnitTest {
   "GetPeriodData" when {
     "isEmpty" should {
       val nonEmptyPeriodData: GetPeriodData = GetPeriodData("", "", None, None, Some(1), "", None, "")
-      val emptyPeriodData: GetPeriodData = nonEmptyPeriodData.copy(grossAmountPaid = None)
+      val emptyPeriodData: GetPeriodData    = nonEmptyPeriodData.copy(grossAmountPaid = None)
       "return 'false' when any data is defined" in {
         nonEmptyPeriodData.isEmpty shouldBe false
       }

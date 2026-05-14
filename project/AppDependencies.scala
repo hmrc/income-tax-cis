@@ -17,10 +17,10 @@
 import sbt.*
 
 object AppDependencies {
-  private val bootstrapPlay30Version = "10.7.0"
-  private val hmrcMongoPlay30Version = "2.12.0"
+  private val bootstrapPlay30Version    = "10.7.0"
+  private val hmrcMongoPlay30Version    = "2.12.0"
   private val jacksonModuleScalaVersion = "2.21.3"
-  private val enumeratumVersion = "1.9.6"
+  private val enumeratumVersion         = "1.9.6"
 
   private val jacksonAndPlayExclusions: Seq[InclusionRule] = Seq(
     ExclusionRule(organization = "com.fasterxml.jackson.core"),
@@ -31,20 +31,20 @@ object AppDependencies {
   )
 
   val compile: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"                   %% "bootstrap-backend-play-30"  % bootstrapPlay30Version,
-    "uk.gov.hmrc.mongo"             %% "hmrc-mongo-play-30"         % hmrcMongoPlay30Version,
-    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % jacksonModuleScalaVersion,
-    "com.beachape"                  %% "enumeratum"                 % enumeratumVersion,
-    "com.beachape"                  %% "enumeratum-play-json"       % enumeratumVersion excludeAll (jacksonAndPlayExclusions *),
-    "uk.gov.hmrc"                   %% "crypto-json-play-30"        % "8.4.0",
-    "org.typelevel"                 %% "cats-core"                  % "2.13.0"
+    "uk.gov.hmrc"                  %% "bootstrap-backend-play-30" % bootstrapPlay30Version,
+    "uk.gov.hmrc.mongo"            %% "hmrc-mongo-play-30"        % hmrcMongoPlay30Version,
+    "com.fasterxml.jackson.module" %% "jackson-module-scala"      % jacksonModuleScalaVersion,
+    "com.beachape"                 %% "enumeratum"                % enumeratumVersion,
+    "com.beachape"                 %% "enumeratum-play-json"      % enumeratumVersion excludeAll (jacksonAndPlayExclusions*),
+    "uk.gov.hmrc"                  %% "crypto-json-play-30"       % "8.4.0",
+    "org.typelevel"                %% "cats-core"                 % "2.13.0"
   )
 
   val test: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"            %% "bootstrap-test-play-30"      % bootstrapPlay30Version % Test,
-    "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-30"     % hmrcMongoPlay30Version % Test,
-    "org.wiremock"            % "wiremock-standalone"         % "3.9.2"                % Test,
-    "org.mockito"             % "mockito-core"                % "5.12.0"               % Test,
-    "org.scalatestplus"      %% "mockito-5-12"                % "3.2.19.0"             % Test
+    "uk.gov.hmrc"       %% "bootstrap-test-play-30"  % bootstrapPlay30Version % Test,
+    "uk.gov.hmrc.mongo" %% "hmrc-mongo-test-play-30" % hmrcMongoPlay30Version % Test,
+    "org.wiremock"       % "wiremock-standalone"     % "3.9.2"                % Test,
+    "org.mockito"        % "mockito-core"            % "5.12.0"               % Test,
+    "org.scalatestplus" %% "mockito-5-12"            % "3.2.19.0"             % Test
   )
 }

@@ -23,28 +23,32 @@ import support.UnitTest
 class ApiErrorBodySpec extends UnitTest {
 
   private val jsonModel: JsObject = Json.obj(
-    "code" -> "SERVER_ERROR",
+    "code"   -> "SERVER_ERROR",
     "reason" -> "Service is unavailable"
   )
 
   private val errorsJsModel: JsObject = Json.obj(
     "failures" -> Json.arr(
       Json.obj(
-        "code" -> "SERVICE_UNAVAILABLE",
+        "code"   -> "SERVICE_UNAVAILABLE",
         "reason" -> "The service is currently unavailable"
       ),
       Json.obj(
-        "code" -> "INTERNAL_SERVER_ERROR",
+        "code"   -> "INTERNAL_SERVER_ERROR",
         "reason" -> "The service is currently facing issues."
       )
     )
   )
 
   "The DesErrorModel" should {
-    val errorsModel = ApiError(SERVICE_UNAVAILABLE, MultiErrorsBody(Seq(
-      SingleErrorBody("SERVICE_UNAVAILABLE", "The service is currently unavailable"),
-      SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")
-    )))
+    val errorsModel = ApiError(
+      SERVICE_UNAVAILABLE,
+      MultiErrorsBody(
+        Seq(
+          SingleErrorBody("SERVICE_UNAVAILABLE", "The service is currently unavailable"),
+          SingleErrorBody("INTERNAL_SERVER_ERROR", "The service is currently facing issues.")
+        ))
+    )
 
     "parse to Json" in {
       ApiError(SERVICE_UNAVAILABLE, SingleErrorBody("SERVER_ERROR", "Service is unavailable")).toJson shouldBe jsonModel

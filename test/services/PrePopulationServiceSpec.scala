@@ -26,8 +26,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
 
-class PrePopulationServiceSpec extends UnitTest
-  with MockCISDeductionsService {
+class PrePopulationServiceSpec extends UnitTest with MockCISDeductionsService {
 
   trait Test {
     val taxYear: Int = 2024
@@ -36,7 +35,7 @@ class PrePopulationServiceSpec extends UnitTest
       service = mockCISDeductionsService
     )
 
-    implicit val hc: HeaderCarrier = HeaderCarrier()
+    implicit val hc: HeaderCarrier    = HeaderCarrier()
     implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
     val dummyData: PrePopulationResponse = PrePopulationResponse(
@@ -45,9 +44,9 @@ class PrePopulationServiceSpec extends UnitTest
   }
 
   "get" when {
-    val dummyErrorBody: SingleErrorBody = SingleErrorBody("Some", "Error")
+    val dummyErrorBody: SingleErrorBody   = SingleErrorBody("Some", "Error")
     val defaultErrorBody: SingleErrorBody = SingleErrorBody("defaulted", "error")
-    val defaultError: ApiError = ApiError(IM_A_TEAPOT, defaultErrorBody)
+    val defaultError: ApiError            = ApiError(IM_A_TEAPOT, defaultErrorBody)
     "call to retrieve CIS data fails with a non-404 status code" should {
       "return an error" in new Test {
         mockGetCISDeductions(taxYear = taxYear, nino = nino, result = Left(ApiError(500, dummyErrorBody)))
@@ -73,12 +72,13 @@ class PrePopulationServiceSpec extends UnitTest
     "call to retrieve CIS data succeeds, and the response contains relevant data" should {
       "return pre-pop flags as 'true' when customer data exists" in new Test {
         val customerOnlyIfResponse: AllCISDeductions = AllCISDeductions(
-          customerCISDeductions = Some(CISSource(
-            totalDeductionAmount = Some(100),
-            totalCostOfMaterials = None,
-            totalGrossAmountPaid = None,
-            cisDeductions = Nil
-          )),
+          customerCISDeductions = Some(
+            CISSource(
+              totalDeductionAmount = Some(100),
+              totalCostOfMaterials = None,
+              totalGrossAmountPaid = None,
+              cisDeductions = Nil
+            )),
           contractorCISDeductions = None
         )
 
@@ -92,12 +92,13 @@ class PrePopulationServiceSpec extends UnitTest
       "return pre-pop flags as 'true' when non-zeroed HMRC-Held data exists" in new Test {
         val hmrcHeldOnlyIfResponse: AllCISDeductions = AllCISDeductions(
           customerCISDeductions = None,
-          contractorCISDeductions = Some(CISSource(
-            totalDeductionAmount = Some(100),
-            totalCostOfMaterials = None,
-            totalGrossAmountPaid = None,
-            cisDeductions = Nil
-          ))
+          contractorCISDeductions = Some(
+            CISSource(
+              totalDeductionAmount = Some(100),
+              totalCostOfMaterials = None,
+              totalGrossAmountPaid = None,
+              cisDeductions = Nil
+            ))
         )
 
         mockGetCISDeductions(taxYear = taxYear, nino = nino, result = Right(hmrcHeldOnlyIfResponse))
@@ -110,34 +111,35 @@ class PrePopulationServiceSpec extends UnitTest
       "return pre-pop flags as 'false' when only zeroed HMRC-held data exists" in new Test {
         val zeroedIfResponse: AllCISDeductions = AllCISDeductions(
           customerCISDeductions = None,
-          contractorCISDeductions = Some(CISSource(
-            totalDeductionAmount = Some(0),
-            totalCostOfMaterials = Some(0),
-            totalGrossAmountPaid = Some(0),
-            cisDeductions = Seq(
-              CISDeductions(
-                fromDate = "fromDate",
-                toDate = "toDate",
-                contractorName = Some("contractor name"),
-                employerRef = "ref",
-                totalDeductionAmount = Some(0),
-                totalCostOfMaterials = Some(0),
-                totalGrossAmountPaid = Some(0),
-                periodData = Seq(
-                  GetPeriodData(
-                    deductionFromDate = "fromDate",
-                    deductionToDate = "toDate",
-                    deductionAmount = Some(0),
-                    costOfMaterials = Some(0),
-                    grossAmountPaid = Some(0),
-                    submissionDate = "submissionDate",
-                    submissionId = Some("submissionId"),
-                    source = "contractor"
+          contractorCISDeductions = Some(
+            CISSource(
+              totalDeductionAmount = Some(0),
+              totalCostOfMaterials = Some(0),
+              totalGrossAmountPaid = Some(0),
+              cisDeductions = Seq(
+                CISDeductions(
+                  fromDate = "fromDate",
+                  toDate = "toDate",
+                  contractorName = Some("contractor name"),
+                  employerRef = "ref",
+                  totalDeductionAmount = Some(0),
+                  totalCostOfMaterials = Some(0),
+                  totalGrossAmountPaid = Some(0),
+                  periodData = Seq(
+                    GetPeriodData(
+                      deductionFromDate = "fromDate",
+                      deductionToDate = "toDate",
+                      deductionAmount = Some(0),
+                      costOfMaterials = Some(0),
+                      grossAmountPaid = Some(0),
+                      submissionDate = "submissionDate",
+                      submissionId = Some("submissionId"),
+                      source = "contractor"
+                    )
                   )
                 )
               )
-            )
-          ))
+            ))
         )
 
         mockGetCISDeductions(taxYear = taxYear, nino = nino, result = Right(zeroedIfResponse))

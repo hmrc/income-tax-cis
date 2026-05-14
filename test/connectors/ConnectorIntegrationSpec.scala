@@ -24,8 +24,16 @@ import support.providers.AppConfigStubProvider
 import uk.gov.hmrc.http.test.{HttpClientV2Support, HttpClientSupport}
 
 trait ConnectorIntegrationSpec
-    extends AnyWordSpec with Matchers with FutureAwaits with DefaultAwaitTimeout with HttpClientSupport
-    with HttpClientV2Support with AppConfigStubProvider with WireMockServer with WireMockStubs with BeforeAndAfterAll {
+    extends AnyWordSpec
+    with Matchers
+    with FutureAwaits
+    with DefaultAwaitTimeout
+    with HttpClientSupport
+    with HttpClientV2Support
+    with AppConfigStubProvider
+    with WireMockServer
+    with WireMockStubs
+    with BeforeAndAfterAll {
 
   override def beforeAll(): Unit = {
     super.beforeAll()

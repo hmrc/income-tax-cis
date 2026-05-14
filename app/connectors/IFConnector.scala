@@ -33,7 +33,7 @@ trait IFConnector {
 
   protected[connectors] def ifHeaderCarrier(url: String, apiVersion: String)(implicit hc: HeaderCarrier): HeaderCarrier = {
     val isInternalHost = headerCarrierConfig.internalHostPatterns.exists(_.pattern.matcher(new URL(url).getHost).matches())
-    val hcWithAuth = hc.copy(authorization = Some(Authorization(s"Bearer ${appConfig.authorisationTokenFor(apiVersion)}")))
+    val hcWithAuth     = hc.copy(authorization = Some(Authorization(s"Bearer ${appConfig.authorisationTokenFor(apiVersion)}")))
 
     if (isInternalHost) {
       hcWithAuth.withExtraHeaders(headers = "Environment" -> appConfig.ifEnvironment)

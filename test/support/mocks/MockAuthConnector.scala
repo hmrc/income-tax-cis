@@ -54,7 +54,6 @@ trait MockAuthConnector {
       )
     ).thenReturn(Future.failed[A](exception))
 
-
   /** Stubs the individual user path through AuthorisedAction.async. */
   def mockAuth(enrolments: Enrolments): Unit = {
     when(
@@ -92,4 +91,3 @@ trait MockAuthConnector {
   def mockAuthReturnException(exception: Throwable): Unit =
     mockAuthoriseFailure[Any](exception)
 }
-

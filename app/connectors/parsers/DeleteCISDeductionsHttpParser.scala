@@ -29,7 +29,7 @@ object DeleteCISDeductionsHttpParser extends ResponseParser {
   override val parserName: String = "DeleteCISDeductionsHttpParser"
 
   implicit object DeleteCISDeductionsHttpReads extends HttpReads[DeleteCISDeductionsResponse] {
-    override def read(method: String, url: String, response: HttpResponse): DeleteCISDeductionsResponse = {
+    override def read(method: String, url: String, response: HttpResponse): DeleteCISDeductionsResponse =
       response.status match {
         case NO_CONTENT => Right(())
         case BAD_REQUEST | NOT_FOUND | UNPROCESSABLE_ENTITY =>
@@ -45,6 +45,5 @@ object DeleteCISDeductionsHttpParser extends ResponseParser {
           pagerDutyLog(UNEXPECTED_RESPONSE_FROM_DES, logMessage(response))
           handleError(response, Some(INTERNAL_SERVER_ERROR))
       }
-    }
   }
 }

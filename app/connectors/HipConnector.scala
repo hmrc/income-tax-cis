@@ -31,24 +31,24 @@ import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, StringContextOps}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class HipConnector @Inject()(
-  http: HttpClientV2,
-  appConfig: AppConfig
+class HipConnector @Inject() (
+    http: HttpClientV2,
+    appConfig: AppConfig
 )(implicit ec: ExecutionContext) {
   lazy val logger: Logger = LoggerFactory.getLogger("hip-connector")
 
   // HIP API#1789
   def createCISDeductions(
-                                        taxYear: String,
-                                        nino: String,
-                                        employerRef: String,
-                                        contractorName: String,
-                                        fromDate: String,
-                                        toDate: String,
-                                        periodData: Seq[PeriodData]
-                                      )(implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
+      taxYear: String,
+      nino: String,
+      employerRef: String,
+      contractorName: String,
+      fromDate: String,
+      toDate: String,
+      periodData: Seq[PeriodData]
+  )(implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
     val hipApiVersion: String = "1789"
-    val url = s"${appConfig.hipBaseUrl}/income-tax/v1/$taxYear/cis/deductions/$nino"
+    val url                   = s"${appConfig.hipBaseUrl}/income-tax/v1/$taxYear/cis/deductions/$nino"
 
     val requestBody = HipCISDeductionsRequest(
       employerRef = employerRef,

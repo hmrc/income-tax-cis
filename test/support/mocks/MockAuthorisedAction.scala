@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 trait MockAuthorisedAction extends MockAuthConnector {
 
-  private val mcc = stubMessagesControllerComponents()
+  private val mcc                                        = stubMessagesControllerComponents()
   private val defaultActionBuilder: DefaultActionBuilder = DefaultActionBuilder(mcc.parsers.default)
 
   protected val mockAuthorisedAction: AuthorisedAction = new AuthorisedAction(
@@ -36,10 +36,11 @@ trait MockAuthorisedAction extends MockAuthConnector {
   )
 
   def mockAuthorisation(): Unit = {
-    val individualEnrolments: Enrolments = Enrolments(Set(
-      Enrolment(Individual.key, Seq(EnrolmentIdentifier(Individual.value, "1234567890")), "Activated"),
-      Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, "1234567890")), "Activated")
-    ))
+    val individualEnrolments: Enrolments = Enrolments(
+      Set(
+        Enrolment(Individual.key, Seq(EnrolmentIdentifier(Individual.value, "1234567890")), "Activated"),
+        Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, "1234567890")), "Activated")
+      ))
 
     mockAuth(individualEnrolments)
   }

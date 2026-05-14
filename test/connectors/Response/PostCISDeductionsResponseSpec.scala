@@ -27,8 +27,8 @@ import models.CreateCISDeductionsSuccess
 
 class PostCISDeductionsResponseSpec extends UnitTest {
   private val anyHeaders: Map[String, Seq[String]] = Map.empty
-  private val anyMethod: String = "POST"
-  private val anyUrl = "/income-tax/v1/cis/deductions"
+  private val anyMethod: String                    = "POST"
+  private val anyUrl                               = "/income-tax/v1/cis/deductions"
 
   private val underTest = postCISDeductions
 
@@ -62,7 +62,7 @@ class PostCISDeductionsResponseSpec extends UnitTest {
       }
 
       "status is NOT_FOUND and any jsValue" in {
-        val jsValue: JsValue = Json.toJson(SingleErrorBody("some-code", "some-reason"))
+        val jsValue: JsValue           = Json.toJson(SingleErrorBody("some-code", "some-reason"))
         val httpResponse: HttpResponse = HttpResponse.apply(NOT_FOUND, jsValue, anyHeaders)
         underTest.read(anyMethod, anyUrl, httpResponse) shouldBe PostCISDeductionsResponse(
           httpResponse,

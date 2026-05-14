@@ -25,7 +25,7 @@ lazy val coverageSettings: Seq[Setting[?]] = {
     ScoverageKeys.coverageExcludedPackages := excludedPackages.mkString(";"),
     ScoverageKeys.coverageMinimumStmtTotal := 96, // This has been set to 96% from 97% due to the Scala 3 migration as Scala 3 brings in more generated code which is not covered by tests, and this has resulted in a drop in coverage. The threshold will be increased back to 97% once the coverage is back up to that level.
     ScoverageKeys.coverageFailOnMinimum := true,
-    ScoverageKeys.coverageHighlighting := true
+    ScoverageKeys.coverageHighlighting  := true
   )
 }
 
@@ -42,7 +42,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(PlayKeys.playDefaultPort := 9328)
   .settings(RoutesKeys.routesImport ++= Seq("models.TaxYearPathBindable._", "models.TaxYearPathBindable.TaxYear"))
   .disablePlugins(JUnitXmlReportPlugin)
-  .settings(coverageSettings *)
+  .settings(coverageSettings*)
 
 lazy val it = project
   .enablePlugins(PlayScala)

@@ -30,14 +30,13 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 // TODO: Refactor to use services instead of connector
-class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnector,
-                                     integrationFrameworkService: IntegrationFrameworkService,
-                                     hipConnector: HipConnector,
-                                     appConfig: AppConfig)
-                                    (implicit ec: ExecutionContext) {
+class CISDeductionsService @Inject() (cisDeductionsConnector: CISDeductionsConnector,
+                                      integrationFrameworkService: IntegrationFrameworkService,
+                                      hipConnector: HipConnector,
+                                      appConfig: AppConfig)(implicit ec: ExecutionContext) {
 
-  def submitCISDeductions(nino: String, taxYear: Int, cisSubmission: CISSubmission)
-                         (implicit hc: HeaderCarrier): Future[Either[ApiError, Option[String]]] = {
+  def submitCISDeductions(nino: String, taxYear: Int, cisSubmission: CISSubmission)(implicit
+      hc: HeaderCarrier): Future[Either[ApiError, Option[String]]] =
     (cisSubmission: @unchecked) match {
       case CISSubmission(Some(employerRef), Some(contractorName), periodData, None) =>
         createCisDeductions(nino, taxYear, CreateCISDeductions(employerRef, contractorName, periodData)).map(response =>
@@ -45,64 +44,60 @@ class CISDeductionsService @Inject()(cisDeductionsConnector: CISDeductionsConnec
       case CISSubmission(None, None, periodData, Some(submissionId)) =>
         updateCisDeductions(nino, taxYear, UpdateCISDeductions(periodData = periodData), submissionId)
     }
-  }
 
-  def getCISDeductions(nino: String, taxYear: Int)
-                      (implicit hc: HeaderCarrier): Future[Either[ApiError, AllCISDeductions]] = {
+  def getCISDeductions(nino: String, taxYear: Int)(implicit hc: HeaderCarrier): Future[Either[ApiError, AllCISDeductions]] =
     getCISDeductions(nino, taxYear, CONTRACTOR).flatMap {
       case Left(error) => Future.successful(Left(error))
-      case Right(contractorCISDeductions) => getCISDeductions(nino, taxYear, CUSTOMER).map {
-        case Left(error) => Left(error)
-        case Right(customerCISDeductions) =>
-          Right(AllCISDeductions(customerCISDeductions = customerCISDeductions, contractorCISDeductions = contractorCISDeductions))
-      }
+      case Right(contractorCISDeductions) =>
+        getCISDeductions(nino, taxYear, CUSTOMER).map {
+          case Left(error) => Left(error)
+          case Right(customerCISDeductions) =>
+            Right(AllCISDeductions(customerCISDeductions = customerCISDeductions, contractorCISDeductions = contractorCISDeductions))
+        }
     }
-  }
 
-  def deleteCISDeductionsSubmission(taxYear: Int,
-                                    nino: String,
-                                    submissionId: String)
-                                   (implicit hc: HeaderCarrier): Future[Either[ApiError, Unit]] = {
+  def deleteCISDeductionsSubmission(taxYear: Int, nino: String, submissionId: String)(implicit hc: HeaderCarrier): Future[Either[ApiError, Unit]] =
     if (shouldUseIFApi(taxYear)) {
       integrationFrameworkService.deleteCisDeductions(taxYear, nino, submissionId)
     } else {
       cisDeductionsConnector.delete(nino, submissionId)
     }
-  }
 
-  private def getCISDeductions(nino: String, taxYear: Int, source: String)(implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
+  private def getCISDeductions(nino: String, taxYear: Int, source: String)(implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] =
     if (shouldUseIFApi(taxYear)) {
       integrationFrameworkService.getCisDeductions(taxYear, nino, source)
     } else {
       cisDeductionsConnector.get(nino, taxYear, source)
     }
-  }
 
-  def createCisDeductions(nino: String, taxYear: Int, createCisDeductions: CreateCISDeductions)
-                                 (implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
+  def createCisDeductions(nino: String, taxYear: Int, createCisDeductions: CreateCISDeductions)(implicit
+      hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] =
     if (appConfig.enableHipApis) {
-      hipConnector.createCISDeductions(asTys(TaxYear(taxYear)),
-        nino, createCisDeductions.employerRef,
+      hipConnector.createCISDeductions(
+        asTys(TaxYear(taxYear)),
+        nino,
+        createCisDeductions.employerRef,
         createCisDeductions.contractorName,
-        createCisDeductions.periodData.map(_.deductionFromDate).min, createCisDeductions.periodData.map(_.deductionToDate).max, createCisDeductions.periodData)
+        createCisDeductions.periodData.map(_.deductionFromDate).min,
+        createCisDeductions.periodData.map(_.deductionToDate).max,
+        createCisDeductions.periodData
+      )
     } else if (shouldUseIFApi(taxYear)) {
       integrationFrameworkService.createCisDeductions(taxYear, nino, createCisDeductions)
     } else {
       cisDeductionsConnector.create(nino, taxYear, createCisDeductions)
     }
-  }
 
-  def updateCisDeductions(nino: String, taxYear: Int, updateCisDeductions: UpdateCISDeductions, submissionId: String)
-                                 (implicit hc: HeaderCarrier): Future[Either[ApiError, None.type]] = {
+  def updateCisDeductions(nino: String, taxYear: Int, updateCisDeductions: UpdateCISDeductions, submissionId: String)(implicit
+      hc: HeaderCarrier): Future[Either[ApiError, None.type]] =
     if (shouldUseIFApi(taxYear)) {
-      integrationFrameworkService.updateCisDeductions(taxYear, nino, submissionId, updateCisDeductions)
+      integrationFrameworkService
+        .updateCisDeductions(taxYear, nino, submissionId, updateCisDeductions)
         .map(response => response.map(_ => None))
     } else {
       cisDeductionsConnector.update(nino, submissionId, updateCisDeductions).map(response => response.map(_ => None))
     }
-  }
 
-  private def shouldUseIFApi(taxYear: Int): Boolean = {
+  private def shouldUseIFApi(taxYear: Int): Boolean =
     taxYear > 2023
-  }
 }

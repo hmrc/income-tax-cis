@@ -23,7 +23,7 @@ class CISSourceSpec extends UnitTest {
   "CisSource" when {
     "isEmpty" should {
       val nonEmptyDeduction: CISDeductions = CISDeductions("", "", None, "", Some(1), None, None, Nil)
-      val emptyDeduction: CISDeductions = nonEmptyDeduction.copy(totalDeductionAmount = None)
+      val emptyDeduction: CISDeductions    = nonEmptyDeduction.copy(totalDeductionAmount = None)
       "return 'false' when any data is defined" in {
         CISSource(Some(1), Some(2), Some(3), Seq(nonEmptyDeduction)).isEmpty shouldBe false
       }

@@ -34,10 +34,7 @@ trait MockIntegrationFrameworkConnector {
   protected val mockIntegrationFrameworkConnector: IntegrationFrameworkConnector =
     mock(classOf[IntegrationFrameworkConnector])
 
-  def mockGetCisDeductions(taxYear: Int,
-                           nino: String,
-                           source: String,
-                           result: Either[ApiError, Option[CISSource]]): Unit =
+  def mockGetCisDeductions(taxYear: Int, nino: String, source: String, result: Either[ApiError, Option[CISSource]]): Unit =
     when(
       mockIntegrationFrameworkConnector.getCisDeductions(
         eqTo(taxYear),
@@ -58,11 +55,7 @@ trait MockIntegrationFrameworkConnector {
       )(any[HeaderCarrier]())
     ).thenReturn(Future.successful(result))
 
-  def mockUpdate(taxYear: Int,
-                 nino: String,
-                 submissionId: String,
-                 updateCISDeductions: UpdateCISDeductions,
-                 result: Either[ApiError, Unit]): Unit =
+  def mockUpdate(taxYear: Int, nino: String, submissionId: String, updateCISDeductions: UpdateCISDeductions, result: Either[ApiError, Unit]): Unit =
     when(
       mockIntegrationFrameworkConnector.update(
         eqTo(taxYear),
@@ -72,10 +65,7 @@ trait MockIntegrationFrameworkConnector {
       )(any[HeaderCarrier]())
     ).thenReturn(Future.successful(result))
 
-  def mockDeleteCisDeductions(taxYear: Int,
-                              nino: String,
-                              submissionId: String,
-                              result: Either[ApiError, Unit]): Unit =
+  def mockDeleteCisDeductions(taxYear: Int, nino: String, submissionId: String, result: Either[ApiError, Unit]): Unit =
     when(
       mockIntegrationFrameworkConnector.deleteCisDeductions(
         eqTo(taxYear),

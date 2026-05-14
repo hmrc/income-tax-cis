@@ -27,29 +27,31 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class PrePopulationController @Inject()(service: PrePopulationService,
-                                        auth: AuthorisedAction,
-                                        cc: ControllerComponents)
-                                       (implicit ec: ExecutionContext) extends BackendController(cc)
-  with PrePopulationLogging {
+class PrePopulationController @Inject() (service: PrePopulationService, auth: AuthorisedAction, cc: ControllerComponents)(implicit
+    ec: ExecutionContext)
+    extends BackendController(cc)
+    with PrePopulationLogging {
   val classLoggingContext: String = "PrePopulationController"
 
-  def get(nino: String, taxYear: Int): Action[AnyContent] = auth.async { implicit request => {
-    val userDataLogString: String = s" for NINO: $nino, and tax year: $taxYear"
+  def get(nino: String, taxYear: Int): Action[AnyContent] = auth.async { implicit request =>
+    val userDataLogString: String  = s" for NINO: $nino, and tax year: $taxYear"
     val infoLogger: String => Unit = infoLog(methodLoggingContext = "get", dataLog = userDataLogString)
     val warnLogger: String => Unit = warnLog(methodLoggingContext = "get", dataLog = userDataLogString)
 
     infoLogger("Request received to check user's CIS data for pre-pop")
 
-    service.get(taxYear, nino).bimap(
-      serviceError => {
-        warnLogger(s"An error occurred while checking the user's CIS data for pre-pop ${serviceError.toLogString}")
-        InternalServerError
-      },
-      prePopData => {
-        infoLogger("CIS pre-pop check completed successfully. Returning response")
-        Ok(Json.toJson(prePopData))
-      }
-    ).merge
-  }}
+    service
+      .get(taxYear, nino)
+      .bimap(
+        serviceError => {
+          warnLogger(s"An error occurred while checking the user's CIS data for pre-pop ${serviceError.toLogString}")
+          InternalServerError
+        },
+        prePopData => {
+          infoLogger("CIS pre-pop check completed successfully. Returning response")
+          Ok(Json.toJson(prePopData))
+        }
+      )
+      .merge
+  }
 }

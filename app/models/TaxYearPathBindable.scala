@@ -23,7 +23,7 @@ object TaxYearPathBindable {
   /* Gets a representation of a taxYear in a YY-YY format (from a YYYY format).
    */
   def asTys(taxYear: TaxYear): String = {
-    val end = taxYear.taxYear - 2000
+    val end   = taxYear.taxYear - 2000
     val start = end - 1
     s"$start-$end"
   }
@@ -33,7 +33,7 @@ object TaxYearPathBindable {
     override def bind(key: String, value: String): Either[String, TaxYear] =
       value match {
         case result if result.matches("^20\\d{2}$") => Right(TaxYear(taxYear = result.toInt))
-        case _ => Left("Invalid taxYear")
+        case _                                      => Left("Invalid taxYear")
       }
 
     override def unbind(key: String, value: TaxYear): String =

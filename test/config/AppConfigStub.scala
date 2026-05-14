@@ -23,31 +23,32 @@ import utils.FeatureSwitchConfig
 
 class AppConfigStub {
 
-  def config(desHost: String = "localhost", environment: String = "test", featureSwitchConfig: Option[FeatureSwitchConfig] = None): AppConfig = new AppConfigImpl(mock[Configuration], mock[ServicesConfig]) {
-    private val wireMockPort = 11111
+  def config(desHost: String = "localhost", environment: String = "test", featureSwitchConfig: Option[FeatureSwitchConfig] = None): AppConfig =
+    new AppConfigImpl(mock[Configuration], mock[ServicesConfig]) {
+      private val wireMockPort = 11111
 
-    private lazy val authorisationToken: String = "secret"
+      private lazy val authorisationToken: String = "secret"
 
-    override lazy val ifBaseUrl: String = s"http://localhost:$wireMockPort"
-    override lazy val ifEnvironment: String = environment
+      override lazy val ifBaseUrl: String     = s"http://localhost:$wireMockPort"
+      override lazy val ifEnvironment: String = environment
 
-    override lazy val cisFrontendBaseUrl: String = "http://localhost:9338"
+      override lazy val cisFrontendBaseUrl: String = "http://localhost:9338"
 
-    override lazy val hipBaseUrl: String = s"http://localhost:$wireMockPort"
-    override lazy val hipEnvironment: String = environment
+      override lazy val hipBaseUrl: String     = s"http://localhost:$wireMockPort"
+      override lazy val hipEnvironment: String = environment
 
-    override def authorisationTokenFor(apiVersion: String): String = authorisationToken + s".$apiVersion"
+      override def authorisationTokenFor(apiVersion: String): String = authorisationToken + s".$apiVersion"
 
-    override def hipAuthTokenFor(apiVersion: String): String = authorisationToken + s".$apiVersion"
+      override def hipAuthTokenFor(apiVersion: String): String = authorisationToken + s".$apiVersion"
 
-    lazy val featureSwitches: FeatureSwitchConfig = featureSwitchConfig.getOrElse(FeatureSwitchConfig())
+      lazy val featureSwitches: FeatureSwitchConfig = featureSwitchConfig.getOrElse(FeatureSwitchConfig())
 
-    override lazy val enableHipApis: Boolean = featureSwitches.enableHipApis
+      override lazy val enableHipApis: Boolean = featureSwitches.enableHipApis
 
-    override lazy val desBaseUrl: String = s"http://$desHost:$wireMockPort"
-    override lazy val desAuthorisationToken: String = "authorisation-token"
-    override lazy val desEnvironment: String = "environment"
+      override lazy val desBaseUrl: String            = s"http://$desHost:$wireMockPort"
+      override lazy val desAuthorisationToken: String = "authorisation-token"
+      override lazy val desEnvironment: String        = "environment"
 
-    override lazy val sectionCompletedQuestionEnabled: Boolean = false
-  }
+      override lazy val sectionCompletedQuestionEnabled: Boolean = false
+    }
 }

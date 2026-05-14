@@ -31,10 +31,7 @@ trait MockIntegrationFrameworkService {
   protected val mockIntegrationFrameworkService: IntegrationFrameworkService =
     mock(classOf[IntegrationFrameworkService])
 
-  def mockGetCisDeductions(taxYear: Int,
-                           nino: String,
-                           source: String,
-                           response: Either[ApiError, Option[CISSource]]): Unit =
+  def mockGetCisDeductions(taxYear: Int, nino: String, source: String, response: Either[ApiError, Option[CISSource]]): Unit =
     when(
       mockIntegrationFrameworkService.getCisDeductions(
         eqTo(taxYear),
@@ -69,10 +66,7 @@ trait MockIntegrationFrameworkService {
       )(any[HeaderCarrier]())
     ).thenReturn(Future.successful(result))
 
-  def mockDeleteCisDeductions(taxYear: Int,
-                              nino: String,
-                              submissionId: String,
-                              result: Either[ApiError, Unit]): Unit =
+  def mockDeleteCisDeductions(taxYear: Int, nino: String, submissionId: String, result: Either[ApiError, Unit]): Unit =
     when(
       mockIntegrationFrameworkService.deleteCisDeductions(
         eqTo(taxYear),

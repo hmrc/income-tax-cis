@@ -32,8 +32,8 @@ case class CISDeductions(fromDate: String,
 
   val isEmpty: Boolean = this match {
     case CISDeductions(_, _, _, _, `zero`, `zero`, `zero`, _) if isPeriodDataEmpty => true
-    case CISDeductions(_, _, _, _, None, None, None, _) if isPeriodDataEmpty => true
-    case _ => false
+    case CISDeductions(_, _, _, _, None, None, None, _) if isPeriodDataEmpty       => true
+    case _                                                                         => false
   }
 }
 

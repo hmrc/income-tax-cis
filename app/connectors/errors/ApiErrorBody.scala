@@ -25,7 +25,7 @@ case class SingleErrorBody(code: String, reason: String) extends ApiErrorBody
 
 object SingleErrorBody {
   implicit val formats: OFormat[SingleErrorBody] = Json.format[SingleErrorBody]
-  val parsingError: SingleErrorBody = SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")
+  val parsingError: SingleErrorBody              = SingleErrorBody("PARSING_ERROR", "Error parsing response from DES")
 }
 
 /** Multiple Errors * */

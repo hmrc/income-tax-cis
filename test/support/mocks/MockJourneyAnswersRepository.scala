@@ -18,7 +18,7 @@ package support.mocks
 
 import models.Done
 import models.mongo.JourneyAnswers
-import org.mockito.ArgumentMatchers.{eq as eqTo}
+import org.mockito.ArgumentMatchers.eq as eqTo
 import org.mockito.Mockito.{mock, when}
 import repositories.JourneyAnswersRepository
 
@@ -29,10 +29,7 @@ trait MockJourneyAnswersRepository {
   protected val mockJourneyAnswersRepo: JourneyAnswersRepository =
     mock(classOf[JourneyAnswersRepository])
 
-  def mockKeepAliveJourneyAnswers(mtdItId: String,
-                                  taxYear: Int,
-                                  journey: String,
-                                  result: Done): Unit =
+  def mockKeepAliveJourneyAnswers(mtdItId: String, taxYear: Int, journey: String, result: Done): Unit =
     when(
       mockJourneyAnswersRepo.keepAlive(
         eqTo(mtdItId),
@@ -41,10 +38,7 @@ trait MockJourneyAnswersRepository {
       )
     ).thenReturn(Future.successful(result))
 
-  def mockGetJourneyAnswers(mtdItId: String,
-                            taxYear: Int,
-                            journey: String,
-                            result: Option[JourneyAnswers]): Unit =
+  def mockGetJourneyAnswers(mtdItId: String, taxYear: Int, journey: String, result: Option[JourneyAnswers]): Unit =
     when(
       mockJourneyAnswersRepo.get(
         eqTo(mtdItId),
@@ -53,10 +47,7 @@ trait MockJourneyAnswersRepository {
       )
     ).thenReturn(Future.successful(result))
 
-  def mockGetJourneyAnswersException(mtdItId: String,
-                                     taxYear: Int,
-                                     journey: String,
-                                     result: Throwable): Unit =
+  def mockGetJourneyAnswersException(mtdItId: String, taxYear: Int, journey: String, result: Throwable): Unit =
     when(
       mockJourneyAnswersRepo.get(
         eqTo(mtdItId),
@@ -65,16 +56,12 @@ trait MockJourneyAnswersRepository {
       )
     ).thenReturn(Future.failed(result))
 
-  def mockSetJourneyAnswers(userData: JourneyAnswers,
-                            result: Done): Unit =
+  def mockSetJourneyAnswers(userData: JourneyAnswers, result: Done): Unit =
     when(
       mockJourneyAnswersRepo.set(eqTo(userData))
     ).thenReturn(Future.successful(result))
 
-  def mockClearJourneyAnswers(mtdItId: String,
-                              taxYear: Int,
-                              journey: String,
-                              result: Done): Unit =
+  def mockClearJourneyAnswers(mtdItId: String, taxYear: Int, journey: String, result: Done): Unit =
     when(
       mockJourneyAnswersRepo.clear(
         eqTo(mtdItId),

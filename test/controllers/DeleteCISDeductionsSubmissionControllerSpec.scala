@@ -25,10 +25,11 @@ import support.providers.FakeRequestProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DeleteCISDeductionsSubmissionControllerSpec extends ControllerUnitTest
-  with MockCISDeductionsService
-  with MockAuthorisedAction
-  with FakeRequestProvider {
+class DeleteCISDeductionsSubmissionControllerSpec
+    extends ControllerUnitTest
+    with MockCISDeductionsService
+    with MockAuthorisedAction
+    with FakeRequestProvider {
 
   private val underTest = new DeleteCISDeductionsSubmissionController(
     mockCISDeductionsService,

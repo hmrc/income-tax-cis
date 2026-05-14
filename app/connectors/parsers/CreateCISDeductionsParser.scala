@@ -30,12 +30,15 @@ object CreateCISDeductionsParser extends ResponseParser with Logging {
   override val parserName = "createCISDeductionsParser"
 
   implicit object CreateCISDeductionsResponseHttpReads extends HttpReads[CreateCISDeductionsResponse] {
-    override def read(method: String, url: String, response: HttpResponse): CreateCISDeductionsResponse = {
+    override def read(method: String, url: String, response: HttpResponse): CreateCISDeductionsResponse =
       response.status match {
-        case OK | CREATED => response.json.validate[CreateCISDeductionsSuccess].fold[CreateCISDeductionsResponse](
-          _ => badSuccessJsonFromDES,
-          responseModel => Right(responseModel)
-        )
+        case OK | CREATED =>
+          response.json
+            .validate[CreateCISDeductionsSuccess]
+            .fold[CreateCISDeductionsResponse](
+              _ => badSuccessJsonFromDES,
+              responseModel => Right(responseModel)
+            )
         case CONFLICT | BAD_REQUEST | UNPROCESSABLE_ENTITY =>
           pagerDutyLog(FOURXX_RESPONSE_FROM_DES, logMessage(response))
           handleError(response)
@@ -49,6 +52,5 @@ object CreateCISDeductionsParser extends ResponseParser with Logging {
           pagerDutyLog(UNEXPECTED_RESPONSE_FROM_DES, logMessage(response))
           handleError(response, Some(INTERNAL_SERVER_ERROR))
       }
-    }
   }
 }

@@ -24,14 +24,13 @@ import support.builders.CISSourceBuilder.aCISSource
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HttpResponse
 
-class GetCISDeductionsHttpParserSpec extends UnitTest
-  with TaxYearProvider {
+class GetCISDeductionsHttpParserSpec extends UnitTest with TaxYearProvider {
 
   private val anyHeaders: Map[String, Seq[String]] = Map.empty
-  private val anyMethod: String = "GET"
-  private val anyUrl = "/any-url"
-  private val singleErrorBody: SingleErrorBody = SingleErrorBody("some-code", "some-reason")
-  private val singleErrorBodyJson: JsValue = Json.toJson(singleErrorBody)
+  private val anyMethod: String                    = "GET"
+  private val anyUrl                               = "/any-url"
+  private val singleErrorBody: SingleErrorBody     = SingleErrorBody("some-code", "some-reason")
+  private val singleErrorBodyJson: JsValue         = Json.toJson(singleErrorBody)
 
   private val underTest = GetCISDeductionsHttpParser.GetCISDeductionsResponseHttpReads
 
@@ -44,7 +43,7 @@ class GetCISDeductionsHttpParserSpec extends UnitTest
       }
 
       "status is OK and source has no deductions" in {
-        val source = aCISSource.copy(cisDeductions = Seq.empty)
+        val source       = aCISSource.copy(cisDeductions = Seq.empty)
         val httpResponse = HttpResponse.apply(OK, Json.toJson(source).toString, anyHeaders)
 
         underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(None)

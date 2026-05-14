@@ -34,9 +34,7 @@ trait MockCISDeductionsConnector {
   protected val mockCISDeductionsConnector: CISDeductionsConnector =
     mock(classOf[CISDeductionsConnector])
 
-  def mockDelete(nino: String,
-                 submissionId: String,
-                 response: Either[ApiError, Unit]): Unit =
+  def mockDelete(nino: String, submissionId: String, response: Either[ApiError, Unit]): Unit =
     when(
       mockCISDeductionsConnector.delete(
         eqTo(nino),
@@ -44,10 +42,7 @@ trait MockCISDeductionsConnector {
       )(any[HeaderCarrier]())
     ).thenReturn(Future.successful(response))
 
-  def mockGet(nino: String,
-              taxYear: Int,
-              source: String,
-              connectorResult: GetCISDeductionsResponse): Unit =
+  def mockGet(nino: String, taxYear: Int, source: String, connectorResult: GetCISDeductionsResponse): Unit =
     when(
       mockCISDeductionsConnector.get(
         eqTo(nino),
@@ -56,10 +51,7 @@ trait MockCISDeductionsConnector {
       )(any[HeaderCarrier]())
     ).thenReturn(Future.successful(connectorResult))
 
-  def mockUpdate(nino: String,
-                 submissionId: String,
-                 model: UpdateCISDeductions,
-                 connectorResult: Either[ApiError, Unit]): Unit =
+  def mockUpdate(nino: String, submissionId: String, model: UpdateCISDeductions, connectorResult: Either[ApiError, Unit]): Unit =
     when(
       mockCISDeductionsConnector.update(
         eqTo(nino),
@@ -68,10 +60,7 @@ trait MockCISDeductionsConnector {
       )(any[HeaderCarrier]())
     ).thenReturn(Future.successful(connectorResult))
 
-  def mockCreate(nino: String,
-                 taxYear: Int,
-                 model: CreateCISDeductions,
-                 connectorResult: Either[ApiError, CreateCISDeductionsSuccess]): Unit =
+  def mockCreate(nino: String, taxYear: Int, model: CreateCISDeductions, connectorResult: Either[ApiError, CreateCISDeductionsSuccess]): Unit =
     when(
       mockCISDeductionsConnector.create(
         eqTo(nino),

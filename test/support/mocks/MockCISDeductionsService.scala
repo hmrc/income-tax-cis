@@ -31,9 +31,7 @@ trait MockCISDeductionsService {
   protected val mockCISDeductionsService: CISDeductionsService =
     mock(classOf[CISDeductionsService])
 
-  def mockGetCISDeductions(nino: String,
-                           taxYear: Int,
-                           result: Either[ApiError, AllCISDeductions]): Unit =
+  def mockGetCISDeductions(nino: String, taxYear: Int, result: Either[ApiError, AllCISDeductions]): Unit =
     when(
       mockCISDeductionsService.getCISDeductions(
         eqTo(nino),
@@ -41,9 +39,7 @@ trait MockCISDeductionsService {
       )(any[HeaderCarrier]())
     ).thenReturn(Future.successful(result))
 
-  def mockGetCISDeductionsException(nino: String,
-                                    taxYear: Int,
-                                    result: Throwable): Unit =
+  def mockGetCISDeductionsException(nino: String, taxYear: Int, result: Throwable): Unit =
     when(
       mockCISDeductionsService.getCISDeductions(
         eqTo(nino),
@@ -51,10 +47,7 @@ trait MockCISDeductionsService {
       )(any[HeaderCarrier]())
     ).thenReturn(Future.failed(result))
 
-  def mockDeleteCISDeductionsSubmission(taxYear: Int,
-                                        nino: String,
-                                        submissionId: String,
-                                        response: Either[ApiError, Unit]): Unit =
+  def mockDeleteCISDeductionsSubmission(taxYear: Int, nino: String, submissionId: String, response: Either[ApiError, Unit]): Unit =
     when(
       mockCISDeductionsService.deleteCISDeductionsSubmission(
         eqTo(taxYear),
@@ -63,10 +56,7 @@ trait MockCISDeductionsService {
       )(any[HeaderCarrier]())
     ).thenReturn(Future.successful(response))
 
-  def mockSubmitCISDeductions(nino: String,
-                              taxYear: Int,
-                              data: CISSubmission,
-                              response: Either[ApiError, Option[String]]): Unit =
+  def mockSubmitCISDeductions(nino: String, taxYear: Int, data: CISSubmission, response: Either[ApiError, Option[String]]): Unit =
     when(
       mockCISDeductionsService.submitCISDeductions(
         eqTo(nino),

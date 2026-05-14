@@ -27,16 +27,15 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class PrePopulationService @Inject()(service: CISDeductionsService) extends PrePopulationLogging {
+class PrePopulationService @Inject() (service: CISDeductionsService) extends PrePopulationLogging {
   val classLoggingContext = "PrePopulationService"
 
-  def get(taxYear: Int, nino: String)
-         (implicit ec: ExecutionContext,hc: HeaderCarrier): EitherT[Future, ApiError, PrePopulationResponse] = {
+  def get(taxYear: Int, nino: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ApiError, PrePopulationResponse] = {
 
     val methodLoggingContext: String = "get"
-    val userDataLogString: String = s" for NINO: $nino, and tax year: $taxYear"
-    val downstreamSource: String = if (taxYear > 2023) "IF" else "DES"
-    val getInfoLogger = infoLog(methodLoggingContext = methodLoggingContext, dataLog = userDataLogString)
+    val userDataLogString: String    = s" for NINO: $nino, and tax year: $taxYear"
+    val downstreamSource: String     = if (taxYear > 2023) "IF" else "DES"
+    val getInfoLogger                = infoLog(methodLoggingContext = methodLoggingContext, dataLog = userDataLogString)
 
     getInfoLogger(s"Attempting to retrieve user's CIS data from $downstreamSource")
 
@@ -53,12 +52,11 @@ class PrePopulationService @Inject()(service: CISDeductionsService) extends PreP
         PrePopulationResponse.fromData(data)
     }
 
-    result.leftMap {
-      err =>
-        warnLog(methodLoggingContext, userDataLogString)(
-          "Attempt to retrieve user's CIS data from IF failed" + s" ${err.toLogString}"
-        )
-        err
+    result.leftMap { err =>
+      warnLog(methodLoggingContext, userDataLogString)(
+        "Attempt to retrieve user's CIS data from IF failed" + s" ${err.toLogString}"
+      )
+      err
     }
   }
 }

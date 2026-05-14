@@ -44,17 +44,18 @@ trait JourneyAnswersRepository {
 }
 
 @Singleton
-class JourneyAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
-                                             appConfig: AppConfig,
-                                             clock: Clock)
-                                            (implicit ec: ExecutionContext, crypto: Encrypter with Decrypter)
-  extends PlayMongoRepository[JourneyAnswers](
-    collectionName = "journeyAnswers",
-    mongoComponent = mongoComponent,
-    domainFormat = JourneyAnswers.encryptedFormat,
-    indexes = JourneyAnswersRepositoryIndexes.indexes()(appConfig),
-    replaceIndexes = appConfig.replaceJourneyAnswersIndexes
-  ) with Logging with JourneyAnswersRepository {
+class JourneyAnswersRepositoryImpl @Inject() (mongoComponent: MongoComponent, appConfig: AppConfig, clock: Clock)(implicit
+    ec: ExecutionContext,
+    crypto: Encrypter with Decrypter)
+    extends PlayMongoRepository[JourneyAnswers](
+      collectionName = "journeyAnswers",
+      mongoComponent = mongoComponent,
+      domainFormat = JourneyAnswers.encryptedFormat,
+      indexes = JourneyAnswersRepositoryIndexes.indexes()(appConfig),
+      replaceIndexes = appConfig.replaceJourneyAnswersIndexes
+    )
+    with Logging
+    with JourneyAnswersRepository {
 
   implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
 
@@ -73,14 +74,12 @@ class JourneyAnswersRepositoryImpl @Inject()(mongoComponent: MongoComponent,
       .toFuture()
       .map(_ => Done)
 
-  def get(mtdItId: String, taxYear: Int, journey: String): Future[Option[JourneyAnswers]] = {
-    keepAlive(mtdItId, taxYear, journey).flatMap {
-      _ =>
-        collection
-          .find[JourneyAnswers](filterByMtdItIdYear(mtdItId, taxYear, journey))
-          .headOption()
+  def get(mtdItId: String, taxYear: Int, journey: String): Future[Option[JourneyAnswers]] =
+    keepAlive(mtdItId, taxYear, journey).flatMap { _ =>
+      collection
+        .find[JourneyAnswers](filterByMtdItIdYear(mtdItId, taxYear, journey))
+        .headOption()
     }
-  }
 
   def set(userData: JourneyAnswers): Future[Done] = {
 
