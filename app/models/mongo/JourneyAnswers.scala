@@ -44,17 +44,17 @@ object JourneyAnswers {
       )(JourneyAnswers.apply _)
   }
 
-  val writes: OWrites[JourneyAnswers] = {
-    import play.api.libs.functional.syntax._
+   val writes: OWrites[JourneyAnswers] = {
+     import play.api.libs.functional.syntax._
 
-    (
-      (__ \ "mtdItId").write[String] and
-        (__ \ "taxYear").write[Int] and
-        (__ \ "journey").write[String] and
-        (__ \ "data").write[JsObject] and
-        (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      )(unlift(JourneyAnswers.unapply))
-  }
+     (
+       (__ \ "mtdItId").write[String] and
+         (__ \ "taxYear").write[Int] and
+         (__ \ "journey").write[String] and
+         (__ \ "data").write[JsObject] and
+         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
+       )(ja => (ja.mtdItId, ja.taxYear, ja.journey, ja.data, ja.lastUpdated))
+   }
 
   implicit val format: OFormat[JourneyAnswers] = OFormat(reads, writes)
 

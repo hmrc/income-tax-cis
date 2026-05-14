@@ -24,6 +24,7 @@ import connectors.parsers.GetCISDeductionsHttpParser.{GetCISDeductionsResponse, 
 import connectors.parsers.UpdateCISDeductionsHttpParser.{UpdateCISDeductionsResponse, UpdateCISDeductionsResponseHttpReads}
 import models.{CreateCISDeductions, UpdateCISDeductions}
 import play.api.libs.json.Json
+import play.api.libs.ws.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import utils.CISTaxYearHelper
