@@ -26,7 +26,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json.Json
 import play.api.libs.ws.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, StringContextOps}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,17 +65,15 @@ class HipConnector @Inject()(
       .setHeader("Environment" -> appConfig.hipEnvironment)
       .setHeader(HeaderNames.authorisation -> s"Bearer ${appConfig.hipAuthTokenFor(hipApiVersion)}")
       .withBody[HipCISDeductionsRequest](requestBody)
-      .execute[HttpResponse]
-      .map { response =>
-        val parsedResponse: PostCISDeductionsResponse =
-          PostCISDeductionsResponse.postCISDeductions.read("POST", url, response)
-
+      .execute[PostCISDeductionsResponse]
+      .map { parsedResponse =>
         if (parsedResponse.result.isLeft) {
+          val httpResponse = parsedResponse.httpResponse
           val correlationId =
-            response.header("CorrelationId").map(id => s" CorrelationId: $id").getOrElse("")
+            httpResponse.header("CorrelationId").map(id => s" CorrelationId: $id").getOrElse("")
           logger.error(
             s"[HipConnector] Error creating a CIS deduction from the HIP Integration Framework: URL: $url" +
-              s" correlationId: $correlationId; status: ${response.status}; Body:${response.body}"
+              s" correlationId: $correlationId; status: ${httpResponse.status}; Body:${httpResponse.body}"
           )
         }
         parsedResponse.result
