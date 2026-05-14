@@ -18,7 +18,7 @@ lazy val coverageSettings: Seq[Setting[?]] = {
     "config.*",
     "testOnly.*",
     "testOnlyDoNotUseInAppConf.*",
-    "controllers.testOnly.*",
+    "controllers.testOnly.*"
   )
 
   Seq(
@@ -30,13 +30,13 @@ lazy val coverageSettings: Seq[Setting[?]] = {
 }
 
 ThisBuild / majorVersion := 0
-ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / scalaVersion := "3.3.7"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .settings(
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    scalacOptions += "-Wconf:cat=unused-imports&src=html/.*:s",
+    scalacOptions += "-Wconf:msg=unused import&src=html/.*:s",
     scalacOptions += "-Wconf:src=routes/.*:s"
   )
   .settings(PlayKeys.playDefaultPort := 9328)

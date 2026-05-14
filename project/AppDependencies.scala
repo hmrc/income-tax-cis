@@ -19,6 +19,8 @@ import sbt.*
 object AppDependencies {
   private val bootstrapPlay30Version = "10.7.0"
   private val hmrcMongoPlay30Version = "2.12.0"
+  private val jacksonModuleScalaVersion = "2.21.3"
+  private val enumeratumVersion = "1.9.6"
 
   private val jacksonAndPlayExclusions: Seq[InclusionRule] = Seq(
     ExclusionRule(organization = "com.fasterxml.jackson.core"),
@@ -31,9 +33,9 @@ object AppDependencies {
   val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"                   %% "bootstrap-backend-play-30"  % bootstrapPlay30Version,
     "uk.gov.hmrc.mongo"             %% "hmrc-mongo-play-30"         % hmrcMongoPlay30Version,
-    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.21.1",
-    "com.beachape"                  %% "enumeratum"                 % "1.9.6",
-    "com.beachape"                  %% "enumeratum-play-json"       % "1.9.6" excludeAll (jacksonAndPlayExclusions *),
+    "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % jacksonModuleScalaVersion,
+    "com.beachape"                  %% "enumeratum"                 % enumeratumVersion,
+    "com.beachape"                  %% "enumeratum-play-json"       % enumeratumVersion excludeAll (jacksonAndPlayExclusions *),
     "uk.gov.hmrc"                   %% "crypto-json-play-30"        % "8.4.0",
     "org.typelevel"                 %% "cats-core"                  % "2.13.0"
   )
@@ -42,7 +44,6 @@ object AppDependencies {
     "uk.gov.hmrc"             %% "bootstrap-test-play-30"   % bootstrapPlay30Version    % Test,
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-30"  % hmrcMongoPlay30Version    % Test,
     "com.github.tomakehurst"  %  "wiremock-jre8-standalone" % "3.0.1"                   % Test,
-    "org.scalamock"           %% "scalamock"                % "7.5.5"                   % Test,
-    "org.mockito"             %% "mockito-scala"            % "2.1.0"                   % Test
+    "org.scalamock"           %% "scalamock"                % "7.5.5"                   % Test
   )
 }
