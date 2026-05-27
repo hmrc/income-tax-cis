@@ -29,12 +29,13 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class JourneyAnswersController @Inject()(
-                                          cc: ControllerComponents,
-                                          authorisedAction: AuthorisedAction,
-                                          repository: JourneyAnswersRepository
-                                        )(implicit ec: ExecutionContext)
-  extends BackendController(cc) with Logging {
+class JourneyAnswersController @Inject() (
+    cc: ControllerComponents,
+    authorisedAction: AuthorisedAction,
+    repository: JourneyAnswersRepository
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
   def get(journey: String, taxYear: TaxYear): Action[AnyContent] = authorisedAction.async { request =>
     repository
@@ -44,10 +45,10 @@ class JourneyAnswersController @Inject()(
         case None =>
           logger.warn("[JourneyAnswersController.get] No existing data returning Not Found")
           NotFound
-      }.recover {
-        case e =>
-          logger.error(s"[JourneyAnswersController.get] recovered from: ${e.getMessage}")
-          InternalServerError
+      }
+      .recover { case e =>
+        logger.error(s"[JourneyAnswersController.get] recovered from: ${e.getMessage}")
+        InternalServerError
       }
   }
 
@@ -56,18 +57,16 @@ class JourneyAnswersController @Inject()(
       case Some(JsSuccess(model, _)) =>
         repository.set(model).map(_ => NoContent)
       case _ => Future.successful(BadRequest)
-    }).recover {
-      case e =>
-        logger.error(s"[JourneyAnswersController.set] recovered from: ${e.getMessage}")
-        InternalServerError
+    }).recover { case e =>
+      logger.error(s"[JourneyAnswersController.set] recovered from: ${e.getMessage}")
+      InternalServerError
     }
   }
 
-  def keepAlive(journey: String, taxYear: TaxYear): Action[AnyContent] = authorisedAction.async {
-    request =>
-      repository
-        .keepAlive(request.user.mtditid, taxYear.taxYear, journey)
-        .map(_ => NoContent)
+  def keepAlive(journey: String, taxYear: TaxYear): Action[AnyContent] = authorisedAction.async { request =>
+    repository
+      .keepAlive(request.user.mtditid, taxYear.taxYear, journey)
+      .map(_ => NoContent)
   }
 
   def clear(journey: String, taxYear: TaxYear): Action[AnyContent] = authorisedAction.async { request =>

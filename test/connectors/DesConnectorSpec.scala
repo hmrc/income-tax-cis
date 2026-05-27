@@ -22,8 +22,7 @@ import support.providers.AppConfigStubProvider
 import uk.gov.hmrc.http.HeaderNames._
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, SessionId}
 
-class DesConnectorSpec extends UnitTest
-  with AppConfigStubProvider {
+class DesConnectorSpec extends UnitTest with AppConfigStubProvider {
 
   private class FakeConnector(override val appConfig: AppConfig) extends DesConnector {
     def headerCarrierTest(url: String)(hc: HeaderCarrier): HeaderCarrier = desHeaderCarrier(url)(hc)
@@ -59,7 +58,7 @@ class DesConnectorSpec extends UnitTest
     "host is External" should {
       val externalHost = "http://127.0.0.1"
       "include all HeaderCarrier headers in the extraHeaders when the host is external" in {
-        val hc = HeaderCarrier(sessionId = Some(SessionId("sessionIdHeaderValue")))
+        val hc     = HeaderCarrier(sessionId = Some(SessionId("sessionIdHeaderValue")))
         val result = connector.headerCarrierTest(externalHost)(hc)
 
         result.extraHeaders.size shouldBe 4

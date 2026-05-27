@@ -23,14 +23,13 @@ import support.UnitTest
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HttpResponse
 
-class UpdateCISDeductionsHttpParserSpec extends UnitTest
-  with TaxYearProvider {
+class UpdateCISDeductionsHttpParserSpec extends UnitTest with TaxYearProvider {
 
   private val anyHeaders: Map[String, Seq[String]] = Map.empty
-  private val anyMethod: String = "PUT"
-  private val anyUrl = "/any-url"
-  private val singleErrorBody: SingleErrorBody = SingleErrorBody("some-code", "some-reason")
-  private val singleErrorBodyJson: JsValue = Json.toJson(singleErrorBody)
+  private val anyMethod: String                    = "PUT"
+  private val anyUrl                               = "/any-url"
+  private val singleErrorBody: SingleErrorBody     = SingleErrorBody("some-code", "some-reason")
+  private val singleErrorBodyJson: JsValue         = Json.toJson(singleErrorBody)
 
   private val underTest = UpdateCISDeductionsHttpParser.UpdateCISDeductionsResponseHttpReads
 

@@ -29,18 +29,16 @@ import support.providers.FakeRequestProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class CreateUpdateCisDeductionsControllerSpec extends ControllerUnitTest
-  with MockCISDeductionsService
-  with MockAuthorisedAction
-  with FakeRequestProvider {
+class CreateUpdateCisDeductionsControllerSpec
+    extends ControllerUnitTest
+    with MockCISDeductionsService
+    with MockAuthorisedAction
+    with FakeRequestProvider {
 
-  private val nino: String = "123456789"
+  private val nino: String    = "123456789"
   private val anyTaxYear: Int = 2022
 
-  private val underTest = new CreateUpdateCisDeductionsController(
-    mockCISDeductionsService,
-    mockAuthorisedAction,
-    cc)
+  private val underTest = new CreateUpdateCisDeductionsController(mockCISDeductionsService, mockAuthorisedAction, cc)
 
   "calling .postCISDeductions" should {
     "with create body" should {
@@ -48,7 +46,8 @@ class CreateUpdateCisDeductionsControllerSpec extends ControllerUnitTest
         mockAuthorisation()
         mockSubmitCISDeductions(nino, anyTaxYear, aCISSubmission.copy(submissionId = None), Right(Some("id")))
 
-        val result = await(underTest.postCISDeductions(nino, anyTaxYear)(fakeGetRequest.withJsonBody(Json.toJson(aCISSubmission.copy(submissionId = None)))))
+        val result =
+          await(underTest.postCISDeductions(nino, anyTaxYear)(fakeGetRequest.withJsonBody(Json.toJson(aCISSubmission.copy(submissionId = None)))))
 
         result.header.status shouldBe OK
         Json.parse(consumeBody(result)) shouldBe Json.toJson(CreateCISDeductionsSuccess("id"))
@@ -61,7 +60,6 @@ class CreateUpdateCisDeductionsControllerSpec extends ControllerUnitTest
         mockAuthorisation()
         mockSubmitCISDeductions(nino, anyTaxYear, anUpdateCISSubmission, Right(None))
 
-
         val result = underTest.postCISDeductions(nino, anyTaxYear)(fakeRequest.withJsonBody(Json.toJson(anUpdateCISSubmission)))
 
         status(result) shouldBe OK
@@ -71,7 +69,8 @@ class CreateUpdateCisDeductionsControllerSpec extends ControllerUnitTest
         mockAuthorisation()
         mockSubmitCISDeductions(nino, anyTaxYear, anUpdateCISSubmission.copy(periodData = Seq(aPeriodData, aPeriodData)), Right(None))
 
-        val result = underTest.postCISDeductions(nino, anyTaxYear)(fakeRequest.withJsonBody(Json.toJson(anUpdateCISSubmission.copy(periodData = Seq(aPeriodData, aPeriodData)))))
+        val result = underTest.postCISDeductions(nino, anyTaxYear)(
+          fakeRequest.withJsonBody(Json.toJson(anUpdateCISSubmission.copy(periodData = Seq(aPeriodData, aPeriodData)))))
 
         status(result) shouldBe OK
       }
@@ -100,7 +99,11 @@ class CreateUpdateCisDeductionsControllerSpec extends ControllerUnitTest
     "when an error is returned" should {
       "return the error response when called as an individual" in {
         mockAuthorisation()
-        mockSubmitCISDeductions(nino, anyTaxYear, aCISSubmission.copy(submissionId = None), Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
+        mockSubmitCISDeductions(
+          nino,
+          anyTaxYear,
+          aCISSubmission.copy(submissionId = None),
+          Left(ApiError(INTERNAL_SERVER_ERROR, SingleErrorBody.parsingError)))
 
         val result = underTest.postCISDeductions(nino, anyTaxYear)(fakeRequest.withJsonBody(Json.toJson(aCISSubmission.copy(submissionId = None))))
 

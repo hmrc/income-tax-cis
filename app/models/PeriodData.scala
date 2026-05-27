@@ -27,4 +27,3 @@ case class PeriodData(deductionFromDate: String,
 object PeriodData {
   implicit val format: OFormat[PeriodData] = Json.format[PeriodData]
 }
-

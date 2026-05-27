@@ -23,6 +23,7 @@ import connectors.parsers.GetCISDeductionsHttpParser.{GetCISDeductionsResponse, 
 import connectors.parsers.UpdateCISDeductionsHttpParser.{UpdateCISDeductionsResponse, UpdateCISDeductionsResponseHttpReads}
 import models.{CreateCISDeductions, UpdateCISDeductions}
 import play.api.libs.json.Json
+import play.api.libs.ws.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import utils.CISTaxYearHelper
@@ -30,18 +31,16 @@ import utils.CISTaxYearHelper
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class CISDeductionsConnector @Inject()(val httpClient: HttpClientV2,
-                                       val appConfig: AppConfig)(implicit ec: ExecutionContext) extends DesConnector {
+class CISDeductionsConnector @Inject() (val httpClient: HttpClientV2, val appConfig: AppConfig)(implicit ec: ExecutionContext) extends DesConnector {
 
-  def update(nino: String, submissionId: String, model: UpdateCISDeductions)
-            (implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] = {
+  def update(nino: String, submissionId: String, model: UpdateCISDeductions)(implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] = {
     val updateUri: String = baseUrl + s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
 
-    def desCall(implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] = {
-      httpClient.put(url"$updateUri")
+    def desCall(implicit hc: HeaderCarrier): Future[UpdateCISDeductionsResponse] =
+      httpClient
+        .put(url"$updateUri")
         .withBody(Json.toJson(model))
         .execute[UpdateCISDeductionsResponse](UpdateCISDeductionsResponseHttpReads, ec)
-    }
 
     desCall(desHeaderCarrier(updateUri))
   }
@@ -50,11 +49,11 @@ class CISDeductionsConnector @Inject()(val httpClient: HttpClientV2,
 
     val cisTaxYear = CISTaxYearHelper.cisTaxYearConverter(taxYear)
 
-    val getUri: String = baseUrl + s"/income-tax/cis/deductions/$nino?periodStart=${cisTaxYear.fromDate}&periodEnd=${cisTaxYear.toDate}&source=$source"
+    val getUri: String =
+      baseUrl + s"/income-tax/cis/deductions/$nino?periodStart=${cisTaxYear.fromDate}&periodEnd=${cisTaxYear.toDate}&source=$source"
 
-    def desCall(implicit hc: HeaderCarrier): Future[GetCISDeductionsResponse] = {
+    def desCall(implicit hc: HeaderCarrier): Future[GetCISDeductionsResponse] =
       httpClient.get(url"$getUri").execute[GetCISDeductionsResponse]
-    }
 
     desCall(desHeaderCarrier(getUri))
   }
@@ -63,22 +62,20 @@ class CISDeductionsConnector @Inject()(val httpClient: HttpClientV2,
 
     val deleteCISDeductionsUri: String = baseUrl + s"/income-tax/cis/deductions/$nino/submissionId/$submissionId"
 
-    def desCall(implicit hc: HeaderCarrier): Future[DeleteCISDeductionsResponse] = {
+    def desCall(implicit hc: HeaderCarrier): Future[DeleteCISDeductionsResponse] =
       httpClient.delete(url"$deleteCISDeductionsUri").execute[DeleteCISDeductionsResponse](DeleteCISDeductionsHttpReads, ec)
-    }
 
     desCall(desHeaderCarrier(deleteCISDeductionsUri))
   }
 
-  def create(nino: String, taxYear: Int, model: CreateCISDeductions)
-            (implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
+  def create(nino: String, taxYear: Int, model: CreateCISDeductions)(implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
     val createCISDeductionsUri = baseUrl + s"/income-tax/cis/deductions/$nino"
 
-    def desCall(implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] = {
-      httpClient.post(url"$createCISDeductionsUri")
+    def desCall(implicit hc: HeaderCarrier): Future[CreateCISDeductionsResponse] =
+      httpClient
+        .post(url"$createCISDeductionsUri")
         .withBody(Json.toJson(model.toApiModel(taxYear)))
         .execute[CreateCISDeductionsResponse]
-    }
 
     desCall(desHeaderCarrier(createCISDeductionsUri))
   }

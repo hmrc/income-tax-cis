@@ -28,7 +28,7 @@ object UpdateCISDeductionsHttpParser extends ResponseParser {
   override val parserName: String = "UpdateCISDeductionsResponse"
 
   implicit object UpdateCISDeductionsResponseHttpReads extends HttpReads[UpdateCISDeductionsResponse] {
-    override def read(method: String, url: String, response: HttpResponse): UpdateCISDeductionsResponse = {
+    override def read(method: String, url: String, response: HttpResponse): UpdateCISDeductionsResponse =
       response.status match {
         case NO_CONTENT => Right(())
         case INTERNAL_SERVER_ERROR =>
@@ -44,6 +44,5 @@ object UpdateCISDeductionsHttpParser extends ResponseParser {
           pagerDutyLog(UNEXPECTED_RESPONSE_FROM_DES, logMessage(response))
           handleError(response, Some(INTERNAL_SERVER_ERROR))
       }
-    }
   }
 }

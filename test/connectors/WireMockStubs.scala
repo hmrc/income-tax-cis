@@ -26,9 +26,7 @@ import uk.gov.hmrc.http.HttpResponse
 
 trait WireMockStubs {
 
-  def stubGetHttpClientCall(url: String,
-                            httpResponse: HttpResponse,
-                            requestHeaders: Seq[HttpHeader] = Seq.empty): StubMapping = {
+  def stubGetHttpClientCall(url: String, httpResponse: HttpResponse, requestHeaders: Seq[HttpHeader] = Seq.empty): StubMapping = {
     val mappingBuilder = get(urlMatching(url))
     stubMapping(httpResponse, requestHeaders, mappingBuilder)
   }
@@ -49,16 +47,12 @@ trait WireMockStubs {
     stubMapping(httpResponse, requestHeaders, mappingBuilder)
   }
 
-  def stubDeleteHttpClientCall(url: String,
-                               httpResponse: HttpResponse,
-                               requestHeaders: Seq[HttpHeader] = Seq.empty): StubMapping = {
+  def stubDeleteHttpClientCall(url: String, httpResponse: HttpResponse, requestHeaders: Seq[HttpHeader] = Seq.empty): StubMapping = {
     val mappingBuilder = delete(urlMatching(url))
     stubMapping(httpResponse, requestHeaders, mappingBuilder)
   }
 
-  private def stubMapping(httpResponse: HttpResponse,
-                          requestHeaders: Seq[HttpHeader],
-                          mappingBuilder: MappingBuilder): StubMapping = {
+  private def stubMapping(httpResponse: HttpResponse, requestHeaders: Seq[HttpHeader], mappingBuilder: MappingBuilder): StubMapping = {
     val responseBuilder = aResponse()
       .withStatus(httpResponse.status)
       .withBody(httpResponse.body)

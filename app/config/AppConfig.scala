@@ -44,16 +44,16 @@ trait AppConfig {
 }
 
 @Singleton
-class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesConfig) extends AppConfig {
+class AppConfigImpl @Inject() (config: Configuration, servicesConfig: ServicesConfig) extends AppConfig {
 
   private def ifAuthorisationTokenKey: String = "microservice.services.integration-framework.authorisation-token"
 
-  def ifBaseUrl: String = servicesConfig.baseUrl(serviceName = "integration-framework")
+  def ifBaseUrl: String     = servicesConfig.baseUrl(serviceName = "integration-framework")
   def ifEnvironment: String = servicesConfig.getString(key = "microservice.services.integration-framework.environment")
 
-  //Journey answers Mongo config
-  lazy val encryptionKey: String = servicesConfig.getString("mongodb.encryption.key")
-  lazy val mongoJourneyAnswersTTL: Int = Duration(servicesConfig.getString("mongodb.journeyAnswersTimeToLive")).toDays.toInt
+  // Journey answers Mongo config
+  lazy val encryptionKey: String                 = servicesConfig.getString("mongodb.encryption.key")
+  lazy val mongoJourneyAnswersTTL: Int           = Duration(servicesConfig.getString("mongodb.journeyAnswersTimeToLive")).toDays.toInt
   lazy val replaceJourneyAnswersIndexes: Boolean = servicesConfig.getBoolean("mongodb.replaceJourneyAnswersIndexes")
 
   def authorisationTokenFor(apiVersion: String): String = servicesConfig.getString(ifAuthorisationTokenKey + s".$apiVersion")
@@ -69,8 +69,8 @@ class AppConfigImpl @Inject()(config: Configuration, servicesConfig: ServicesCon
 
   def cisFrontendBaseUrl: String = config.get[String]("microservice.services.income-tax-cis-frontend.url")
 
-  def desBaseUrl: String = servicesConfig.baseUrl("des")
-  def desEnvironment: String = config.get[String]("microservice.services.des.environment")
+  def desBaseUrl: String            = servicesConfig.baseUrl("des")
+  def desEnvironment: String        = config.get[String]("microservice.services.des.environment")
   def desAuthorisationToken: String = config.get[String]("microservice.services.des.authorisation-token")
 
   def sectionCompletedQuestionEnabled: Boolean = config.get[Boolean]("feature-switch.sectionCompletedQuestionEnabled")

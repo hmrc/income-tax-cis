@@ -17,6 +17,6 @@
 package common
 
 object CISSource {
-  val CUSTOMER = "customer"
+  val CUSTOMER   = "customer"
   val CONTRACTOR = "contractor"
 }

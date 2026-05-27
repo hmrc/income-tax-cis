@@ -18,14 +18,8 @@ package models.get
 
 import play.api.libs.json.{Json, OFormat}
 
-case class AllCISDeductions(customerCISDeductions: Option[CISSource],
-                            contractorCISDeductions: Option[CISSource])
+case class AllCISDeductions(customerCISDeductions: Option[CISSource], contractorCISDeductions: Option[CISSource])
 
 object AllCISDeductions {
   implicit val format: OFormat[AllCISDeductions] = Json.format[AllCISDeductions]
 }
-
-
-
-
-

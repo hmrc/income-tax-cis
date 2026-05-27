@@ -19,9 +19,7 @@ package models
 import play.api.libs.json.{Json, OFormat}
 import utils.CISTaxYearHelper.cisTaxYearConverter
 
-case class CreateCISDeductions(employerRef: String,
-                               contractorName: String,
-                               periodData: Seq[PeriodData]) {
+case class CreateCISDeductions(employerRef: String, contractorName: String, periodData: Seq[PeriodData]) {
 
   // TODO: This method is not unit tested
   def toApiModel(taxYear: Int): CreateCISDeductionsApi = {
@@ -40,11 +38,7 @@ object CreateCISDeductions {
   implicit val format: OFormat[CreateCISDeductions] = Json.format[CreateCISDeductions]
 }
 
-case class CreateCISDeductionsApi(employerRef: String,
-                                  contractorName: String,
-                                  fromDate: String,
-                                  toDate: String,
-                                  periodData: Seq[PeriodData])
+case class CreateCISDeductionsApi(employerRef: String, contractorName: String, fromDate: String, toDate: String, periodData: Seq[PeriodData])
 
 object CreateCISDeductionsApi {
   implicit val format: OFormat[CreateCISDeductionsApi] = Json.format[CreateCISDeductionsApi]

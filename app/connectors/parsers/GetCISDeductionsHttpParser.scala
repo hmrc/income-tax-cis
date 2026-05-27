@@ -30,15 +30,18 @@ object GetCISDeductionsHttpParser extends ResponseParser with Logging {
   override val parserName: String = "GetCISDeductionsResponse"
 
   implicit object GetCISDeductionsResponseHttpReads extends HttpReads[GetCISDeductionsResponse] {
-    override def read(method: String, url: String, response: HttpResponse): GetCISDeductionsResponse = {
+    override def read(method: String, url: String, response: HttpResponse): GetCISDeductionsResponse =
       response.status match {
-        case OK => response.json.validate[CISSource].fold[GetCISDeductionsResponse](
-          _ => badSuccessJsonFromDES,
-          {
-            case CISSource(_, _, _, cisDeductions) if cisDeductions.isEmpty => Right(None)
-            case parsedModel => Right(Some(parsedModel))
-          }
-        )
+        case OK =>
+          response.json
+            .validate[CISSource]
+            .fold[GetCISDeductionsResponse](
+              _ => badSuccessJsonFromDES,
+              {
+                case CISSource(_, _, _, cisDeductions) if cisDeductions.isEmpty => Right(None)
+                case parsedModel                                                => Right(Some(parsedModel))
+              }
+            )
         case NOT_FOUND =>
           logger.info(logMessage(response))
           Right(None)
@@ -55,6 +58,5 @@ object GetCISDeductionsHttpParser extends ResponseParser with Logging {
           pagerDutyLog(UNEXPECTED_RESPONSE_FROM_DES, logMessage(response))
           handleError(response, Some(INTERNAL_SERVER_ERROR))
       }
-    }
   }
 }

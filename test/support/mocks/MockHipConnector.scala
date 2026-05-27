@@ -19,41 +19,34 @@ package support.mocks
 import connectors.HipConnector
 import connectors.errors.ApiError
 import models.{CreateCISDeductionsSuccess, PeriodData}
-import org.scalamock.handlers.CallHandler8
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.TestSuite
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{mock, when}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-trait MockHipConnector extends MockFactory { _: TestSuite =>
+trait MockHipConnector {
 
-  protected val mockHipConnector: HipConnector = mock[HipConnector]
+  protected val mockHipConnector: HipConnector =
+    mock(classOf[HipConnector])
 
-  def mockHipCISDeductionsSubmission(
-                                      taxYear: String,
-                                      nino: String,
-                                      employerRef: String,
-                                      contractorName: String,
-                                      fromDate: String,
-                                      toDate: String,
-                                      periodData: PeriodData,
-                                      result: Either[ApiError, CreateCISDeductionsSuccess]
-                                    ): CallHandler8[String, String, String, String, String, String, Seq[PeriodData], HeaderCarrier, Future[
-    Either[ApiError, CreateCISDeductionsSuccess]
-  ]] = (
-    mockHipConnector
-      .createCISDeductions(
-        _: String,
-        _: String,
-        _: String,
-        _: String,
-        _: String,
-        _: String,
-        _: Seq[PeriodData]
-      )(
-        _: HeaderCarrier
-      ))
-    .expects(taxYear, nino, employerRef, contractorName, fromDate, toDate, Seq(periodData), *)
-    .returning(Future.successful(result))
+  def mockHipCISDeductionsSubmission(taxYear: String,
+                                     nino: String,
+                                     employerRef: String,
+                                     contractorName: String,
+                                     fromDate: String,
+                                     toDate: String,
+                                     periodData: PeriodData,
+                                     result: Either[ApiError, CreateCISDeductionsSuccess]): Unit =
+    when(
+      mockHipConnector.createCISDeductions(
+        eqTo(taxYear),
+        eqTo(nino),
+        eqTo(employerRef),
+        eqTo(contractorName),
+        eqTo(fromDate),
+        eqTo(toDate),
+        eqTo(Seq(periodData))
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(result))
 }

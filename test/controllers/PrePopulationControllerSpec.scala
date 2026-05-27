@@ -28,16 +28,13 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class PrePopulationControllerSpec extends ControllerUnitTest
-  with MockPrePopulationService
-  with MockAuthorisedAction
-  with FakeRequestProvider {
+class PrePopulationControllerSpec extends ControllerUnitTest with MockPrePopulationService with MockAuthorisedAction with FakeRequestProvider {
 
   trait Test {
     val taxYear: Int = 2024
     val nino: String = "AA111111A"
 
-    implicit val hc: HeaderCarrier = HeaderCarrier()
+    implicit val hc: HeaderCarrier    = HeaderCarrier()
     implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
     val controller = new PrePopulationController(
@@ -64,9 +61,10 @@ class PrePopulationControllerSpec extends ControllerUnitTest
         mockGetPrePop(
           taxYear = taxYear,
           nino = nino,
-          result = Right(PrePopulationResponse(
-            hasCis = true
-          ))
+          result = Right(
+            PrePopulationResponse(
+              hasCis = true
+            ))
         )
 
         val result: Future[Result] = controller.get(nino, taxYear)(fakeGetRequest)

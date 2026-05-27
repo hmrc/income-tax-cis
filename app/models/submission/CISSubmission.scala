@@ -19,12 +19,8 @@ package models.submission
 import models.PeriodData
 import play.api.libs.json.{Json, OFormat}
 
-case class CISSubmission(employerRef: Option[String],
-                         contractorName: Option[String],
-                         periodData: Seq[PeriodData],
-                         submissionId: Option[String])
+case class CISSubmission(employerRef: Option[String], contractorName: Option[String], periodData: Seq[PeriodData], submissionId: Option[String])
 
 object CISSubmission {
   implicit val format: OFormat[CISSubmission] = Json.format[CISSubmission]
 }
-

@@ -65,16 +65,19 @@ class JourneyAnswersRepositorySpec
 
   override implicit lazy val appConfig: AppConfig = mock[AppConfig]
 
-  protected override val repository = new JourneyAnswersRepositoryImpl(
+  private val repositoryImpl = new JourneyAnswersRepositoryImpl(
     mongoComponent = mongoComponent,
     appConfig = appConfig,
     clock = stubClock
   )
 
+  protected override val repository: JourneyAnswersRepositoryImpl = repositoryImpl
+
   override lazy val app: Application = new GuiceApplicationBuilder().overrides(
     bind[AppConfig].toInstance(mock[AppConfig]),
-    bind[JourneyAnswersRepository].toInstance(repository)
+    bind[JourneyAnswersRepository].toInstance(repositoryImpl)
   ).build()
+
 
   def filterByMtdItIdYear(mtdItId: String, taxYear: Int, journey: String): Bson =
     Filters.and(

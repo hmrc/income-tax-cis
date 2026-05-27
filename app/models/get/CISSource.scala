@@ -28,8 +28,8 @@ case class CISSource(totalDeductionAmount: Option[BigDecimal],
 
   val isEmpty: Boolean = this match {
     case CISSource(`zero`, `zero`, `zero`, _) if isCisDeductionsEmpty => true
-    case CISSource(None, None, None, _) if isCisDeductionsEmpty => true
-    case _ => false
+    case CISSource(None, None, None, _) if isCisDeductionsEmpty       => true
+    case _                                                            => false
   }
 }
 

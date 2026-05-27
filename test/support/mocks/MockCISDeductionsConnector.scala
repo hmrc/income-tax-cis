@@ -23,52 +23,49 @@ import connectors.parsers.DeleteCISDeductionsHttpParser.DeleteCISDeductionsRespo
 import connectors.parsers.GetCISDeductionsHttpParser.GetCISDeductionsResponse
 import connectors.parsers.UpdateCISDeductionsHttpParser.UpdateCISDeductionsResponse
 import models.{CreateCISDeductions, CreateCISDeductionsSuccess, UpdateCISDeductions}
-import org.scalamock.handlers.{CallHandler3, CallHandler4}
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.TestSuite
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{mock, when}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-trait MockCISDeductionsConnector extends MockFactory { _: TestSuite =>
+trait MockCISDeductionsConnector {
 
-  protected val mockCISDeductionsConnector: CISDeductionsConnector = mock[CISDeductionsConnector]
+  protected val mockCISDeductionsConnector: CISDeductionsConnector =
+    mock(classOf[CISDeductionsConnector])
 
-  def mockDelete(nino: String,
-                 submissionId: String,
-                 response: Either[ApiError, Unit]): CallHandler3[String, String, HeaderCarrier, Future[DeleteCISDeductionsResponse]] = {
-    (mockCISDeductionsConnector.delete(_: String, _: String)(_: HeaderCarrier))
-      .expects(nino, submissionId, *)
-      .returning(Future.successful(response))
-  }
+  def mockDelete(nino: String, submissionId: String, response: Either[ApiError, Unit]): Unit =
+    when(
+      mockCISDeductionsConnector.delete(
+        eqTo(nino),
+        eqTo(submissionId)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(response))
 
-  def mockGet(nino: String,
-              taxYear: Int,
-              source: String,
-              connectorResult: GetCISDeductionsResponse): CallHandler4[String,
-    Int, String, HeaderCarrier, Future[GetCISDeductionsResponse]] = {
-    (mockCISDeductionsConnector.get(_: String, _: Int, _: String)(_: HeaderCarrier))
-      .expects(nino, taxYear, source, *)
-      .returning(Future.successful(connectorResult))
-  }
+  def mockGet(nino: String, taxYear: Int, source: String, connectorResult: GetCISDeductionsResponse): Unit =
+    when(
+      mockCISDeductionsConnector.get(
+        eqTo(nino),
+        eqTo(taxYear),
+        eqTo(source)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(connectorResult))
 
-  def mockUpdate(nino: String,
-                 submissionId: String,
-                 model: UpdateCISDeductions,
-                 connectorResult: Either[ApiError, Unit]): CallHandler4[String, String,
-    UpdateCISDeductions, HeaderCarrier, Future[UpdateCISDeductionsResponse]] = {
-    (mockCISDeductionsConnector.update(_: String, _: String, _: UpdateCISDeductions)(_: HeaderCarrier))
-      .expects(nino, submissionId, model, *)
-      .returning(Future.successful(connectorResult))
-  }
+  def mockUpdate(nino: String, submissionId: String, model: UpdateCISDeductions, connectorResult: Either[ApiError, Unit]): Unit =
+    when(
+      mockCISDeductionsConnector.update(
+        eqTo(nino),
+        eqTo(submissionId),
+        eqTo(model)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(connectorResult))
 
-  def mockCreate(nino: String,
-                 taxYear: Int,
-                 model: CreateCISDeductions,
-                 connectorResult: Either[ApiError, CreateCISDeductionsSuccess]): CallHandler4[String, Int,
-    CreateCISDeductions, HeaderCarrier, Future[CreateCISDeductionsResponse]] = {
-    (mockCISDeductionsConnector.create(_: String, _: Int, _: CreateCISDeductions)(_: HeaderCarrier))
-      .expects(nino, taxYear, model, *)
-      .returning(Future.successful(connectorResult))
-  }
+  def mockCreate(nino: String, taxYear: Int, model: CreateCISDeductions, connectorResult: Either[ApiError, CreateCISDeductionsSuccess]): Unit =
+    when(
+      mockCISDeductionsConnector.create(
+        eqTo(nino),
+        eqTo(taxYear),
+        eqTo(model)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(connectorResult))
 }

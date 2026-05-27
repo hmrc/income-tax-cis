@@ -20,24 +20,22 @@ import connectors.errors.{ApiError, SingleErrorBody}
 import models.TaxYearPathBindable.{TaxYear, asTys}
 import models.{CreateCISDeductionsSuccess, PeriodData}
 import models.requests.HipCISDeductionsRequest
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.TestSuite
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, SessionId}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory { _: TestSuite =>
+class HipConnectorSpec extends ConnectorIntegrationSpec {
 
-  private val nino = "test-nino"
-  private val taxYear = 2020
-  private val employerRef = "exampleRef"
-  private val contractorName = "exampleName"
-  private val fromDate = "2019-08-24"
-  private val toDate = "2019-08-24"
+  private val nino: String           = "AA123456A"
+  private val taxYear                = 2020
+  private val employerRef            = "exampleRef"
+  private val contractorName         = "exampleName"
+  private val fromDate               = "2019-08-24"
+  private val toDate                 = "2019-08-24"
   private val periodData: PeriodData = PeriodData("2019-08-24", "2019-08-24", Some(BigDecimal(12.34)), BigDecimal(45.67), Some(BigDecimal(89.01)))
-  private val submissionId = "exampleSubmissionId"
+  private val submissionId           = "exampleSubmissionId"
 
   private val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("sessionIdValue")))
 
@@ -46,7 +44,7 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory { _: Te
   ".createCISDeductions" should {
     "return the CreateCISDeductionsSuccess" when {
       "successfully created CIS Deductions" in {
-        val requestBody = Json.toJson(Requests.validCreateDeductionsRequest).toString()
+        val requestBody  = Json.toJson(Requests.validCreateDeductionsRequest).toString()
         val httpResponse = HttpResponse(OK, Json.toJson(Responses.hipCreateDeductionsResponse).toString)
 
         stubPostHttpClientCall(
@@ -72,8 +70,8 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory { _: Te
     }
     "return a API error from upstream" when {
       "a NOT_FOUND' error is returned from the API" in {
-        val requestBody = Json.toJson(Requests.validCreateDeductionsRequest).toString()
-        val apiError = SingleErrorBody("code", "reason")
+        val requestBody  = Json.toJson(Requests.validCreateDeductionsRequest).toString()
+        val apiError     = SingleErrorBody("code", "reason")
         val httpResponse = HttpResponse(NOT_FOUND, Json.toJson(apiError).toString())
 
         stubPostHttpClientCall(
@@ -97,8 +95,8 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory { _: Te
         ) shouldBe expectedResult
       }
       "a Service Error is returned from the API" in {
-        val requestBody = Json.toJson(Requests.validCreateDeductionsRequest).toString()
-        val apiError = SingleErrorBody("code", "reason")
+        val requestBody      = Json.toJson(Requests.validCreateDeductionsRequest).toString()
+        val apiError         = SingleErrorBody("code", "reason")
         val apiServiceErrors = Seq(BAD_REQUEST, CONFLICT, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE)
 
         apiServiceErrors.foreach { apiErrorCode =>
@@ -126,8 +124,8 @@ class HipConnectorSpec extends ConnectorIntegrationSpec with MockFactory { _: Te
         }
       }
       "another unexpected error is returned from the API" in {
-        val requestBody = Json.toJson(Requests.validCreateDeductionsRequest).toString()
-        val apiError = SingleErrorBody("code", "reason")
+        val requestBody  = Json.toJson(Requests.validCreateDeductionsRequest).toString()
+        val apiError     = SingleErrorBody("code", "reason")
         val httpResponse = HttpResponse(INSUFFICIENT_STORAGE, Json.toJson(apiError).toString())
 
         stubPostHttpClientCall(

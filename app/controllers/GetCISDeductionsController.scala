@@ -26,16 +26,15 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class GetCISDeductionsController @Inject()(service: CISDeductionsService,
-                                           auth: AuthorisedAction,
-                                           cc: ControllerComponents)
-                                          (implicit ec: ExecutionContext) extends BackendController(cc) {
+class GetCISDeductionsController @Inject() (service: CISDeductionsService, auth: AuthorisedAction, cc: ControllerComponents)(implicit
+    ec: ExecutionContext)
+    extends BackendController(cc) {
 
   def getCISDeductions(nino: String, taxYear: Int): Action[AnyContent] = auth.async { implicit user =>
     service.getCISDeductions(nino, taxYear).map {
       case Right(AllCISDeductions(None, None)) => NoContent
-      case Right(model) => Ok(Json.toJson(model))
-      case Left(errorModel) => Status(errorModel.status)(errorModel.toJson)
+      case Right(model)                        => Ok(Json.toJson(model))
+      case Left(errorModel)                    => Status(errorModel.status)(errorModel.toJson)
     }
   }
 }

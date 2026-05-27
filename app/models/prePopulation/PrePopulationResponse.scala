@@ -26,7 +26,7 @@ object PrePopulationResponse {
 
   def fromData(data: AllCISDeductions): PrePopulationResponse = {
     val cisCustomer: Boolean = data.customerCISDeductions.exists(!_.isEmpty)
-    val cisHmrc: Boolean = data.contractorCISDeductions.exists(!_.isEmpty)
+    val cisHmrc: Boolean     = data.contractorCISDeductions.exists(!_.isEmpty)
 
     PrePopulationResponse(
       hasCis = cisCustomer || cisHmrc

@@ -22,8 +22,7 @@ import support.providers.AppConfigStubProvider
 import uk.gov.hmrc.http.HeaderNames.{authorisation, xRequestChain, xSessionId}
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, SessionId}
 
-class IFConnectorSpec extends UnitTest
-  with AppConfigStubProvider {
+class IFConnectorSpec extends UnitTest with AppConfigStubProvider {
 
   private val underTest = new IFConnector {
     override protected val appConfig: AppConfig = new AppConfigStub().config()
@@ -51,7 +50,7 @@ class IFConnectorSpec extends UnitTest
 
     "return correct HeaderCarrier when external host" in {
       val externalHost = "http://127.0.0.1"
-      val hc = HeaderCarrier(sessionId = Some(SessionId("sessionIdHeaderValue")))
+      val hc           = HeaderCarrier(sessionId = Some(SessionId("sessionIdHeaderValue")))
 
       val result = underTest.ifHeaderCarrier(externalHost, "some-api-version")(hc)
 

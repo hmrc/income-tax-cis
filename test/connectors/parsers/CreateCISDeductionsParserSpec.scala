@@ -25,28 +25,27 @@ import support.builders.CISSubmissionBuilder.aCISSubmission
 import support.providers.TaxYearProvider
 import uk.gov.hmrc.http.HttpResponse
 
-class CreateCISDeductionsParserSpec extends UnitTest
-  with TaxYearProvider {
+class CreateCISDeductionsParserSpec extends UnitTest with TaxYearProvider {
 
   private val anyHeaders: Map[String, Seq[String]] = Map.empty
-  private val anyMethod: String = "POST"
-  private val anyUrl = "/any-url"
-  private val singleErrorBody: SingleErrorBody = SingleErrorBody("some-code", "some-reason")
-  private val singleErrorBodyJson: JsValue = Json.toJson(singleErrorBody)
+  private val anyMethod: String                    = "POST"
+  private val anyUrl                               = "/any-url"
+  private val singleErrorBody: SingleErrorBody     = SingleErrorBody("some-code", "some-reason")
+  private val singleErrorBodyJson: JsValue         = Json.toJson(singleErrorBody)
 
   private val underTest = CreateCISDeductionsParser.CreateCISDeductionsResponseHttpReads
 
   "CreateCISDeductionsResponseHttpReads" should {
     "convert JsValue to CreateCISDeductionsResponse" when {
       "status is OK and any jsValue" in {
-        val success = CreateCISDeductionsSuccess(aCISSubmission.submissionId.get)
+        val success      = CreateCISDeductionsSuccess(aCISSubmission.submissionId.get)
         val httpResponse = HttpResponse.apply(OK, Json.toJson(success).toString, anyHeaders)
 
         underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(success)
       }
 
       "status is CREATED and any jsValue" in {
-        val success = CreateCISDeductionsSuccess(aCISSubmission.submissionId.get)
+        val success      = CreateCISDeductionsSuccess(aCISSubmission.submissionId.get)
         val httpResponse = HttpResponse.apply(CREATED, Json.toJson(success).toString, anyHeaders)
 
         underTest.read(anyMethod, anyUrl, httpResponse) shouldBe Right(success)

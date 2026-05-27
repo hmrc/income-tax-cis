@@ -24,30 +24,31 @@ import models.requests.HipCISDeductionsRequest
 import models.{CreateCISDeductionsSuccess, PeriodData}
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json.Json
+import play.api.libs.ws.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{StringContextOps, HeaderCarrier, HeaderNames}
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, StringContextOps}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class HipConnector @Inject()(
-  http: HttpClientV2,
-  appConfig: AppConfig
+class HipConnector @Inject() (
+    http: HttpClientV2,
+    appConfig: AppConfig
 )(implicit ec: ExecutionContext) {
   lazy val logger: Logger = LoggerFactory.getLogger("hip-connector")
 
   // HIP API#1789
   def createCISDeductions(
-                                        taxYear: String,
-                                        nino: String,
-                                        employerRef: String,
-                                        contractorName: String,
-                                        fromDate: String,
-                                        toDate: String,
-                                        periodData: Seq[PeriodData]
-                                      )(implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
+      taxYear: String,
+      nino: String,
+      employerRef: String,
+      contractorName: String,
+      fromDate: String,
+      toDate: String,
+      periodData: Seq[PeriodData]
+  )(implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
     val hipApiVersion: String = "1789"
-    val url = s"${appConfig.hipBaseUrl}/income-tax/v1/$taxYear/cis/deductions/$nino"
+    val url                   = s"${appConfig.hipBaseUrl}/income-tax/v1/$taxYear/cis/deductions/$nino"
 
     val requestBody = HipCISDeductionsRequest(
       employerRef = employerRef,
@@ -65,16 +66,17 @@ class HipConnector @Inject()(
       .setHeader(HeaderNames.authorisation -> s"Bearer ${appConfig.hipAuthTokenFor(hipApiVersion)}")
       .withBody[HipCISDeductionsRequest](requestBody)
       .execute[PostCISDeductionsResponse]
-      .map { response: PostCISDeductionsResponse =>
-        if (response.result.isLeft) {
+      .map { parsedResponse =>
+        if (parsedResponse.result.isLeft) {
+          val httpResponse = parsedResponse.httpResponse
           val correlationId =
-            response.httpResponse.header(key = "CorrelationId").map(id => s" CorrelationId: $id").getOrElse("")
+            httpResponse.header("CorrelationId").map(id => s" CorrelationId: $id").getOrElse("")
           logger.error(
             s"[HipConnector] Error creating a CIS deduction from the HIP Integration Framework: URL: $url" +
-              s" correlationId: $correlationId; status: ${response.httpResponse.status}; Body:${response.httpResponse.body}"
+              s" correlationId: $correlationId; status: ${httpResponse.status}; Body:${httpResponse.body}"
           )
         }
-        response.result
+        parsedResponse.result
       }
   }
 }

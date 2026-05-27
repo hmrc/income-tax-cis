@@ -30,7 +30,7 @@ class PrePopulationResponseSpec extends UnitTest {
         )
 
         Json.toJson(prePopulationResponse) shouldBe Json.parse(
-        """
+          """
            |{
            |  "hasCis": true
            |}

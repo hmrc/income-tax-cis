@@ -24,11 +24,7 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
 
-case class JourneyAnswers(mtdItId: String,
-                          taxYear: Int,
-                          journey: String,
-                          data: JsObject,
-                          lastUpdated: Instant)
+case class JourneyAnswers(mtdItId: String, taxYear: Int, journey: String, data: JsObject, lastUpdated: Instant)
 
 object JourneyAnswers {
 
@@ -41,7 +37,7 @@ object JourneyAnswers {
         (__ \ "journey").read[String] and
         (__ \ "data").read[JsObject] and
         (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
-      )(JourneyAnswers.apply _)
+    )(JourneyAnswers.apply _)
   }
 
   val writes: OWrites[JourneyAnswers] = {
@@ -53,7 +49,7 @@ object JourneyAnswers {
         (__ \ "journey").write[String] and
         (__ \ "data").write[JsObject] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-      )(unlift(JourneyAnswers.unapply))
+    )(ja => (ja.mtdItId, ja.taxYear, ja.journey, ja.data, ja.lastUpdated))
   }
 
   implicit val format: OFormat[JourneyAnswers] = OFormat(reads, writes)
@@ -62,9 +58,8 @@ object JourneyAnswers {
 
     import play.api.libs.functional.syntax._
 
-    implicit val sensitiveFormat: Format[SensitiveString] = {
+    implicit val sensitiveFormat: Format[SensitiveString] =
       JsonEncryption.sensitiveEncrypterDecrypter(SensitiveString.apply)
-    }
 
     val encryptedReads: Reads[JourneyAnswers] =
       (
@@ -73,7 +68,8 @@ object JourneyAnswers {
           (__ \ "journey").read[String] and
           (__ \ "data").read[SensitiveString] and
           (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
-        )((mtdItId, taxYear, journey, data, lastUpdated) => JourneyAnswers(mtdItId, taxYear, journey, Json.parse(data.decryptedValue).as[JsObject], lastUpdated))
+      )((mtdItId, taxYear, journey, data, lastUpdated) =>
+        JourneyAnswers(mtdItId, taxYear, journey, Json.parse(data.decryptedValue).as[JsObject], lastUpdated))
 
     val encryptedWrites: OWrites[JourneyAnswers] =
       (
@@ -82,7 +78,7 @@ object JourneyAnswers {
           (__ \ "journey").write[String] and
           (__ \ "data").write[SensitiveString] and
           (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-        )(ua => (ua.mtdItId, ua.taxYear, ua.journey, SensitiveString(Json.stringify(ua.data)), ua.lastUpdated))
+      )(ua => (ua.mtdItId, ua.taxYear, ua.journey, SensitiveString(Json.stringify(ua.data)), ua.lastUpdated))
 
     OFormat(encryptedReads orElse reads, encryptedWrites)
   }

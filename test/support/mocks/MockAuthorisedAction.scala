@@ -18,23 +18,15 @@ package support.mocks
 
 import actions.AuthorisedAction
 import models.authorisation.Enrolment.{Individual, Nino}
-import org.scalamock.handlers.CallHandler4
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.TestSuite
 import play.api.mvc._
 import play.api.test.Helpers.stubMessagesControllerComponents
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.Retrieval
 import uk.gov.hmrc.auth.core.{Enrolment, EnrolmentIdentifier, Enrolments}
-import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
 
-trait MockAuthorisedAction extends MockFactory
-  with MockAuthConnector { _: TestSuite =>
+trait MockAuthorisedAction extends MockAuthConnector {
 
-  private val mcc = stubMessagesControllerComponents()
+  private val mcc                                        = stubMessagesControllerComponents()
   private val defaultActionBuilder: DefaultActionBuilder = DefaultActionBuilder(mcc.parsers.default)
 
   protected val mockAuthorisedAction: AuthorisedAction = new AuthorisedAction(
@@ -43,11 +35,12 @@ trait MockAuthorisedAction extends MockFactory
     cc = mcc
   )
 
-  def mockAuthorisation(): CallHandler4[Predicate, Retrieval[_], HeaderCarrier, ExecutionContext, Future[Any]] = {
-    val individualEnrolments: Enrolments = Enrolments(Set(
-      Enrolment(Individual.key, Seq(EnrolmentIdentifier(Individual.value, "1234567890")), "Activated"),
-      Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, "1234567890")), "Activated")
-    ))
+  def mockAuthorisation(): Unit = {
+    val individualEnrolments: Enrolments = Enrolments(
+      Set(
+        Enrolment(Individual.key, Seq(EnrolmentIdentifier(Individual.value, "1234567890")), "Activated"),
+        Enrolment(Nino.key, Seq(EnrolmentIdentifier(Nino.value, "1234567890")), "Activated")
+      ))
 
     mockAuth(individualEnrolments)
   }

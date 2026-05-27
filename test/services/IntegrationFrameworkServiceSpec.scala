@@ -27,14 +27,12 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import java.util.UUID
 
-class IntegrationFrameworkServiceSpec extends UnitTest
-  with MockIntegrationFrameworkConnector
-  with TaxYearProvider {
+class IntegrationFrameworkServiceSpec extends UnitTest with MockIntegrationFrameworkConnector with TaxYearProvider {
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
-  private val source = "some-source"
-  private val nino = "some-nino"
+  private val source       = "some-source"
+  private val nino         = "some-nino"
   private val submissionId = UUID.randomUUID().toString
 
   private val underTest = new IntegrationFrameworkService(mockIntegrationFrameworkConnector)

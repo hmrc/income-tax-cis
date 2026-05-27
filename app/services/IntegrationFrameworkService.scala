@@ -26,34 +26,19 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class IntegrationFrameworkService @Inject()(integrationFrameworkConnector: IntegrationFrameworkConnector) {
+class IntegrationFrameworkService @Inject() (integrationFrameworkConnector: IntegrationFrameworkConnector) {
 
-  def getCisDeductions(taxYear: Int,
-                       nino: String,
-                       source: String)
-                      (implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] = {
+  def getCisDeductions(taxYear: Int, nino: String, source: String)(implicit hc: HeaderCarrier): Future[Either[ApiError, Option[CISSource]]] =
     integrationFrameworkConnector.getCisDeductions(taxYear, nino, source)
-  }
 
-  def createCisDeductions(taxYear: Int,
-                          nino: String,
-                          createCISDeductions: CreateCISDeductions)
-                         (implicit hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] = {
+  def createCisDeductions(taxYear: Int, nino: String, createCISDeductions: CreateCISDeductions)(implicit
+      hc: HeaderCarrier): Future[Either[ApiError, CreateCISDeductionsSuccess]] =
     integrationFrameworkConnector.create(taxYear, nino, createCISDeductions)
-  }
 
-  def updateCisDeductions(taxYear: Int,
-                          nino: String,
-                          submissionId: String,
-                          updateCISDeductions: UpdateCISDeductions)
-                         (implicit hc: HeaderCarrier): Future[Either[ApiError, Unit]] = {
+  def updateCisDeductions(taxYear: Int, nino: String, submissionId: String, updateCISDeductions: UpdateCISDeductions)(implicit
+      hc: HeaderCarrier): Future[Either[ApiError, Unit]] =
     integrationFrameworkConnector.update(taxYear, nino, submissionId, updateCISDeductions)
-  }
 
-  def deleteCisDeductions(taxYear: Int,
-                          nino: String,
-                          submissionId: String)
-                         (implicit hc: HeaderCarrier): Future[Either[ApiError, Unit]] = {
+  def deleteCisDeductions(taxYear: Int, nino: String, submissionId: String)(implicit hc: HeaderCarrier): Future[Either[ApiError, Unit]] =
     integrationFrameworkConnector.deleteCisDeductions(taxYear, nino, submissionId)
-  }
 }

@@ -25,16 +25,17 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class DeleteCISDeductionsSubmissionController @Inject()(service: CISDeductionsService,
-                                                        auth: AuthorisedAction,
-                                                        cc: ControllerComponents)
-                                                       (implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+class DeleteCISDeductionsSubmissionController @Inject() (service: CISDeductionsService, auth: AuthorisedAction, cc: ControllerComponents)(implicit
+    ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
   def deleteCISDeductionsSubmission(nino: String, taxYear: Int, submissionId: String): Action[AnyContent] = auth.async { implicit user =>
-    logger.info(s"[DeleteCISDeductionsSubmissionController][deleteCISDeductionsSubmission]" +
-      s" Attempting to delete submission: $submissionId, nino: $nino, tax year: $taxYear")
+    logger.info(
+      s"[DeleteCISDeductionsSubmissionController][deleteCISDeductionsSubmission]" +
+        s" Attempting to delete submission: $submissionId, nino: $nino, tax year: $taxYear")
     service.deleteCISDeductionsSubmission(taxYear, nino, submissionId).map {
-      case Right(_) => NoContent
+      case Right(_)         => NoContent
       case Left(errorModel) => Status(errorModel.status)(errorModel.toJson)
     }
   }

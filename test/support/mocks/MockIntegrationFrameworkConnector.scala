@@ -23,51 +23,54 @@ import connectors.parsers.GetCISDeductionsHttpParser.GetCISDeductionsResponse
 import connectors.parsers.UpdateCISDeductionsHttpParser.UpdateCISDeductionsResponse
 import models.{CreateCISDeductions, CreateCISDeductionsSuccess, UpdateCISDeductions}
 import models.get.CISSource
-import org.scalamock.handlers.{CallHandler4, CallHandler5}
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.TestSuite
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{mock, when}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-trait MockIntegrationFrameworkConnector extends MockFactory { _: TestSuite =>
+trait MockIntegrationFrameworkConnector {
 
-  protected val mockIntegrationFrameworkConnector: IntegrationFrameworkConnector = mock[IntegrationFrameworkConnector]
+  protected val mockIntegrationFrameworkConnector: IntegrationFrameworkConnector =
+    mock(classOf[IntegrationFrameworkConnector])
 
-  def mockGetCisDeductions(taxYear: Int,
-                           nino: String,
-                           source: String,
-                           result: Either[ApiError, Option[CISSource]]): CallHandler4[Int, String, String, HeaderCarrier, Future[GetCISDeductionsResponse]] = {
-    (mockIntegrationFrameworkConnector.getCisDeductions(_: Int, _: String, _: String)(_: HeaderCarrier))
-      .expects(taxYear, nino, source, *)
-      .returning(Future.successful(result))
-  }
+  def mockGetCisDeductions(taxYear: Int, nino: String, source: String, result: Either[ApiError, Option[CISSource]]): Unit =
+    when(
+      mockIntegrationFrameworkConnector.getCisDeductions(
+        eqTo(taxYear),
+        eqTo(nino),
+        eqTo(source)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(result))
 
   def mockCreateCisDeductions(taxYear: Int,
                               nino: String,
                               createCISDeductions: CreateCISDeductions,
-                              result: Either[ApiError, CreateCISDeductionsSuccess]): CallHandler4[Int, String, CreateCISDeductions, HeaderCarrier, Future[CreateCISDeductionsResponse]] = {
-    (mockIntegrationFrameworkConnector.create(_: Int, _: String, _: CreateCISDeductions)(_: HeaderCarrier))
-      .expects(taxYear, nino, createCISDeductions, *)
-      .returning(Future.successful(result))
-  }
+                              result: Either[ApiError, CreateCISDeductionsSuccess]): Unit =
+    when(
+      mockIntegrationFrameworkConnector.create(
+        eqTo(taxYear),
+        eqTo(nino),
+        eqTo(createCISDeductions)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(result))
 
-  def mockUpdate(taxYear: Int,
-                 nino: String,
-                 submissionId: String,
-                 updateCISDeductions: UpdateCISDeductions,
-                 result: Either[ApiError, Unit]): CallHandler5[Int, String, String, UpdateCISDeductions, HeaderCarrier, Future[UpdateCISDeductionsResponse]] = {
-    (mockIntegrationFrameworkConnector.update(_: Int, _: String, _: String, _: UpdateCISDeductions)(_: HeaderCarrier))
-      .expects(taxYear, nino, submissionId, updateCISDeductions, *)
-      .returning(Future.successful(result))
-  }
+  def mockUpdate(taxYear: Int, nino: String, submissionId: String, updateCISDeductions: UpdateCISDeductions, result: Either[ApiError, Unit]): Unit =
+    when(
+      mockIntegrationFrameworkConnector.update(
+        eqTo(taxYear),
+        eqTo(nino),
+        eqTo(submissionId),
+        eqTo(updateCISDeductions)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(result))
 
-  def mockDeleteCisDeductions(taxYear: Int,
-                              nino: String,
-                              submissionId: String,
-                              result: Either[ApiError, Unit]): CallHandler4[Int, String, String, HeaderCarrier, Future[Either[ApiError, Unit]]] = {
-    (mockIntegrationFrameworkConnector.deleteCisDeductions(_: Int, _: String, _: String)(_: HeaderCarrier))
-      .expects(taxYear, nino, submissionId, *)
-      .returning(Future.successful(result))
-  }
+  def mockDeleteCisDeductions(taxYear: Int, nino: String, submissionId: String, result: Either[ApiError, Unit]): Unit =
+    when(
+      mockIntegrationFrameworkConnector.deleteCisDeductions(
+        eqTo(taxYear),
+        eqTo(nino),
+        eqTo(submissionId)
+      )(any[HeaderCarrier]())
+    ).thenReturn(Future.successful(result))
 }

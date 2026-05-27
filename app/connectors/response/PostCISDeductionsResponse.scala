@@ -31,16 +31,17 @@ object PostCISDeductionsResponse {
     override val parserName: String = this.getClass.getSimpleName
 
     override def read(method: String, url: String, response: HttpResponse): PostCISDeductionsResponse = response.status match {
-      case OK => PostCISDeductionsResponse(response, extractResult(response))
+      case OK        => PostCISDeductionsResponse(response, extractResult(response))
       case NOT_FOUND => PostCISDeductionsResponse(response, handleErrorHIP(response, NOT_FOUND))
-      case BAD_REQUEST| CONFLICT | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE =>
+      case BAD_REQUEST | CONFLICT | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE =>
         PostCISDeductionsResponse(response, handleErrorHIP(response, response.status))
       case _ => PostCISDeductionsResponse(response, handleErrorHIP(response, INTERNAL_SERVER_ERROR))
     }
 
     private def extractResult(response: HttpResponse): Either[ApiError, CreateCISDeductionsSuccess] = {
       val json = response.json
-      json.validate[CreateCISDeductionsSuccess]
+      json
+        .validate[CreateCISDeductionsSuccess]
         .fold[Either[ApiError, CreateCISDeductionsSuccess]](_ => badSuccessJsonResponse, parsedModel => Right(parsedModel))
     }
   }

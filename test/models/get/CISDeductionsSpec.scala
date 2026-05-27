@@ -23,7 +23,7 @@ class CISDeductionsSpec extends UnitTest {
   "CISDeductions" when {
     "isEmpty" should {
       val nonEmptyPeriodData: GetPeriodData = GetPeriodData("", "", None, None, Some(1), "", None, "")
-      val emptyPeriodData: GetPeriodData = nonEmptyPeriodData.copy(grossAmountPaid = None)
+      val emptyPeriodData: GetPeriodData    = nonEmptyPeriodData.copy(grossAmountPaid = None)
       "return 'false' when any data is defined" in {
         CISDeductions("", "", None, "", Some(1), None, None, Nil).isEmpty shouldBe false
       }
